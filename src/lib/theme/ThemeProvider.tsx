@@ -17,12 +17,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    // Load theme from localStorage
+    // Only load from localStorage and apply classes inside useEffect
     const savedTheme = localStorage.getItem("mysticflow-theme") as Theme;
     if (savedTheme && ["light", "soft", "pastel", "rainbow"].includes(savedTheme)) {
+      document.documentElement.setAttribute("data-theme", savedTheme);
+      applyThemeVariables(savedTheme);
       setThemeState(savedTheme);
     }
+    setMounted(true);
   }, []);
 
   useEffect(() => {
