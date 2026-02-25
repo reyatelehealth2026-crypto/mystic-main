@@ -167,7 +167,7 @@ export function ShareableCard({ data, onShare, className }: ShareableCardProps) 
         {/* Footer CTA */}
         <div className="mt-4 pt-4 border-t border-violet-200/50 text-center">
           <p className="text-violet-400 text-xs">
-            🔮 ดูดวงฟรีได้ที่ reffortune.com
+            🔮 ดูดวงกับเรฟ reffortune.com
           </p>
         </div>
       </div>

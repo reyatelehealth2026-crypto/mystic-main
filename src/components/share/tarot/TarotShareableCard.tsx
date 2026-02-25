@@ -164,7 +164,7 @@ export function TarotShareableCard({ data, onShare, className }: TarotShareableC
         {/* Footer CTA */}
         <div className="mt-6 pt-5 border-t border-violet-200/50 flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="text-violet-800 font-bold text-sm">ดูดวงฟรี 24 ชม.</span>
+            <span className="text-violet-800 font-bold text-sm">ดูดวงกับเรฟ</span>
             <span className="text-violet-500 text-xs mt-0.5">www.reffortune.com</span>
           </div>
           <div className="bg-violet-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-md">

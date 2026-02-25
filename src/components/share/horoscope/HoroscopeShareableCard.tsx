@@ -133,7 +133,7 @@ export function HoroscopeShareableCard({ data, onShare, className }: HoroscopeSh
 
         {/* Footer */}
         <div className="mt-5 pt-4 border-t border-gray-200/50 text-center">
-          <p className="text-gray-400 text-xs font-medium">✨ ดูดวงฟรีได้ที่ reffortune.com</p>
+          <p className="text-gray-400 text-xs font-medium">✨ ดูดวงกับเรฟ reffortune.com</p>
         </div>
       </div>
 
