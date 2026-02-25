@@ -59,7 +59,7 @@ function buildPrompt(req: WallpaperRequest): string {
     : "";
 
   const textPart = req.overlayText
-    ? ` Include the sacred text "${req.overlayText}" rendered in minimal mystical ancient typography — like engraved stone or sacred Sanskrit/Thai script — subtle, elegant, and spiritually powerful. The text should be a focal point but harmonious with the overall design.`
+    ? ` At the very bottom of the image, add a small subtle artist signature/caption with the text "${req.overlayText}" in Thai traditional handwriting style (ลายมือไทย). The text should be small, elegant, positioned at the bottom edge like a watermark or photographer signature, NOT on any stone tablet or object. Very subtle and does not dominate the image.`
     : " No text, no letters, no words, no watermarks.";
 
   return `Create a stunning high-quality phone wallpaper for Thai spiritual fortune enhancement.
@@ -68,7 +68,9 @@ Theme: ${topicDesc}.
 Style: ${styleDesc}.
 Color: ${colorDesc}.${symbolsPart}${elementsPart}${luckyPart}${textPart}
 
-The design should be inspired by Thai mystical and spiritual aesthetics (สายมู), beautiful and serene, suitable as a phone lock screen wallpaper. The auspicious colors must be prominent and dominant in the composition. Vertical 9:16 aspect ratio, high resolution, photorealistic quality with artistic flair.`;
+The design should be inspired by Thai mystical and spiritual aesthetics (สายมู), beautiful and serene, suitable as a phone lock screen wallpaper. The auspicious colors must be prominent and dominant in the composition. Vertical 9:16 aspect ratio, high resolution, photorealistic quality with artistic flair.
+
+CRITICAL: The image must be a pure artwork filling the ENTIRE canvas. NO phone frames, NO device mockups, NO layered compositions showing a phone with wallpaper inside. The image should be a seamless single artwork that goes edge to edge. Do NOT create any borders, frames, or layered effects.`;
 }
 
 // ──────────────────────────────────────────────
