@@ -76,7 +76,54 @@ export const TOPIC_INFO: Record<WallpaperTopic, TopicInfo> = {
 // Card Pools per Topic
 // ──────────────────────────────────────────────
 
-// Major Arcana IDs ที่เกี่ยวข้องกับแต่ละหัวข้อ
+// ไพ่ที่เหมาะสมที่สุดสำหรับการเสริมมงคลในแต่ละหมวด (เรียงตามลำดับความเหมาะสม)
+const BEST_CARDS_FOR_TOPIC: Record<WallpaperTopic, string[]> = {
+  // การเงิน: ไพ่เหรียญ (Pentacles) ที่มีความหมายดี + Major Arcana ที่เกี่ยวกับความมั่งคั่ง
+  finance: [
+    "pen10", // Ten of Pentacles - ความมั่งคั่งของครอบครัว
+    "pen09", // Nine of Pentacles - ความสำเร็จทางการเงิน
+    "penA", // Ace of Pentacles - โอกาสทางการเงินใหม่
+    "maj19", // The Sun - ความสำเร็จ
+    "maj21", // The World - ความสมบูรณ์
+    "maj10", // Wheel of Fortune - โชคลาภ
+  ],
+  // การงาน: ไพ่ไม้เท้า (Wands) ที่มีพลังและความก้าวหน้า
+  career: [
+    "wan03", // Three of Wands - การขยายธุรกิจ
+    "wan06", // Six of Wands - ชัยชนะ
+    "wanA", // Ace of Wands - โอกาสใหม่
+    "maj01", // The Magician - ความสามารถ
+    "maj07", // The Chariot - ความมุ่งมั่น
+    "maj04", // The Emperor - ความเป็นผู้นำ
+  ],
+  // ความรัก: ไพ่ถ้วย (Cups) ที่เกี่ยวกับความรักและอารมณ์
+  love: [
+    "cup02", // Two of Cups - ความรักที่สมดุล
+    "cup10", // Ten of Cups - ความสุขในครอบครัว
+    "cupA", // Ace of Cups - ความรักใหม่
+    "maj06", // The Lovers - ความรัก
+    "maj03", // The Empress - ความอุดมสมบูรณ์
+    "maj17", // The Star - ความหวัง
+  ],
+  // โชคลาภ: ไพ่เหรียญ + Major Arcana ที่เกี่ยวกับโชคดี
+  luck: [
+    "maj10", // Wheel of Fortune - โชคลาภ
+    "maj19", // The Sun - ความสำเร็จ
+    "maj17", // The Star - ความหวังและโชคดี
+    "pen09", // Nine of Pentacles - ความสำเร็จ
+    "maj21", // The World - ความสมบูรณ์
+  ],
+  // สุขภาพ: ไพ่ถ้วย (Cups) ที่เกี่ยวกับการเยียวยา + Major Arcana
+  health: [
+    "maj17", // The Star - การเยียวยา
+    "maj14", // Temperance - สมดุล
+    "maj19", // The Sun - พลังชีวิต
+    "cupA", // Ace of Cups - พลังงานใหม่
+    "maj08", // Strength - พลังและความแข็งแกร่ง
+  ],
+};
+
+// Major Arcana IDs ที่เกี่ยวข้องกับแต่ละหัวข้อ (สำหรับ fallback)
 const TOPIC_MAJOR_IDS: Record<WallpaperTopic, string[]> = {
   finance: ["maj10", "maj19", "maj21", "maj03", "maj01"], // Wheel, Sun, World, Empress, Magician
   career: ["maj01", "maj04", "maj07", "maj08", "maj11"],  // Magician, Emperor, Chariot, Strength, Justice
@@ -107,19 +154,35 @@ function getCardPool(topic: WallpaperTopic): TarotCard[] {
 }
 
 // ──────────────────────────────────────────────
-// Draw a random card from the topic pool
+// เลือกไพ่ที่เหมาะสมที่สุดสำหรับการเสริมมงคล
 // ──────────────────────────────────────────────
 
 export function drawTopicCard(topic: WallpaperTopic): DrawnTopicCard {
-  const pool = getCardPool(topic);
-  const card = pool[Math.floor(Math.random() * pool.length)];
+  const bestCardIds = BEST_CARDS_FOR_TOPIC[topic];
   const topicInfo = TOPIC_INFO[topic];
 
+  // หาไพ่ที่เหมาะสมที่สุดจากรายการที่กำหนด
+  let selectedCard: TarotCard | undefined;
+  
+  for (const cardId of bestCardIds) {
+    const card = TAROT_DECK.find(c => c.id === cardId);
+    if (card) {
+      selectedCard = card;
+      break; // เลือกไพ่แรกที่เจอ (ซึ่งเป็นไพ่ที่เหมาะสมที่สุด)
+    }
+  }
+
+  // Fallback: ถ้าไม่เจอไพ่ที่กำหนด ให้ใช้ไพ่จาก pool
+  if (!selectedCard) {
+    const pool = getCardPool(topic);
+    selectedCard = pool[0] || TAROT_DECK[0];
+  }
+
   // สร้าง prompt สัญลักษณ์ที่เฉพาะเจาะจงสำหรับไพ่ใบนี้
-  const promptSymbols = `${card.name} tarot card symbolism, ${topicInfo.symbolDescEn}`;
+  const promptSymbols = `${selectedCard.name} tarot card symbolism, ${topicInfo.symbolDescEn}`;
 
   return {
-    card,
+    card: selectedCard,
     topic,
     promptSymbols,
   };
