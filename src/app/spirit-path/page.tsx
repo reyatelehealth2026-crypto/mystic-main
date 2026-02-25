@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { HeartSave } from "@/components/ui/HeartSave";
 import { ShareButton } from "@/components/ui/ShareButton";
-import { HelperText, Input, Label } from "@/components/ui/Input";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/label";
 import { Markdown } from "@/components/ui/Markdown";
 import { trackEvent } from "@/lib/analytics/tracking";
 import { useLibrary } from "@/lib/library/useLibrary";
@@ -184,7 +185,7 @@ export default function SpiritPathPage() {
           อ่านไพ่ 2 ใบจากวันเกิด: ไพ่ราศี (Zodiac Card) + ไพ่จิตวิญญาณ (Soul Card)
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-5">
+        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           <Card className="p-5">
             <div className="grid grid-cols-3 gap-3">
               <div>
@@ -201,7 +202,7 @@ export default function SpiritPathPage() {
               </div>
             </div>
 
-            <HelperText className="mt-3">ตัวอย่าง: 14 / 2 / 1994</HelperText>
+            <p className="text-xs text-fg-subtle mt-1">ตัวอย่าง: 14 / 2 / 1994</p>
 
             <Button type="submit" className="mt-4 w-full" disabled={loading}>
               {loading ? "กำลังตีความ…" : "เปิดไพ่ 2 ใบ"}
@@ -281,18 +282,21 @@ export default function SpiritPathPage() {
                   <HeartSave saved={!!savedId} onToggle={toggleSaved} label="Save spirit path" />
                 </div>
                 
-                <div className="grid grid-cols-2 gap-3">
-                   <Button variant={savedId ? "secondary" : "primary"} onClick={toggleSaved}>
-                     {savedId ? "Saved" : "Save"}
-                   </Button>
-                   <ShareButton 
-                     variant="secondary"
-                     shareData={{
-                       title: "เส้นทางจิตวิญญาณของฉัน",
-                       text: `ไพ่ราศี ${zodiacCard.nameTh} + ไพ่จิตวิญญาณ ${soulCard.nameTh}`,
-                       url: typeof window !== "undefined" ? window.location.href : "",
-                     }}
-                   />
+                <div className="mt-8 flex flex-col gap-3">
+                  <Button
+                    className="w-full"
+                    variant="secondary"
+                    onClick={toggleSaved}
+                  >
+                    {savedId ? "Saved" : "Save to Library"}
+                  </Button>
+                  <ShareButton
+                    shareData={{
+                      title: `เส้นทางจิตวิญญาณ: ${zodiacCard.nameTh} & ${soulCard.nameTh}`,
+                      text: "ดูไพ่ประจำตัวจากวันเกิด",
+                      url: window.location.href,
+                    }}
+                  />
                 </div>
               </div>
             </Card>

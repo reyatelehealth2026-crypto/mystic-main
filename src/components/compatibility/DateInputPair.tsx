@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { cn } from "@/lib/cn";
-import { Input, Label, HelperText } from "@/components/ui/Input";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/label";
 
 export interface DateInputPairProps {
   person1Date: string;
@@ -58,7 +59,7 @@ export function DateInputPair({
           )}
         />
         {person1Error && (
-          <HelperText className="text-danger">{person1Error}</HelperText>
+          <p className="text-xs text-danger mt-1">{person1Error}</p>
         )}
       </div>
 
@@ -78,7 +79,7 @@ export function DateInputPair({
           )}
         />
         {person2Error && (
-          <HelperText className="text-danger">{person2Error}</HelperText>
+          <p className="text-xs text-danger mt-1">{person2Error}</p>
         )}
       </div>
     </div>

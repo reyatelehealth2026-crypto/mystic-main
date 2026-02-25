@@ -45,7 +45,7 @@ export default function PickClient() {
     setTimeout(() => {
         setShuffled(shuffleCards(TAROT_DECK));
         setIsShuffling(false);
-    }, 800);
+    }, 5000); // 5 seconds
   };
 
   useEffect(() => {
@@ -178,7 +178,7 @@ export default function PickClient() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
-              className="w-full h-full grid grid-cols-13 gap-px bg-white/5"
+              className="w-full h-full grid grid-cols-13 gap-[1px] bg-white/10"
             >
               {shuffled.map((card, idx) => {
                   const isSelected = selected.some(s => s.startsWith(card.id));
@@ -188,7 +188,7 @@ export default function PickClient() {
                       <motion.div 
                           key={card.id}
                           onClick={() => onToggleSelect(card.id)}
-                          initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                          initial={{ opacity: 0, scale: 0.3, y: 60 }}
                           animate={{ 
                             opacity: 1, 
                             scale: 1, 
@@ -196,13 +196,13 @@ export default function PickClient() {
                             filter: isDimmed ? "grayscale(100%) opacity(50%)" : "grayscale(0%) opacity(100%)",
                           }}
                           transition={{ 
-                            duration: 0.3, 
-                            delay: idx * 0.005,
-                            ease: "easeOut"
+                            duration: 0.5, 
+                            delay: idx * 0.05,
+                            ease: [0.22, 1, 0.36, 1]
                           }}
                           whileHover={!isDimmed ? { scale: 1.1, zIndex: 30, filter: "brightness(1.2)" } : {}}
                           className={cn(
-                              "relative cursor-pointer w-full h-full overflow-hidden",
+                              "relative cursor-pointer w-full h-full overflow-hidden bg-black",
                               isSelected && "z-20 brightness-125"
                           )}
                       >
@@ -237,7 +237,17 @@ export default function PickClient() {
       </div>
 
       {/* ── Bottom Controls ── */}
-      <div className="fixed bottom-24 left-0 right-0 p-4 z-50 flex justify-center pointer-events-none">
+      <div className="fixed bottom-24 left-0 right-0 p-4 z-50 flex justify-center pointer-events-none gap-3 items-center">
+         <Button
+           onClick={handleShuffle}
+           disabled={isShuffling}
+           variant="secondary"
+           className="h-14 px-6 rounded-full bg-black/60 backdrop-blur-md hover:bg-black/80 text-white border border-white/20 pointer-events-auto"
+         >
+           <RefreshCcw className={cn("w-5 h-5 mr-2", isShuffling && "animate-spin")} />
+           สับไพ่ใหม่
+         </Button>
+
          {selected.length === count ? (
              <Button 
                 onClick={submitReading} 
@@ -246,7 +256,7 @@ export default function PickClient() {
                  ดูผลทำนาย
              </Button>
          ) : (
-             <div className="bg-black/60 backdrop-blur-md px-6 py-2 rounded-full border border-white/10 text-white/80 text-sm pointer-events-auto shadow-lg animate-pulse">
+             <div className="bg-black/60 backdrop-blur-md px-6 py-4 h-14 flex items-center justify-center rounded-full border border-white/10 text-white/80 text-sm pointer-events-auto shadow-lg animate-pulse">
                  เลือกอีก {count - selected.length} ใบ
              </div>
          )}

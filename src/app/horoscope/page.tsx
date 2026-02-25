@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     "ดูดวงตามราศีออนไลน์ เลือกดูดวงรายวัน รายสัปดาห์ หรือรายเดือน รับคำทำนายแม่นยำ ใช้ได้จริง",
   alternates: { canonical: "/horoscope" },
   openGraph: {
-    title: "ดูดวงตามราศี — MysticFlow",
+    title: "ดูดวงตามราศี — REFFORTUNE",
     description: "เลือกช่วงเวลาที่เหมาะกับคุณ ดูดวงรายวัน รายสัปดาห์ หรือรายเดือน",
     url: "/horoscope",
   },

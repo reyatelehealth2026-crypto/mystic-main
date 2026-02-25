@@ -1,7 +1,7 @@
 import EsiimsiClient from "./EsiimsiClient";
 
 export const metadata = {
-  title: "เซียมซีเสี่ยงทาย - MysticFlow",
+  title: "เซียมซีเสี่ยงทาย - REFFORTUNE",
   description: "เขย่าติ้วเสี่ยงทายเซียมซี รับคำทำนายแม่นๆ จากศาสตร์โบราณ",
 };
 

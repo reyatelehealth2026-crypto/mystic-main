@@ -1,190 +1,301 @@
 'use client';
 
-import { useConfigStore, FeatureToggles } from '@/store/useConfigStore';
+import { useConfigStore, FeatureToggles, PackageConfig } from '@/store/useConfigStore';
 import { useState, useEffect } from 'react';
 import { Switch } from '@/components/ui/switch';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Save } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Save, Plus, Trash2, ChevronDown, ChevronUp, Crown, X } from 'lucide-react';
+
+const CIRCLE_COLORS = [
+  'bg-gradient-to-br from-red-400 to-red-600',
+  'bg-gradient-to-br from-violet-400 to-violet-600',
+  'bg-gradient-to-br from-amber-400 to-orange-500',
+  'bg-gradient-to-br from-blue-400 to-blue-600',
+  'bg-gradient-to-br from-emerald-400 to-emerald-600',
+  'bg-gradient-to-br from-pink-400 to-pink-600',
+];
+
+function newEmptyPackage(): PackageConfig {
+  return {
+    id: `pkg-${Date.now()}`,
+    name: '',
+    subtitle: '',
+    price: '',
+    priceAlt: '',
+    description: '',
+    detail: '',
+    features: [''],
+    popular: false,
+    href: '',
+  };
+}
 
 export default function AdminConfigPanel() {
-  const { toggles, packages, setToggle, updatePackage } = useConfigStore();
+  const { toggles, packages, setToggle, updatePackage, addPackage, removePackage, reorderPackages } = useConfigStore();
   const [mounted, setMounted] = useState(false);
-  const [savedMessage, setSavedMessage] = useState('');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [toast, setToast] = useState('');
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
+  useEffect(() => { setMounted(true); }, []);
   if (!mounted) return null;
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(''), 2500);
+  };
 
   const handleToggle = (key: keyof FeatureToggles) => {
     setToggle(key, !toggles[key]);
   };
 
-  const handlePackageUpdate = (id: string, field: string, value: string) => {
+  const handleField = (id: string, field: keyof PackageConfig, value: string | boolean) => {
     updatePackage(id, { [field]: value });
   };
 
-  const handleFeatureUpdate = (id: string, index: number, value: string) => {
+  const handleFeature = (id: string, idx: number, value: string) => {
     const pkg = packages.find(p => p.id === id);
-    if (pkg) {
-      const newFeatures = [...pkg.features];
-      newFeatures[index] = value;
-      updatePackage(id, { features: newFeatures });
-    }
+    if (!pkg) return;
+    const next = [...pkg.features];
+    next[idx] = value;
+    updatePackage(id, { features: next });
   };
 
-  const saveChanges = () => {
-    setSavedMessage('บันทึกการเปลี่ยนแปลงเรียบร้อยแล้ว');
-    setTimeout(() => setSavedMessage(''), 3000);
+  const addFeature = (id: string) => {
+    const pkg = packages.find(p => p.id === id);
+    if (!pkg) return;
+    updatePackage(id, { features: [...pkg.features, ''] });
+  };
+
+  const removeFeature = (id: string, idx: number) => {
+    const pkg = packages.find(p => p.id === id);
+    if (!pkg) return;
+    updatePackage(id, { features: pkg.features.filter((_, i) => i !== idx) });
+  };
+
+  const movePackage = (idx: number, dir: -1 | 1) => {
+    const next = [...packages];
+    const swap = idx + dir;
+    if (swap < 0 || swap >= next.length) return;
+    [next[idx], next[swap]] = [next[swap], next[idx]];
+    reorderPackages(next);
+  };
+
+  const handleAdd = () => {
+    const pkg = newEmptyPackage();
+    addPackage(pkg);
+    setExpandedId(pkg.id);
+    showToast('เพิ่มแพ็กเกจใหม่แล้ว');
+  };
+
+  const handleRemove = (id: string) => {
+    if (!confirm('ลบแพ็กเกจนี้?')) return;
+    removePackage(id);
+    showToast('ลบแพ็กเกจแล้ว');
   };
 
   return (
-    <div className="container mx-auto py-10 px-4 max-w-4xl">
-      <div className="flex justify-between items-center mb-8">
+    <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Header */}
+      <div className="bg-white border-b px-6 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Admin Config Panel</h1>
-          <p className="text-muted-foreground mt-2">จัดการการเปิด/ปิดฟีเจอร์และแพ็กเกจ (Changes auto-save locally)</p>
+          <h1 className="text-xl font-bold text-gray-900">REFFORTUNE Admin</h1>
+          <p className="text-xs text-gray-400 mt-0.5">จัดการฟีเจอร์และแพ็กเกจ • บันทึกอัตโนมัติ</p>
         </div>
-        <Button onClick={saveChanges} className="gap-2">
-          <Save className="w-4 h-4" /> บันทึก
+        <Button size="sm" onClick={() => showToast('บันทึกแล้ว ✓')} className="gap-1.5">
+          <Save className="w-3.5 h-3.5" /> บันทึก
         </Button>
       </div>
 
-      {savedMessage && (
-        <div className="bg-green-100 text-green-800 p-4 rounded-md mb-6 transition-all">
-          {savedMessage}
+      {toast && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-sm px-4 py-2 rounded-full shadow-lg animate-in fade-in slide-in-from-top-2">
+          {toast}
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Feature Toggles Section */}
-        <section className="bg-card border rounded-xl p-6 shadow-sm">
-          <h2 className="text-xl font-semibold mb-6">Feature Toggles</h2>
-          <div className="space-y-6">
-            <ToggleItem 
-              label="Tarot Reading (ดูไพ่ยิปซี)" 
-              description="เปิด/ปิด โหมดดูไพ่ยิปซี 1, 3, 10 ใบ"
-              checked={toggles.enableTarot} 
-              onCheckedChange={() => handleToggle('enableTarot')} 
-            />
-            <ToggleItem 
-              label="Spirit Card (ไพ่จิตวิญญาณ)" 
-              description="เปิด/ปิด โหมดไพ่จิตวิญญาณ"
-              checked={toggles.enableSpiritCard} 
-              onCheckedChange={() => handleToggle('enableSpiritCard')} 
-            />
-            <ToggleItem 
-              label="Numerology (วิเคราะห์เบอร์มงคล)" 
-              description="เปิด/ปิด โหมดวิเคราะห์เบอร์มงคล"
-              checked={toggles.enableNumerology} 
-              onCheckedChange={() => handleToggle('enableNumerology')} 
-            />
-            <ToggleItem 
-              label="Love Tarot (ดวงความรัก - New)" 
-              description="เปิด/ปิด โหมดดูดวงความรักโดยเฉพาะ"
-              checked={toggles.enableLoveTarot} 
-              onCheckedChange={() => handleToggle('enableLoveTarot')} 
-            />
-            <ToggleItem 
-              label="Daily Auspicious (ฤกษ์ยามมงคล - New)" 
-              description="เปิด/ปิด โหมดดูฤกษ์ยามมงคลประจำวัน"
-              checked={toggles.enableDailyAuspicious} 
-              onCheckedChange={() => handleToggle('enableDailyAuspicious')} 
-            />
+      <div className="max-w-2xl mx-auto px-4 pt-6 space-y-6">
+
+        {/* Feature Toggles */}
+        <section className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b bg-gray-50">
+            <h2 className="font-semibold text-gray-800">Feature Toggles</h2>
+            <p className="text-xs text-gray-400 mt-0.5">เปิด/ปิดการแสดงผลแต่ละฟีเจอร์บนหน้าแรก</p>
           </div>
-        </section>
-
-        {/* Package Management Section */}
-        <section className="bg-card border rounded-xl p-6 shadow-sm">
-          <h2 className="text-xl font-semibold mb-6">Packages (แพ็กเกจ)</h2>
-          <div className="space-y-8">
-            {packages.map((pkg) => (
-              <div key={pkg.id} className="space-y-4 border-b pb-6 last:border-0 last:pb-0">
-                <h3 className="font-medium text-lg capitalize">{pkg.id} Package</h3>
-                
-                <div className="grid gap-2">
-                  <Label>ชื่อแพ็กเกจ</Label>
-                  <Input 
-                    value={pkg.name} 
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handlePackageUpdate(pkg.id, 'name', e.target.value)} 
-                  />
+          <div className="divide-y">
+            {([
+              ['enableTarot', 'Tarot Reading', 'ดูไพ่ยิปซี 1, 3, 10 ใบ'],
+              ['enableSpiritCard', 'Spirit Card', 'ไพ่จิตวิญญาณ'],
+              ['enableNumerology', 'Numerology', 'วิเคราะห์เบอร์มงคล'],
+              ['enableLoveTarot', 'Love Tarot', 'ดูดวงความรักโดยเฉพาะ'],
+              ['enableDailyAuspicious', 'Daily Card', 'ไพ่ประจำวัน'],
+            ] as [keyof FeatureToggles, string, string][]).map(([key, label, desc]) => (
+              <div key={key} className="flex items-center justify-between px-5 py-3.5">
+                <div>
+                  <p className="text-sm font-medium text-gray-800">{label}</p>
+                  <p className="text-xs text-gray-400">{desc}</p>
                 </div>
-                
-                <div className="grid gap-2">
-                  <Label>ราคา</Label>
-                  <Input 
-                    value={pkg.price} 
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handlePackageUpdate(pkg.id, 'price', e.target.value)} 
-                  />
-                </div>
-                
-                <div className="grid gap-2">
-                  <Label>คำอธิบาย</Label>
-                  <Textarea 
-                    value={pkg.description} 
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handlePackageUpdate(pkg.id, 'description', e.target.value)} 
-                    rows={2}
-                  />
-                </div>
-                
-                <div className="grid gap-2">
-                  <Label>Image URL (รูปโปรไฟล์)</Label>
-                  <Input 
-                    value={pkg.imageUrl} 
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handlePackageUpdate(pkg.id, 'imageUrl', e.target.value)} 
-                    placeholder="https://..."
-                  />
-                  {pkg.imageUrl && (
-                    <img 
-                      src={pkg.imageUrl} 
-                      alt="Preview" 
-                      className="mt-2 w-16 h-16 object-cover rounded-full border"
-                    />
-                  )}
-                </div>
-
-                <div className="grid gap-2">
-                  <Label>ฟีเจอร์เด่น</Label>
-                  {pkg.features.map((feature, idx) => (
-                    <Input 
-                      key={idx}
-                      value={feature} 
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFeatureUpdate(pkg.id, idx, e.target.value)} 
-                      className="mb-1"
-                    />
-                  ))}
-                </div>
+                <Switch checked={toggles[key]} onCheckedChange={() => handleToggle(key)} />
               </div>
             ))}
           </div>
         </section>
-      </div>
-    </div>
-  );
-}
 
-function ToggleItem({ 
-  label, 
-  description, 
-  checked, 
-  onCheckedChange 
-}: { 
-  label: string; 
-  description: string;
-  checked: boolean; 
-  onCheckedChange: (checked: boolean) => void;
-}) {
-  return (
-    <div className="flex items-center justify-between space-x-2">
-      <div className="flex flex-col space-y-1">
-        <Label className="text-base">{label}</Label>
-        <span className="text-sm text-muted-foreground">{description}</span>
+        {/* Packages */}
+        <section className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b bg-gray-50 flex items-center justify-between">
+            <div>
+              <h2 className="font-semibold text-gray-800">แพ็กเกจ ({packages.length})</h2>
+              <p className="text-xs text-gray-400 mt-0.5">จัดการแพ็กเกจที่แสดงบนหน้าแรก</p>
+            </div>
+            <Button size="sm" variant="outline" onClick={handleAdd} className="gap-1.5 text-violet-600 border-violet-200 hover:bg-violet-50">
+              <Plus className="w-3.5 h-3.5" /> เพิ่มแพ็กเกจ
+            </Button>
+          </div>
+
+          {/* Package preview list */}
+          <div className="divide-y">
+            {packages.map((pkg, idx) => {
+              const isOpen = expandedId === pkg.id;
+              const circleColor = CIRCLE_COLORS[idx % CIRCLE_COLORS.length];
+              const badgeLabel = pkg.popular
+                ? (pkg.subtitle === 'มาใหม่' ? 'มาใหม่' : 'ลดนิยม')
+                : pkg.subtitle || null;
+
+              return (
+                <div key={pkg.id} className="group">
+                  {/* Collapsed row */}
+                  <div
+                    className="flex items-center gap-3 px-5 py-3.5 cursor-pointer hover:bg-gray-50 transition-colors"
+                    onClick={() => setExpandedId(isOpen ? null : pkg.id)}
+                  >
+                    {/* Circle avatar */}
+                    <div className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-sm ${circleColor}`}>
+                      {pkg.price || 'FREE'}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-gray-800 truncate">{pkg.name || '(ไม่มีชื่อ)'}</p>
+                        {badgeLabel && (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 shrink-0">
+                            <Crown className="w-2.5 h-2.5" />{badgeLabel}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400 truncate">{pkg.description}</p>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <p className="text-sm font-bold text-violet-600">{pkg.price || '—'}</p>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); movePackage(idx, -1); }}
+                        className="p-1 text-gray-300 hover:text-gray-600 disabled:opacity-20"
+                        disabled={idx === 0}
+                      >
+                        <ChevronUp className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); movePackage(idx, 1); }}
+                        className="p-1 text-gray-300 hover:text-gray-600 disabled:opacity-20"
+                        disabled={idx === packages.length - 1}
+                      >
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleRemove(pkg.id); }}
+                        className="p-1 text-gray-300 hover:text-red-500"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Expanded editor */}
+                  {isOpen && (
+                    <div className="px-5 pb-5 pt-2 bg-gray-50 border-t space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">ชื่อแพ็กเกจ</Label>
+                          <Input value={pkg.name} onChange={e => handleField(pkg.id, 'name', e.target.value)} placeholder="ชื่อ" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Subtitle / Badge</Label>
+                          <Input value={pkg.subtitle ?? ''} onChange={e => handleField(pkg.id, 'subtitle', e.target.value)} placeholder="ยอดนิยม / มาใหม่" />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">ราคา</Label>
+                          <Input value={pkg.price} onChange={e => handleField(pkg.id, 'price', e.target.value)} placeholder="฿389" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">ราคาทางเลือก</Label>
+                          <Input value={pkg.priceAlt ?? ''} onChange={e => handleField(pkg.id, 'priceAlt', e.target.value)} placeholder="฿749 (คอล 1 ชม)" />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label className="text-xs">คำอธิบายสั้น</Label>
+                        <Input value={pkg.description} onChange={e => handleField(pkg.id, 'description', e.target.value)} placeholder="PDF 15-20 หน้า" />
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label className="text-xs">รายละเอียด (ข้อความสีม่วง)</Label>
+                        <Textarea value={pkg.detail ?? ''} onChange={e => handleField(pkg.id, 'detail', e.target.value)} rows={2} placeholder="เจาะลึกทุกมิติชีวิต..." />
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label className="text-xs">ลิงก์ (href) — เว้นว่างใช้ /pricing/{'{id}'}</Label>
+                        <Input value={pkg.href ?? ''} onChange={e => handleField(pkg.id, 'href', e.target.value)} placeholder="/esiimsi" />
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <Switch
+                          checked={pkg.popular ?? false}
+                          onCheckedChange={(v) => handleField(pkg.id, 'popular', v)}
+                        />
+                        <Label className="text-xs text-gray-600">Popular (แสดง badge ลดนิยม/มาใหม่)</Label>
+                      </div>
+
+                      {/* Features */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs">ฟีเจอร์ / รายการ (รวม:)</Label>
+                          <button
+                            onClick={() => addFeature(pkg.id)}
+                            className="text-xs text-violet-600 hover:underline flex items-center gap-0.5"
+                          >
+                            <Plus className="w-3 h-3" /> เพิ่ม
+                          </button>
+                        </div>
+                        {pkg.features.map((f, fi) => (
+                          <div key={fi} className="flex gap-2">
+                            <Input
+                              value={f}
+                              onChange={e => handleFeature(pkg.id, fi, e.target.value)}
+                              placeholder={`รายการที่ ${fi + 1}`}
+                              className="flex-1"
+                            />
+                            <button
+                              onClick={() => removeFeature(pkg.id, fi)}
+                              className="p-2 text-gray-300 hover:text-red-500"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
       </div>
-      <Switch checked={checked} onCheckedChange={onCheckedChange} />
     </div>
   );
 }

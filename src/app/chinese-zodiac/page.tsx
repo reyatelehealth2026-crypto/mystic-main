@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { AppBar } from "@/components/nav/AppBar";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Input, Label, HelperText } from "@/components/ui/Input";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/label";
 import { FeatureMenu } from "@/components/nav/FeatureMenu";
 import { FAB } from "@/components/ui/FAB";
 import { TimePeriod } from "@/lib/horoscope/types";
@@ -103,7 +104,7 @@ export default function ChineseZodiacPage() {
                 className={error && "border-danger focus-visible:ring-danger"}
               />
               {error && (
-                <HelperText className="text-danger">{error}</HelperText>
+                <p className="text-xs text-fg-subtle mt-1">{error}</p>
               )}
             </div>
 

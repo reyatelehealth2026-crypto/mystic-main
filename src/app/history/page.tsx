@@ -100,9 +100,9 @@ export default function HistoryPage() {
                     </div>
                     <p className="text-sm text-gray-600 line-clamp-2">{item.summary}</p>
                     
-                    {item.details && item.details.question && (
+                    {item.details && Boolean(item.details.question) && (
                       <div className="mt-2 text-xs bg-gray-50 p-2 rounded-lg text-gray-500 border border-gray-100">
-                        <span className="font-medium text-gray-700">คำถาม:</span> {item.details.question}
+                        <span className="font-medium text-gray-700">คำถาม:</span> {String(item.details.question)}
                       </div>
                     )}
                   </div>

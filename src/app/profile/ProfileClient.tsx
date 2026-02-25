@@ -150,7 +150,7 @@ export function ProfileClient({ version }: { version?: string }) {
           </div>
 
           <div className="mt-4">
-            <Button variant="secondary" size="md" disabled aria-disabled="true">
+            <Button variant="secondary" size="default" disabled aria-disabled="true">
               {language === "th" ? "เข้าสู่ระบบ (เร็ว ๆ นี้)" : "Sign in (soon)"}
             </Button>
           </div>

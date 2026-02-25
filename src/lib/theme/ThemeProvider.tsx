@@ -18,7 +18,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Only load from localStorage and apply classes inside useEffect
-    const savedTheme = localStorage.getItem("mysticflow-theme") as Theme;
+    const savedTheme = localStorage.getItem("reffortune-theme") as Theme;
     if (savedTheme && ["light", "soft", "pastel", "rainbow"].includes(savedTheme)) {
       document.documentElement.setAttribute("data-theme", savedTheme);
       applyThemeVariables(savedTheme);
@@ -31,7 +31,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (!mounted) return;
     
     // Save to localStorage
-    localStorage.setItem("mysticflow-theme", theme);
+    localStorage.setItem("reffortune-theme", theme);
     
     // Apply theme class to document
     document.documentElement.setAttribute("data-theme", theme);

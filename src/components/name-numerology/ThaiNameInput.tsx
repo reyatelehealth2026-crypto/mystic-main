@@ -1,7 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { Input, Label, HelperText } from '@/components/ui/Input';
+import { Input } from '@/components/ui/Input';
+import { Label } from '@/components/ui/label';
 import { Alert } from '@/components/ui/Alert';
 import { validateThaiName } from '@/lib/validation';
 import { cn } from '@/lib/cn';
@@ -139,12 +140,12 @@ export function ThaiNameInput({
           )}
         </div>
         {showFirstNameError && (
-          <HelperText id="firstName-error" className="text-danger">
+          <p id="firstName-error" className="text-xs text-danger mt-1">
             {firstNameValidation.error}
-          </HelperText>
+          </p>
         )}
         {!showFirstNameError && (
-          <HelperText>ใช้ตัวอักษรไทยเท่านั้น</HelperText>
+          <p className="text-xs text-fg-subtle mt-1">ใช้ตัวอักษรไทยเท่านั้น</p>
         )}
       </div>
 
@@ -190,12 +191,12 @@ export function ThaiNameInput({
           )}
         </div>
         {showLastNameError && (
-          <HelperText id="lastName-error" className="text-danger">
+          <p id="lastName-error" className="text-xs text-danger mt-1">
             {lastNameValidation.error}
-          </HelperText>
+          </p>
         )}
         {!showLastNameError && (
-          <HelperText>ใช้ตัวอักษรไทยเท่านั้น</HelperText>
+          <p className="text-xs text-fg-subtle mt-1">ใช้ตัวอักษรไทยเท่านั้น</p>
         )}
       </div>
 

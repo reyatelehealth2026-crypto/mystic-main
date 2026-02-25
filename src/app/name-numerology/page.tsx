@@ -70,7 +70,7 @@ export default function NameNumerologyPage() {
           <div className="flex gap-3">
             <Button
               type="submit"
-              variant="primary"
+              variant="default"
               size="lg"
               className="flex-1"
               disabled={nameInput.showValidation && !nameInput.isValid}

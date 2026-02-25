@@ -422,7 +422,7 @@ export function FortuneReadingBlocks({
       {/* Post-Reading Actions */}
       <section className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
         {onViewAnother && (
-          <Button onClick={onViewAnother} variant="primary">
+          <Button onClick={onViewAnother} variant="default">
             ดูดวงอีกครั้ง
           </Button>
         )}

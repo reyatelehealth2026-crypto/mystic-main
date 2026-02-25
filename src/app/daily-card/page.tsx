@@ -152,7 +152,7 @@ export default function DailyCardPage() {
   const orientationLabel = drawn?.orientation === "upright" ? "ตั้งตรง" : "กลับหัว";
 
   const shareText = drawn
-    ? `ไพ่รายวัน: ${drawn.card.nameTh ?? drawn.card.name} (${orientationLabel}) — MysticFlow`
+    ? `ไพ่รายวัน: ${drawn.card.nameTh ?? drawn.card.name} (${orientationLabel}) — REFFORTUNE`
     : "";
   const shareUrl = typeof window !== "undefined" ? window.location.href : "https://tarot.reffortune.com/daily-card";
 
@@ -335,7 +335,7 @@ export default function DailyCardPage() {
           <div className="flex flex-col gap-3 pt-2">
             <div className="grid grid-cols-2 gap-3">
               <Button
-                variant={savedId ? "secondary" : "primary"}
+                variant={savedId ? "secondary" : "default"}
                 size="lg"
                 className="w-full"
                 onClick={toggleSaved}
@@ -343,12 +343,10 @@ export default function DailyCardPage() {
                 {savedId ? "บันทึกแล้ว" : "บันทึก"}
               </Button>
               <ShareButton
-                variant="secondary"
-                size="lg"
                 className="w-full"
                 shareData={{
                   title: "ไพ่รายวันของฉัน",
-                  text: aiReading?.summary || "ดูดวงรายวันกับ MysticFlow",
+                  text: aiReading?.summary || "ดูดวงรายวันกับ REFFORTUNE",
                   url: typeof window !== "undefined" ? window.location.href : "",
                 }}
               />

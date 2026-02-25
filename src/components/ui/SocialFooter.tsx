@@ -65,7 +65,7 @@ export function SocialFooter() {
       </div>
 
       <div className={cn("text-xs space-y-2", isPastel ? "text-white/60" : "text-gray-400")}>
-        <p>© 2026 MysticFlow by Reffortune</p>
+        <p>© 2026 REFFORTUNE</p>
         <div className="flex justify-center gap-3">
             <Link href="/terms" className="hover:underline opacity-80 hover:opacity-100">ข้อกำหนด</Link>
             <span className="opacity-50">•</span>

@@ -20,8 +20,8 @@ const playfair = Playfair_Display({
 });
 
 const SITE_URL = "https://tarot.reffortune.com";
-const SITE_NAME = "MysticFlow";
-const DEFAULT_TITLE = "MysticFlow — ดูดวงไพ่ทาโรต์ออนไลน์ แม่นยำ ทันใจ";
+const SITE_NAME = "REFFORTUNE";
+const DEFAULT_TITLE = "REFFORTUNE — ดูดวงไพ่ทาโรต์ออนไลน์ แม่นยำ ทันใจ";
 const DEFAULT_DESCRIPTION =
   "ค้นหาคำตอบของชีวิตด้วยไพ่ทาโรต์และโหราศาสตร์ไทย ดูดวงรายวัน ความรัก การงาน การเงิน ฟรี! พร้อมเจาะลึกทุกคำถามที่คุณอยากรู้";
 
@@ -44,13 +44,13 @@ export const metadata: Metadata = {
     "ดูดวงความรัก",
     "ดูดวงการเงิน",
     "ดูดวงการงาน",
-    "MysticFlow",
+    "REFFORTUNE",
     "Reffortune",
   ],
   authors: [{ name: "Reffortune", url: "https://www.facebook.com/reffortune" }],
   creator: "Reffortune Team",
-  publisher: "MysticFlow by Reffortune",
-  applicationName: "MysticFlow",
+  publisher: "REFFORTUNE",
+  applicationName: "REFFORTUNE",
   formatDetection: {
     email: false,
     address: false,
@@ -71,7 +71,7 @@ export const metadata: Metadata = {
         url: "/tarot.jpg",
         width: 1200,
         height: 630,
-        alt: "MysticFlow — Tarot & Spiritual Guidance",
+        alt: "REFFORTUNE — Tarot & Spiritual Guidance",
       },
     ],
   },

@@ -159,10 +159,9 @@ export default function SavedReadingDetailPage() {
 
         <div className="mt-6 grid grid-cols-2 gap-3">
           <ShareButton
-            variant="primary"
             className="w-full"
             shareData={{
-              title: "คำทำนายจาก MysticFlow",
+              title: "คำทำนายจาก REFFORTUNE",
               text: `ลองมาดูคำทำนายนี้สิ!`,
               url: typeof window !== "undefined" ? window.location.href : "",
             }}

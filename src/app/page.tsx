@@ -32,7 +32,7 @@ const packages = [
     id: "esiimsi-promo",
     name: "เซียมซีเสี่ยงทาย",
     subtitle: "มาใหม่",
-    price: "FREE",
+    price: "",
     description: "เขย่าติ้วรับคำทำนายโบราณ",
     features: [
       "ระบบเขย่าแบบ Physical 3D",
@@ -293,57 +293,106 @@ export default function Home() {
           </Link>
         </div>
 
-        <div className="space-y-4">
-          {useConfigStore.getState().packages.map((pkg) => (
-            <Link key={pkg.id} href={`/pricing/${pkg.id}`} className="block">
-              <div
-                className={cn(
-                  "relative p-5 rounded-2xl border transition-all active:scale-[0.98]",
+        <div className="space-y-3">
+          {packages.map((pkg, idx) => {
+            const circleColors = [
+              "bg-gradient-to-br from-red-400 to-red-600",
+              "bg-gradient-to-br from-violet-400 to-violet-600",
+              "bg-gradient-to-br from-amber-400 to-orange-500",
+              "bg-gradient-to-br from-blue-400 to-blue-600",
+              "bg-gradient-to-br from-emerald-400 to-emerald-600",
+              "bg-gradient-to-br from-pink-400 to-pink-600",
+            ];
+            const circleColor = circleColors[idx % circleColors.length];
+            const badgeLabel = pkg.popular
+              ? (pkg.subtitle === "มาใหม่" ? "มาใหม่" : "ลดนิยม")
+              : (pkg.subtitle === "ยอดนิยม" ? "ยอดนิยม" : pkg.subtitle === "พิเศษ" ? "แนะนำ" : pkg.subtitle === "เหมาๆ" ? "แนะนำ" : null);
+            const maxFeatures = 4;
+            const visibleFeatures = pkg.features.slice(0, maxFeatures);
+            const extraCount = pkg.features.length - maxFeatures;
+
+            return (
+              <Link key={pkg.id} href={pkg.href ?? `/pricing/${pkg.id}`} className="block">
+                <div className={cn(
+                  "relative p-4 rounded-2xl border transition-all active:scale-[0.98]",
                   isPastel
-                    ? "bg-white/20 backdrop-blur border-white/30 hover:bg-white/30"
-                    : "bg-white border-gray-200 hover:border-violet-200"
-                )}
-              >
-                <div className="flex gap-4">
-                  {pkg.imageUrl && (
-                    <div className="flex-shrink-0">
-                      <img 
-                        src={pkg.imageUrl} 
-                        alt={pkg.name} 
-                        className="w-20 h-20 rounded-xl object-cover border-2 border-white/20 shadow-sm"
-                      />
-                    </div>
+                    ? "bg-white/15 backdrop-blur border-white/25 hover:bg-white/25"
+                    : "bg-white border-gray-100 hover:border-violet-200 shadow-sm"
+                )}>
+                  {/* Badge */}
+                  {badgeLabel && (
+                    <span className={cn(
+                      "inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full mb-2",
+                      isPastel
+                        ? "bg-white/20 text-white"
+                        : "bg-violet-100 text-violet-700"
+                    )}>
+                      <Crown className="w-3 h-3" />
+                      {badgeLabel}
+                    </span>
                   )}
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-1">
-                      <h3 className={cn("font-semibold text-lg leading-tight", isPastel ? "text-white" : "text-gray-900")}>{pkg.name}</h3>
-                      <p className={cn("text-lg font-bold ml-2", isPastel ? "text-white" : "text-violet-600")}>{pkg.price}</p>
-                    </div>
-                    <p className={cn("text-sm mt-1 mb-3 line-clamp-2", isPastel ? "text-white/70" : "text-gray-500")}>{pkg.description}</p>
-                    
-                    <ul className="flex flex-wrap gap-2">
-                      {pkg.features.slice(0, 2).map((feature) => (
-                        <li key={feature} className={cn(
-                          "text-[10px] px-2 py-1 rounded-full whitespace-nowrap",
-                          isPastel ? "text-white bg-white/20" : "text-gray-600 bg-gray-50 border border-gray-100"
-                        )}>
-                          {feature}
-                        </li>
-                      ))}
-                      {pkg.features.length > 2 && (
-                        <li className={cn(
-                          "text-[10px] px-2 py-1 rounded-full",
-                          isPastel ? "text-white/80 bg-white/10" : "text-gray-500 bg-gray-50"
-                        )}>
-                          +{pkg.features.length - 2}
-                        </li>
+
+                  <div className="flex items-start justify-between gap-3">
+                    {/* Left content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className={cn("font-semibold text-base leading-snug", isPastel ? "text-white" : "text-gray-900")}>
+                          {pkg.name}
+                        </h3>
+                        <p className={cn("text-base font-bold shrink-0", isPastel ? "text-white" : "text-violet-600")}>
+                          {pkg.price}
+                        </p>
+                      </div>
+
+                      <p className={cn("text-xs mt-0.5", isPastel ? "text-white/60" : "text-gray-400")}>
+                        {pkg.description}
+                      </p>
+
+                      {pkg.detail && (
+                        <p className={cn("text-xs mt-1", isPastel ? "text-violet-200" : "text-violet-500")}>
+                          {pkg.detail}
+                        </p>
                       )}
-                    </ul>
+
+                      {/* Features */}
+                      <div className="mt-2.5">
+                        <span className={cn("text-[11px]", isPastel ? "text-white/50" : "text-gray-400")}>รวม:</span>
+                        <div className="flex flex-wrap gap-1.5 mt-1">
+                          {visibleFeatures.map((feature) => (
+                            <span key={feature} className={cn(
+                              "text-[11px] px-2 py-0.5 rounded-full whitespace-nowrap",
+                              isPastel
+                                ? "bg-white/15 text-white/80"
+                                : "bg-gray-100 text-gray-600"
+                            )}>
+                              {feature}
+                            </span>
+                          ))}
+                          {extraCount > 0 && (
+                            <span className={cn(
+                              "text-[11px] px-2 py-0.5 rounded-full",
+                              isPastel ? "bg-white/10 text-white/60" : "bg-violet-50 text-violet-500"
+                            )}>
+                              +{extraCount} รายการ
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Circle avatar */}
+                    <div className={cn("shrink-0 w-12 h-12 rounded-full flex items-center justify-center shadow-md self-start mt-1", circleColor)}>
+                      {pkg.price === "FREE" ? (
+                        <span className="text-white font-bold text-[11px]">FREE</span>
+                      ) : (
+                        <Sparkles className="w-5 h-5 text-white" />
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       </section>
 
