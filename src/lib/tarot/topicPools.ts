@@ -19,10 +19,10 @@ export interface TopicInfo {
   symbolDescTh: string;
 }
 
-export interface DrawnTopicCard {
-  card: TarotCard;
+export interface TopicSymbols {
   topic: WallpaperTopic;
-  promptSymbols: string; // สัญลักษณ์สำหรับใส่ใน image prompt
+  symbols: string; // สัญลักษณ์มงคลสำหรับสร้างภาพ
+  symbolsTh: string; // คำอธิบายภาษาไทย
 }
 
 // ──────────────────────────────────────────────
@@ -154,37 +154,62 @@ function getCardPool(topic: WallpaperTopic): TarotCard[] {
 }
 
 // ──────────────────────────────────────────────
-// เลือกไพ่ที่เหมาะสมที่สุดสำหรับการเสริมมงคล
+// ดึงสัญลักษณ์มงคลจากไพ่ที่เหมาะสมสำหรับการเสริมดวง
 // ──────────────────────────────────────────────
 
-export function drawTopicCard(topic: WallpaperTopic): DrawnTopicCard {
+// สัญลักษณ์มงคลเฉพาะของแต่ละไพ่
+const CARD_AUSPICIOUS_SYMBOLS: Record<string, { en: string; th: string }> = {
+  // Pentacles - เหรียญทอง
+  "pen10": { en: "golden coins raining down, family prosperity, abundant wealth, treasure chest", th: "เหรียญทองโปรยปราย ความมั่งคั่งของครอบครัว ขุมทรัพย์" },
+  "pen09": { en: "golden pentacles garden, luxury vineyard, financial independence, prosperity", th: "สวนเหรียญทอง ความอุดมสมบูรณ์ ความมั่งคั่งส่วนตัว" },
+  "penA": { en: "giant golden pentacle, new opportunity gate, prosperity seed, wealth manifestation", th: "เหรียญทองยักษ์ ประตูโอกาสใหม่ เมล็ดพันธุ์ความมั่งคั่ง" },
+  
+  // Wands - ไม้เท้าและพลังไฟ
+  "wan03": { en: "three wands on mountain peak, ships sailing to success, expansion vision", th: "ไม้เท้าสามอันบนยอดเขา เรือแล่นสู่ความสำเร็จ วิสัยทัศน์กว้างไกล" },
+  "wan06": { en: "victory laurel wreath, champion on horseback, triumph celebration, success parade", th: "พวงมาลัยชัยชนะ แชมป์บนหลังม้า ขบวนแห่ความสำเร็จ" },
+  "wanA": { en: "blazing wand from clouds, divine opportunity, creative spark, new beginning flame", th: "ไม้เท้าลุกเป็นไฟจากเมฆ โอกาสจากสวรรค์ ประกายความคิดสร้างสรรค์" },
+  
+  // Cups - ถ้วยและน้ำ
+  "cup02": { en: "two golden chalices united, caduceus of harmony, love bond, partnership blessing", th: "ถ้วยทองสองใบหลอมรวม สายสัมพันธ์แห่งรัก พรแห่งคู่ครอง" },
+  "cup10": { en: "rainbow of ten cups, family joy, eternal happiness, blessed home", th: "รุ้งกะรัตแห่งความสุข สิบถ้วยแห่งความสุขครอบครัว บ้านที่ได้รับพร" },
+  "cupA": { en: "overflowing golden chalice, dove of love, lotus bloom, emotional abundance", th: "ถ้วยทองล้นพ้น นกพิราบแห่งความรัก ดอกบัวบาน" },
+  
+  // Major Arcana
+  "maj01": { en: "infinity symbol, magic wand, all elements mastery, manifestation power", th: "สัญลักษณ์อนันต์ ไม้กายสิทธิ์ พลังสร้างสรรค์" },
+  "maj03": { en: "empress crown, abundant harvest, fertile garden, mother nature blessing", th: "มงกุฎจักรพรรดินี สวนอุดมสมบูรณ์ พรจากธรรมชาติ" },
+  "maj04": { en: "throne of authority, ram symbols, leadership crown, solid foundation", th: "บัลลังก์แห่งอำนาจ มงกุฎผู้นำ รากฐานมั่นคง" },
+  "maj06": { en: "angel of love blessing, twin flames, sacred union, divine partnership", th: "เทวดาแห่งความรักอวยพร เปลวไฟคู่ สหภาพศักดิ์สิทธิ์" },
+  "maj07": { en: "victory chariot, star crown, sphinxes power, triumph journey", th: "รถรบชัยชนะ มงกุฎดาว พลังสฟิงซ์" },
+  "maj08": { en: "gentle strength, lion tamed with love, infinite courage, inner power", th: "พลังอ่อนโยน สิงโตที่ถูกทำให้เชื่อง ความกล้าหาญไร้ขีดจำกัด" },
+  "maj10": { en: "wheel of fortune spinning, sphinx guardian, ascending cycle, divine timing", th: "วงล้อแห่งโชคชะตาหมุน ผู้พิทักษ์สฟิงซ์ รอบแห่งความรุ่งเรือง" },
+  "maj14": { en: "angel of balance, mixing golden cups, harmony flow, perfect equilibrium", th: "เทวดาแห่งสมดุล ถ้วยทองผสมผสาน กระแสแห่งความกลมกลืน" },
+  "maj17": { en: "bright star of hope, eternal spring, healing waters, divine guidance", th: "ดาวแห่งความหวัง น้ำพุแห่งการเยียวยา แสงนำทางจากสวรรค์" },
+  "maj19": { en: "radiant sun, sunflowers blooming, child of joy, infinite vitality", th: "ดวงอาทิตย์เปล่งรัศมี ทานตะวันบาน เด็กแห่งความสุข" },
+  "maj21": { en: "world completion, victory wreath, four elements harmony, cosmic dance", th: "ความสมบูรณ์แห่งโลก พวงมาลัยชัยชนะ สี่ธาตุกลมกลืน" },
+};
+
+export function getTopicSymbols(topic: WallpaperTopic): TopicSymbols {
   const bestCardIds = BEST_CARDS_FOR_TOPIC[topic];
   const topicInfo = TOPIC_INFO[topic];
 
-  // หาไพ่ที่เหมาะสมที่สุดจากรายการที่กำหนด
-  let selectedCard: TarotCard | undefined;
+  // หาไพ่มงคลที่เหมาะสมที่สุด
+  let cardSymbols = { en: topicInfo.symbolDescEn, th: topicInfo.symbolDescTh };
   
   for (const cardId of bestCardIds) {
-    const card = TAROT_DECK.find(c => c.id === cardId);
-    if (card) {
-      selectedCard = card;
-      break; // เลือกไพ่แรกที่เจอ (ซึ่งเป็นไพ่ที่เหมาะสมที่สุด)
+    if (CARD_AUSPICIOUS_SYMBOLS[cardId]) {
+      cardSymbols = CARD_AUSPICIOUS_SYMBOLS[cardId];
+      break; // ใช้สัญลักษณ์จากไพ่มงคลแรกที่เจอ
     }
   }
 
-  // Fallback: ถ้าไม่เจอไพ่ที่กำหนด ให้ใช้ไพ่จาก pool
-  if (!selectedCard) {
-    const pool = getCardPool(topic);
-    selectedCard = pool[0] || TAROT_DECK[0];
-  }
-
-  // สร้าง prompt สัญลักษณ์ที่เฉพาะเจาะจงสำหรับไพ่ใบนี้
-  const promptSymbols = `${selectedCard.name} tarot card symbolism, ${topicInfo.symbolDescEn}`;
+  // รวมสัญลักษณ์จากหมวดหมู่ + ไพ่มงคล
+  const combinedSymbols = `${cardSymbols.en}, ${topicInfo.symbolDescEn}`;
+  const combinedSymbolsTh = `${cardSymbols.th} ${topicInfo.symbolDescTh}`;
 
   return {
-    card: selectedCard,
     topic,
-    promptSymbols,
+    symbols: combinedSymbols,
+    symbolsTh: combinedSymbolsTh,
   };
 }
 

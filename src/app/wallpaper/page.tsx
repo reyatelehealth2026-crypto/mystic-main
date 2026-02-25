@@ -9,7 +9,7 @@ import {
 import { useTheme } from "@/lib/theme/ThemeProvider";
 import { cn } from "@/lib/cn";
 import { calculateBirthColors, type AuspiciousColor, type BirthColorResult } from "@/lib/thai-astrology/colors";
-import { drawTopicCard, TOPIC_INFO, type WallpaperTopic, type DrawnTopicCard } from "@/lib/tarot/topicPools";
+import { getTopicSymbols, TOPIC_INFO, type WallpaperTopic, type TopicSymbols } from "@/lib/tarot/topicPools";
 import { getLuckyNumbers, type LuckyNumberOption } from "@/lib/tarot/luckyNumbers";
 
 const STORAGE_KEY = "reffortune_wallpaper_daily";
@@ -63,7 +63,7 @@ export default function WallpaperPage() {
   const isPastel = theme === "pastel";
   const isRainbow = theme === "rainbow";
 
-  // Wizard step: 1=birthdate, 2=topic, 3=lucky number, 4=style, 5=generating/result
+  // Wizard step: 1=birthdate, 2=topic+lucky number, 3=style, 4=generating/result
   const [step, setStep] = useState(1);
 
   // Step 1: Birth date
@@ -72,15 +72,14 @@ export default function WallpaperPage() {
   const [birthColors, setBirthColors] = useState<BirthColorResult | null>(null);
   const [selectedColors, setSelectedColors] = useState<AuspiciousColor[]>([]);
 
-  // Step 2: Topic + Tarot
+  // Step 2: Topic + Lucky number
   const [selectedTopic, setSelectedTopic] = useState<WallpaperTopic>("finance");
-  const [drawnCard, setDrawnCard] = useState<DrawnTopicCard | null>(null);
+  const [topicSymbols, setTopicSymbols] = useState<TopicSymbols | null>(null);
 
-  // Step 3: Lucky number
   const [luckyNumbers, setLuckyNumbers] = useState<LuckyNumberOption[]>([]);
   const [selectedLucky, setSelectedLucky] = useState<number | null>(null);
 
-  // Step 4: Style
+  // Step 3: Style
   const [selectedStyle, setSelectedStyle] = useState<"minimal" | "cosmic">("minimal");
 
   // Result
@@ -96,7 +95,7 @@ export default function WallpaperPage() {
       setSavedData(saved);
       setGeneratedImage(saved.imageUrl);
       setAlreadyGenerated(true);
-      setStep(5);
+      setStep(4);
     }
   }, []);
 
@@ -121,11 +120,11 @@ export default function WallpaperPage() {
     });
   }, []);
 
-  // ── Step 2: Draw tarot card on topic select ──
+  // ── Step 2: Get topic symbols on topic select ──
   const handleTopicSelect = useCallback((topic: WallpaperTopic) => {
     setSelectedTopic(topic);
-    const card = drawTopicCard(topic);
-    setDrawnCard(card);
+    const symbols = getTopicSymbols(topic);
+    setTopicSymbols(symbols);
     const nums = getLuckyNumbers(topic);
     setLuckyNumbers(nums);
     setSelectedLucky(nums[0]?.num ?? null);
@@ -134,18 +133,17 @@ export default function WallpaperPage() {
   // ── Navigation ──
   const canGoNext = useMemo(() => {
     if (step === 1) return selectedColors.length >= 1;
-    if (step === 2) return !!drawnCard;
-    if (step === 3) return selectedLucky !== null;
-    if (step === 4) return !!selectedStyle;
+    if (step === 2) return !!topicSymbols && selectedLucky !== null;
+    if (step === 3) return !!selectedStyle;
     return false;
-  }, [step, selectedColors, drawnCard, selectedLucky, selectedStyle]);
+  }, [step, selectedColors, topicSymbols, selectedLucky, selectedStyle]);
 
   const goNext = useCallback(() => {
-    if (step === 2 && !drawnCard) {
+    if (step === 2 && !topicSymbols) {
       handleTopicSelect(selectedTopic);
     }
-    if (step < 5 && canGoNext) setStep(step + 1);
-  }, [step, canGoNext, drawnCard, handleTopicSelect, selectedTopic]);
+    if (step < 4 && canGoNext) setStep(step + 1);
+  }, [step, canGoNext, topicSymbols, handleTopicSelect, selectedTopic]);
 
   const goBack = useCallback(() => {
     if (step > 1) setStep(step - 1);
@@ -156,7 +154,7 @@ export default function WallpaperPage() {
     if (alreadyGenerated || isGenerating) return;
     setIsGenerating(true);
     setError(null);
-    setStep(5);
+    setStep(4);
 
     try {
       const resp = await fetch("/api/ai/wallpaper", {
@@ -165,8 +163,7 @@ export default function WallpaperPage() {
         body: JSON.stringify({
           selectedColors: selectedColors.map((c) => ({ nameEn: c.nameEn, hex: c.hex })),
           topic: selectedTopic,
-          tarotCardName: drawnCard?.card.name ?? "",
-          tarotSymbols: drawnCard?.promptSymbols ?? "",
+          symbols: topicSymbols?.symbols ?? "",
           luckyNumber: selectedLucky ?? 9,
           style: selectedStyle,
         }),
@@ -183,8 +180,6 @@ export default function WallpaperPage() {
       const saveData: SavedWallpaper = {
         date: getTodayKey(),
         imageUrl: data.image,
-        tarotCardName: drawnCard?.card.name,
-        tarotAdvice: drawnCard?.card.meaningUpright,
         topic: selectedTopic,
         luckyNumber: selectedLucky ?? undefined,
         selectedColorNames: selectedColors.map((c) => c.nameTh),
@@ -197,11 +192,11 @@ export default function WallpaperPage() {
     } finally {
       setIsGenerating(false);
     }
-  }, [alreadyGenerated, isGenerating, selectedColors, selectedTopic, drawnCard, selectedLucky, selectedStyle]);
+  }, [alreadyGenerated, isGenerating, selectedColors, selectedTopic, topicSymbols, selectedLucky, selectedStyle]);
 
-  // Auto-trigger generate when entering step 5
+  // Auto-trigger generate when entering step 4
   useEffect(() => {
-    if (step === 5 && !generatedImage && !isGenerating && !alreadyGenerated && !error) {
+    if (step === 4 && !generatedImage && !isGenerating && !alreadyGenerated && !error) {
       handleGenerate();
     }
   }, [step, generatedImage, isGenerating, alreadyGenerated, error, handleGenerate]);
@@ -459,13 +454,13 @@ export default function WallpaperPage() {
           </div>
         )}
 
-        {/* ════════════════ STEP 2: Topic + Tarot ════════════════ */}
+        {/* ════════════════ STEP 2: Topic + Lucky Number ════════════════ */}
         {step === 2 && (
           <div className="space-y-5">
             <div className="text-center mb-2">
               <Star className={cn("w-8 h-8 mx-auto mb-2", isPastel || isRainbow ? "text-white" : "text-violet-500")} />
               <h2 className={cn("font-serif text-xl font-bold", headingCls)}>เลือกเรื่องที่ต้องการเสริม</h2>
-              <p className={cn("text-sm mt-1", subCls)}>ระบบจะสุ่มไพ่ทาโรต์ที่เกี่ยวข้องกับเรื่องนี้</p>
+              <p className={cn("text-sm mt-1", subCls)}>เลือกหมวดและเลขมงคลเสริมดวง</p>
             </div>
 
             <div className="grid grid-cols-3 gap-2">
@@ -475,7 +470,7 @@ export default function WallpaperPage() {
                   onClick={() => handleTopicSelect(t.id)}
                   className={cn(
                     "p-3 rounded-2xl border text-center transition-all active:scale-[0.97]",
-                    selectedTopic === t.id && drawnCard ? selectedCls : unselectedCls
+                    selectedTopic === t.id && topicSymbols ? selectedCls : unselectedCls
                   )}
                 >
                   <span className="text-2xl">{t.emoji}</span>
@@ -486,94 +481,64 @@ export default function WallpaperPage() {
               ))}
             </div>
 
-            {/* Drawn card preview */}
-            {drawnCard && (
-              <div className={cn("p-5 rounded-2xl text-center", cardCls)}>
-                <Wand2 className={cn("w-6 h-6 mx-auto mb-2", isPastel || isRainbow ? "text-white" : "text-violet-500")} />
-                <p className={cn("text-lg font-bold", headingCls)}>{drawnCard.card.name}</p>
-                {drawnCard.card.nameTh && (
-                  <p className={cn("text-sm", subCls)}>{drawnCard.card.nameTh}</p>
-                )}
-                <p className={cn("text-sm mt-2 leading-relaxed", subCls)}>
-                  {drawnCard.card.meaningUpright}
-                </p>
-                <div className="flex items-center justify-center gap-2 mt-3">
-                  {drawnCard.card.image && (
-                    <img src={drawnCard.card.image} alt={drawnCard.card.name} className="w-16 h-auto rounded-lg shadow-md" />
-                  )}
+            {/* Lucky numbers */}
+            {topicSymbols && luckyNumbers.length > 0 && (
+              <div className="space-y-3">
+                <div className="text-center">
+                  <Hash className={cn("w-6 h-6 mx-auto mb-1", isPastel || isRainbow ? "text-white" : "text-violet-500")} />
+                  <h3 className={cn("font-semibold", headingCls)}>เลขมงคลเสริมดวง</h3>
+                  <p className={cn("text-xs mt-1", subCls)}>
+                    สำหรับเรื่อง{TOPIC_INFO[selectedTopic].labelTh}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  {luckyNumbers.map((ln) => (
+                    <button
+                      key={ln.num}
+                      onClick={() => setSelectedLucky(ln.num)}
+                      className={cn(
+                        "w-full p-4 rounded-2xl border text-left transition-all active:scale-[0.98] flex items-center gap-4",
+                        selectedLucky === ln.num ? selectedCls : unselectedCls
+                      )}
+                    >
+                      <div className={cn(
+                        "w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold shrink-0",
+                        selectedLucky === ln.num
+                          ? isPastel ? "bg-white/30 text-white" : isRainbow ? "bg-[#ff00ff]/30 text-white" : "bg-violet-100 text-violet-700"
+                          : isPastel ? "bg-white/10 text-white/60" : isRainbow ? "bg-white/5 text-white/50" : "bg-gray-100 text-gray-500"
+                      )}>
+                        {ln.num}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={cn("text-sm font-medium", headingCls)}>{ln.reasonTh}</p>
+                        <div className="flex items-center gap-1 mt-1">
+                          <span className={cn("text-xs", subCls)}>พลังเสริม</span>
+                          <div className="flex gap-0.5">
+                            {Array.from({ length: 10 }).map((_, i) => (
+                              <div
+                                key={i}
+                                className={cn(
+                                  "w-2 h-2 rounded-full",
+                                  i < ln.score
+                                    ? isPastel ? "bg-white/60" : isRainbow ? "bg-[#00ffff]" : "bg-violet-400"
+                                    : isPastel ? "bg-white/10" : isRainbow ? "bg-white/10" : "bg-gray-200"
+                                )}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
-
-            {!drawnCard && (
-              <button
-                onClick={() => handleTopicSelect(selectedTopic)}
-                className={cn("w-full py-3 rounded-xl font-semibold transition-all active:scale-[0.98]", btnPrimary)}
-              >
-                <Wand2 className="w-4 h-4 inline mr-2" />
-                จับไพ่ทาโรต์
-              </button>
-            )}
           </div>
         )}
 
-        {/* ════════════════ STEP 3: Lucky Number ════════════════ */}
+        {/* ════════════════ STEP 3: Style ════════════════ */}
         {step === 3 && (
-          <div className="space-y-5">
-            <div className="text-center mb-2">
-              <Hash className={cn("w-8 h-8 mx-auto mb-2", isPastel || isRainbow ? "text-white" : "text-violet-500")} />
-              <h2 className={cn("font-serif text-xl font-bold", headingCls)}>เลขมงคลเสริมดวง</h2>
-              <p className={cn("text-sm mt-1", subCls)}>
-                เลขมงคลสำหรับเรื่อง{TOPIC_INFO[selectedTopic].labelTh}
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              {luckyNumbers.map((ln) => (
-                <button
-                  key={ln.num}
-                  onClick={() => setSelectedLucky(ln.num)}
-                  className={cn(
-                    "w-full p-4 rounded-2xl border text-left transition-all active:scale-[0.98] flex items-center gap-4",
-                    selectedLucky === ln.num ? selectedCls : unselectedCls
-                  )}
-                >
-                  <div className={cn(
-                    "w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold shrink-0",
-                    selectedLucky === ln.num
-                      ? isPastel ? "bg-white/30 text-white" : isRainbow ? "bg-[#ff00ff]/30 text-white" : "bg-violet-100 text-violet-700"
-                      : isPastel ? "bg-white/10 text-white/60" : isRainbow ? "bg-white/5 text-white/50" : "bg-gray-100 text-gray-500"
-                  )}>
-                    {ln.num}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={cn("text-sm font-medium", headingCls)}>{ln.reasonTh}</p>
-                    <div className="flex items-center gap-1 mt-1">
-                      <span className={cn("text-xs", subCls)}>พลังเสริม</span>
-                      <div className="flex gap-0.5">
-                        {Array.from({ length: 10 }).map((_, i) => (
-                          <div
-                            key={i}
-                            className={cn(
-                              "w-2 h-2 rounded-full",
-                              i < ln.score
-                                ? isPastel ? "bg-white/60" : isRainbow ? "bg-[#ff00ff]" : "bg-violet-500"
-                                : isPastel ? "bg-white/15" : isRainbow ? "bg-white/10" : "bg-gray-200"
-                            )}
-                          />
-                        ))}
-                      </div>
-                      <span className={cn("text-xs font-bold", headingCls)}>+{ln.score}</span>
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ════════════════ STEP 4: Style ════════════════ */}
-        {step === 4 && (
           <div className="space-y-5">
             <div className="text-center mb-2">
               <Palette className={cn("w-8 h-8 mx-auto mb-2", isPastel || isRainbow ? "text-white" : "text-violet-500")} />
@@ -614,17 +579,17 @@ export default function WallpaperPage() {
                 เรื่อง: <span className={headingCls}>{TOPIC_INFO[selectedTopic].emoji} {TOPIC_INFO[selectedTopic].labelTh}</span>
               </p>
               <p className={cn("text-xs", subCls)}>
-                ไพ่: <span className={headingCls}>{drawnCard?.card.name}</span>
+                เลขมงคล: <span className={headingCls}>{selectedLucky}</span>
               </p>
               <p className={cn("text-xs", subCls)}>
-                เลขมงคล: <span className={headingCls}>{selectedLucky}</span>
+                สไตล์: <span className={headingCls}>{STYLES.find(s => s.id === selectedStyle)?.label}</span>
               </p>
             </div>
           </div>
         )}
 
-        {/* ════════════════ STEP 5: Result ════════════════ */}
-        {step === 5 && (
+        {/* ════════════════ STEP 4: Generating / Result ════════════════ */}
+        {step === 4 && (
           <div className="space-y-6">
             {isGenerating && (
               <div className="text-center py-16">
@@ -660,32 +625,27 @@ export default function WallpaperPage() {
                   <img src={generatedImage} alt="วอลเปเปอร์เสริมดวง" className="w-full h-full object-cover" />
                 </div>
 
-                {/* Tarot card info */}
-                {(savedData?.tarotCardName || drawnCard) && (
-                  <div className={cn("p-5 rounded-2xl", cardCls)}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Wand2 className={cn("w-5 h-5", isPastel || isRainbow ? "text-white" : "text-violet-500")} />
-                      <span className={cn("text-sm font-bold", headingCls)}>
-                        {savedData?.tarotCardName || drawnCard?.card.name}
-                      </span>
-                    </div>
-                    <p className={cn("text-sm leading-relaxed", subCls)}>
-                      {savedData?.tarotAdvice || drawnCard?.card.meaningUpright}
-                    </p>
-                    <div className="flex items-center gap-3 mt-3">
-                      {savedData?.selectedColorNames && (
-                        <p className={cn("text-xs", subCls)}>
-                          สีมงคล: {savedData.selectedColorNames.join(", ")}
-                        </p>
-                      )}
-                      {(savedData?.luckyNumber || selectedLucky) && (
-                        <p className={cn("text-xs", subCls)}>
-                          เลขมงคล: {savedData?.luckyNumber || selectedLucky}
-                        </p>
-                      )}
-                    </div>
+                {/* Wallpaper info */}
+                <div className={cn("p-5 rounded-2xl", cardCls)}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles className={cn("w-5 h-5", isPastel || isRainbow ? "text-white" : "text-violet-500")} />
+                    <span className={cn("text-sm font-bold", headingCls)}>
+                      วอลเปเปอร์เสริมดวง{TOPIC_INFO[selectedTopic].labelTh}
+                    </span>
                   </div>
-                )}
+                  <div className="flex items-center gap-3 mt-3 flex-wrap">
+                    {savedData?.selectedColorNames && (
+                      <p className={cn("text-xs", subCls)}>
+                        สีมงคล: {savedData.selectedColorNames.join(", ")}
+                      </p>
+                    )}
+                    {(savedData?.luckyNumber || selectedLucky) && (
+                      <p className={cn("text-xs", subCls)}>
+                        เลขมงคล: {savedData?.luckyNumber || selectedLucky}
+                      </p>
+                    )}
+                  </div>
+                </div>
 
                 {/* Action Buttons */}
                 <div className="flex gap-3 justify-center">

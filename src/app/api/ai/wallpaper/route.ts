@@ -9,9 +9,8 @@ type WallpaperRequest = {
   selectedColors: { nameEn: string; hex: string }[];
   // เรื่องที่ต้องการเสริม
   topic: "finance" | "career" | "love" | "luck" | "health";
-  // ข้อมูลไพ่ที่สุ่มได้
-  tarotCardName: string;
-  tarotSymbols: string;
+  // สัญลักษณ์มงคลจากไพ่ทาโรต์
+  symbols: string;
   // เลขมงคล
   luckyNumber: number;
   // สไตล์ภาพ
@@ -47,15 +46,15 @@ function buildPrompt(req: WallpaperRequest): string {
     ? ` The lucky number "${req.luckyNumber}" should be subtly integrated into the design as a mystical element.`
     : "";
 
-  const tarotPart = req.tarotCardName
-    ? ` Incorporate visual symbolism inspired by the "${req.tarotCardName}" tarot card: ${req.tarotSymbols}.`
+  const symbolsPart = req.symbols
+    ? ` Incorporate these auspicious symbols and elements: ${req.symbols}.`
     : "";
 
   return `Create a stunning high-quality phone wallpaper for Thai spiritual fortune enhancement.
 
 Theme: ${topicDesc}.
 Style: ${styleDesc}.
-Color: ${colorDesc}.${tarotPart}${luckyPart}
+Color: ${colorDesc}.${symbolsPart}${luckyPart}
 
 The design should be inspired by Thai mystical and spiritual aesthetics (สายมู), beautiful and serene, suitable as a phone lock screen wallpaper. The auspicious colors must be prominent and dominant in the composition. Vertical 9:16 aspect ratio, high resolution, photorealistic quality with artistic flair. No text, no letters, no watermarks, no words.`;
 }
