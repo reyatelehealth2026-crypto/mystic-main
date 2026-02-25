@@ -11,7 +11,8 @@ import {
   CircleDot, 
   Compass, 
   FileText,
-  Search
+  Search,
+  ImageIcon
 } from "lucide-react";
 import { useTheme } from "@/lib/theme/ThemeProvider";
 import { cn } from "@/lib/cn";
@@ -77,30 +78,37 @@ const categories = [
     href: "/esiimsi",
     icon: Sparkles,
   },
+  {
+    title: "วอลเปเปอร์เสริมดวง",
+    description: "สร้างวอลเปเปอร์มงคลด้วย AI วันละ 1 ครั้ง",
+    href: "/wallpaper",
+    icon: ImageIcon,
+  },
 ];
 
 export default function ExplorePage() {
   const { theme } = useTheme();
   const isPastel = theme === "pastel";
+  const isRainbow = theme === "rainbow";
 
   return (
-    <main className={cn("min-h-screen pb-24", isPastel ? "bg-transparent" : "bg-white")}>
+    <main className={cn("min-h-screen pb-24", isPastel ? "bg-transparent" : isRainbow ? "bg-transparent" : "bg-white")}>
       {/* Header */}
       <header className={cn(
         "sticky top-0 z-40 backdrop-blur-sm",
-        isPastel ? "bg-white/10 border-b border-white/20" : "bg-white/95 border-b border-gray-100"
+        isPastel ? "bg-white/10 border-b border-white/20" : isRainbow ? "bg-[#0f0f1a]/90 border-b border-[rgba(255,0,255,0.2)]" : "bg-white/95 border-b border-gray-100"
       )}>
         <div className="flex items-center gap-3 px-5 py-4">
           <Link href="/" className="flex items-center gap-2">
-            <Sparkles className={cn("w-5 h-5", isPastel ? "text-white" : "text-violet-600")} />
-            <span className={cn("font-serif text-lg font-semibold", isPastel ? "text-white" : "text-violet-600")}>REFFORTUNE</span>
+            <Sparkles className={cn("w-5 h-5", isPastel || isRainbow ? "text-white" : "text-violet-600")} />
+            <span className={cn("font-serif text-lg font-semibold", isPastel || isRainbow ? "text-white" : "text-violet-600")}>REFFORTUNE</span>
           </Link>
         </div>
         
         {/* Search Bar */}
         <div className="px-5 pb-4">
           <div className="relative">
-            <Search className={cn("absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5", isPastel ? "text-white/60" : "text-gray-400")} />
+            <Search className={cn("absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5", isPastel ? "text-white/60" : isRainbow ? "text-white/50" : "text-gray-400")} />
             <input
               type="text"
               placeholder="ค้นหาศาสตร์การดูดวง..."
@@ -108,7 +116,9 @@ export default function ExplorePage() {
                 "w-full h-12 pl-12 pr-4 rounded-2xl focus:outline-none",
                 isPastel 
                   ? "bg-white/20 border border-white/30 text-white placeholder-white/60 focus:border-white/50 focus:ring-2 focus:ring-white/20"
-                  : "bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                  : isRainbow
+                    ? "bg-[#1a1a2e]/80 border border-[rgba(255,0,255,0.3)] text-white placeholder-white/40 focus:border-[#ff00ff] focus:ring-2 focus:ring-[rgba(255,0,255,0.2)]"
+                    : "bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
               )}
             />
           </div>
@@ -117,8 +127,8 @@ export default function ExplorePage() {
 
       {/* Categories Grid */}
       <section className="px-5 py-6">
-        <h1 className={cn("font-serif text-2xl font-semibold mb-2", isPastel ? "text-white" : "text-gray-900")}>สำรวจศาสตร์</h1>
-        <p className={cn("text-sm mb-6", isPastel ? "text-white/70" : "text-gray-500")}>เลือกศาสตร์ที่คุณสนใจเพื่อเริ่มดูดวง</p>
+        <h1 className={cn("font-serif text-2xl font-semibold mb-2", isPastel || isRainbow ? "text-white" : "text-gray-900")}>สำรวจศาสตร์</h1>
+        <p className={cn("text-sm mb-6", isPastel || isRainbow ? "text-white/70" : "text-gray-500")}>เลือกศาสตร์ที่คุณสนใจเพื่อเริ่มดูดวง</p>
         
         <div className="grid grid-cols-2 gap-3">
           {categories.map((cat) => {
@@ -131,17 +141,19 @@ export default function ExplorePage() {
                   "group p-4 rounded-2xl transition-all hover:-translate-y-0.5",
                   isPastel
                     ? "bg-white/20 backdrop-blur border border-white/30 hover:bg-white/30 hover:shadow-[0_8px_32px_rgba(199,125,255,0.3)]"
-                    : "bg-white border border-gray-200 hover:border-violet-300 hover:shadow-[0_8px_32px_rgba(124,58,237,0.12)]"
+                    : isRainbow
+                      ? "bg-[#1a1a2e]/80 backdrop-blur border border-[rgba(255,0,255,0.15)] hover:border-[rgba(255,0,255,0.4)] hover:shadow-[0_8px_32px_rgba(255,0,255,0.2)]"
+                      : "bg-white border border-gray-200 hover:border-violet-300 hover:shadow-[0_8px_32px_rgba(124,58,237,0.12)]"
                 )}
               >
                 <div className={cn(
                   "w-12 h-12 rounded-2xl flex items-center justify-center mb-3",
-                  isPastel ? "bg-white/20 text-white" : "bg-violet-50 text-violet-600"
+                  isPastel ? "bg-white/20 text-white" : isRainbow ? "bg-[rgba(255,0,255,0.15)] text-white" : "bg-violet-50 text-violet-600"
                 )}>
                   <Icon className="w-6 h-6" />
                 </div>
-                <h3 className={cn("font-semibold text-sm mb-1", isPastel ? "text-white" : "text-gray-900")}>{cat.title}</h3>
-                <p className={cn("text-xs line-clamp-2", isPastel ? "text-white/70" : "text-gray-500")}>{cat.description}</p>
+                <h3 className={cn("font-semibold text-sm mb-1", isPastel || isRainbow ? "text-white" : "text-gray-900")}>{cat.title}</h3>
+                <p className={cn("text-xs line-clamp-2", isPastel || isRainbow ? "text-white/70" : "text-gray-500")}>{cat.description}</p>
               </Link>
             );
           })}
@@ -150,55 +162,61 @@ export default function ExplorePage() {
 
       {/* Popular Section */}
       <section className="px-5 pb-6">
-        <h2 className={cn("font-serif text-xl font-semibold mb-4", isPastel ? "text-white" : "text-gray-900")}>ยอดนิยม</h2>
+        <h2 className={cn("font-serif text-xl font-semibold mb-4", isPastel || isRainbow ? "text-white" : "text-gray-900")}>ยอดนิยม</h2>
         
         <div className="space-y-3">
           <Link href="/tarot" className={cn(
             "flex items-center gap-4 p-4 rounded-2xl border",
             isPastel
               ? "bg-white/20 backdrop-blur border-white/30"
-              : "bg-violet-50 border-violet-100"
+              : isRainbow
+                ? "bg-[#1a1a2e]/80 border-[rgba(255,0,255,0.2)]"
+                : "bg-violet-50 border-violet-100"
           )}>
-            <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", isPastel ? "bg-white/20 text-white" : "bg-violet-100 text-violet-600")}>
+            <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", isPastel ? "bg-white/20 text-white" : isRainbow ? "bg-[rgba(255,0,255,0.15)] text-white" : "bg-violet-100 text-violet-600")}>
               <Sparkles className="w-6 h-6" />
             </div>
             <div className="flex-1">
-              <h3 className={cn("font-semibold", isPastel ? "text-white" : "text-gray-900")}>ไพ่ทาโรต์ 3 ใบ</h3>
-              <p className={cn("text-sm", isPastel ? "text-white/70" : "text-gray-500")}>อดีต ปัจจุบัน อนาคต</p>
+              <h3 className={cn("font-semibold", isPastel || isRainbow ? "text-white" : "text-gray-900")}>ไพ่ทาโรต์ 3 ใบ</h3>
+              <p className={cn("text-sm", isPastel || isRainbow ? "text-white/70" : "text-gray-500")}>อดีต ปัจจุบัน อนาคต</p>
             </div>
-            <span className={isPastel ? "text-white" : "text-violet-600"}>→</span>
+            <span className={isPastel || isRainbow ? "text-white" : "text-violet-600"}>→</span>
           </Link>
 
           <Link href="/daily-card" className={cn(
             "flex items-center gap-4 p-4 rounded-2xl border",
             isPastel
               ? "bg-white/20 backdrop-blur border-white/30"
-              : "bg-rose-50 border-rose-100"
+              : isRainbow
+                ? "bg-[#1a1a2e]/80 border-[rgba(0,255,255,0.2)]"
+                : "bg-rose-50 border-rose-100"
           )}>
-            <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", isPastel ? "bg-white/20 text-white" : "bg-rose-100 text-rose-600")}>
+            <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", isPastel ? "bg-white/20 text-white" : isRainbow ? "bg-[rgba(0,255,255,0.15)] text-white" : "bg-rose-100 text-rose-600")}>
               <Calendar className="w-6 h-6" />
             </div>
             <div className="flex-1">
-              <h3 className={cn("font-semibold", isPastel ? "text-white" : "text-gray-900")}>ไพ่ประจำวัน</h3>
-              <p className={cn("text-sm", isPastel ? "text-white/70" : "text-gray-500")}>พลังงานวันนี้ของคุณ</p>
+              <h3 className={cn("font-semibold", isPastel || isRainbow ? "text-white" : "text-gray-900")}>ไพ่ประจำวัน</h3>
+              <p className={cn("text-sm", isPastel || isRainbow ? "text-white/70" : "text-gray-500")}>พลังงานวันนี้ของคุณ</p>
             </div>
-            <span className={isPastel ? "text-white" : "text-rose-600"}>→</span>
+            <span className={isPastel || isRainbow ? "text-white" : "text-rose-600"}>→</span>
           </Link>
 
           <Link href="/numerology" className={cn(
             "flex items-center gap-4 p-4 rounded-2xl border",
             isPastel
               ? "bg-white/20 backdrop-blur border-white/30"
-              : "bg-indigo-50 border-indigo-100"
+              : isRainbow
+                ? "bg-[#1a1a2e]/80 border-[rgba(255,215,0,0.2)]"
+                : "bg-indigo-50 border-indigo-100"
           )}>
-            <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", isPastel ? "bg-white/20 text-white" : "bg-indigo-100 text-indigo-600")}>
+            <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", isPastel ? "bg-white/20 text-white" : isRainbow ? "bg-[rgba(255,215,0,0.15)] text-white" : "bg-indigo-100 text-indigo-600")}>
               <Hash className="w-6 h-6" />
             </div>
             <div className="flex-1">
-              <h3 className={cn("font-semibold", isPastel ? "text-white" : "text-gray-900")}>วิเคราะห์เบอร์มงคล</h3>
-              <p className={cn("text-sm", isPastel ? "text-white/70" : "text-gray-500")}>เลขศาสตร์เบอร์โทร</p>
+              <h3 className={cn("font-semibold", isPastel || isRainbow ? "text-white" : "text-gray-900")}>วิเคราะห์เบอร์มงคล</h3>
+              <p className={cn("text-sm", isPastel || isRainbow ? "text-white/70" : "text-gray-500")}>เลขศาสตร์เบอร์โทร</p>
             </div>
-            <span className={isPastel ? "text-white" : "text-indigo-600"}>→</span>
+            <span className={isPastel || isRainbow ? "text-white" : "text-indigo-600"}>→</span>
           </Link>
         </div>
       </section>

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
-import { Sparkles, Star, ChevronRight, Crown, Settings } from "lucide-react";
+import { Sparkles, Star, ChevronRight, Crown, Settings, ImageIcon } from "lucide-react";
 import { useTheme } from "@/lib/theme/ThemeProvider";
 import { SocialFooter } from "@/components/ui/SocialFooter";
 import { cn } from "@/lib/cn";
@@ -144,6 +144,7 @@ const packages = [
 export default function Home() {
   const { theme } = useTheme();
   const isPastel = theme === "pastel";
+  const isRainbow = theme === "rainbow";
   const { toggles } = useConfigStore();
 
   useEffect(() => {
@@ -151,7 +152,7 @@ export default function Home() {
   }, []);
 
   return (
-    <main className={cn("min-h-screen pb-24", isPastel ? "bg-transparent" : "bg-white")}>
+    <main className={cn("min-h-screen pb-24", isPastel ? "bg-transparent" : isRainbow ? "bg-transparent" : "bg-white")}>
       {/* Header - Redesigned */}
       <header className="px-5 pt-6 pb-4 flex justify-between items-center">
         <div className="w-10"></div> {/* Spacer for centering logo */}
@@ -159,7 +160,7 @@ export default function Home() {
           {/* Logo with background glow effect */}
           <div className="relative">
             {/* Glow effect */}
-            <div className={cn("absolute inset-0 blur-3xl rounded-full scale-150", isPastel ? "bg-white/30" : "bg-violet-400/20")} />
+            <div className={cn("absolute inset-0 blur-3xl rounded-full scale-150", isPastel ? "bg-white/30" : isRainbow ? "bg-[rgba(255,0,255,0.2)]" : "bg-violet-400/20")} />
             {/* Logo image */}
             <Image 
               src="/logo.png" 
@@ -173,7 +174,7 @@ export default function Home() {
         </Link>
         <Link href="/admin-config-panel" className={cn(
           "w-10 h-10 flex items-center justify-center rounded-full transition-colors",
-          isPastel ? "hover:bg-white/10 text-white/70 hover:text-white" : "hover:bg-violet-50 text-gray-400 hover:text-violet-600"
+          isPastel ? "hover:bg-white/10 text-white/70 hover:text-white" : isRainbow ? "hover:bg-white/10 text-white/60 hover:text-white" : "hover:bg-violet-50 text-gray-400 hover:text-violet-600"
         )}>
           <Settings className="w-5 h-5" />
         </Link>
@@ -185,18 +186,20 @@ export default function Home() {
           "relative overflow-hidden rounded-[28px] p-6 text-white shadow-xl",
           isPastel 
             ? "bg-white/20 backdrop-blur-xl border border-white/30 shadow-[0_8px_32px_rgba(199,125,255,0.3)]"
-            : "bg-gradient-to-br from-violet-600 via-violet-500 to-purple-500 shadow-violet-200"
+            : isRainbow
+              ? "bg-[#1a1a2e]/90 backdrop-blur-xl border border-[rgba(255,0,255,0.3)] shadow-[0_8px_32px_rgba(255,0,255,0.2)]"
+              : "bg-gradient-to-br from-violet-600 via-violet-500 to-purple-500 shadow-violet-200"
         )}>
           {/* Decorative elements */}
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
           <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
           
           <div className="relative z-10">
-            <p className={cn("text-sm mb-1", isPastel ? "text-white/80" : "text-violet-100")}>{greeting()}</p>
+            <p className={cn("text-sm mb-1", isPastel || isRainbow ? "text-white/80" : "text-violet-100")}>{greeting()}</p>
             <h1 className="font-serif text-2xl font-semibold leading-tight">
               ค้นหาคำตอบที่คุณตามหา
             </h1>
-            <p className={cn("mt-2 text-sm leading-relaxed", isPastel ? "text-white/70" : "text-violet-100")}>
+            <p className={cn("mt-2 text-sm leading-relaxed", isPastel || isRainbow ? "text-white/70" : "text-violet-100")}>
               ไพ่ทาโรต์ • ดวงชะตา • ความรัก • เลขศาสตร์
             </p>
 
@@ -207,7 +210,9 @@ export default function Home() {
                     "w-full h-12 rounded-xl font-semibold shadow-lg transition-all active:scale-[0.98]",
                     isPastel 
                       ? "bg-white/30 backdrop-blur text-white border border-white/50 hover:bg-white/50"
-                      : "bg-white text-violet-600 hover:bg-violet-50"
+                      : isRainbow
+                        ? "bg-gradient-to-r from-[#ff00ff] to-[#00ffff] text-white hover:opacity-90"
+                        : "bg-white text-violet-600 hover:bg-violet-50"
                   )}>
                     เริ่มดูดวง
                   </button>
@@ -218,7 +223,9 @@ export default function Home() {
                     "w-full h-12 rounded-xl font-semibold shadow-lg opacity-50 cursor-not-allowed",
                     isPastel 
                       ? "bg-white/10 backdrop-blur text-white/50 border border-white/20"
-                      : "bg-gray-100 text-gray-400"
+                      : isRainbow
+                        ? "bg-[#1a1a2e] text-white/40 border border-[rgba(255,0,255,0.1)]"
+                        : "bg-gray-100 text-gray-400"
                   )}>
                     ปิดปรับปรุงชั่วคราว
                   </button>
@@ -236,13 +243,15 @@ export default function Home() {
                 "p-4 rounded-2xl border transition-all",
                 isPastel
                   ? "bg-white/20 backdrop-blur border-white/30"
-                  : "bg-violet-50 border-violet-100"
+                  : isRainbow
+                    ? "bg-[#1a1a2e]/80 border-[rgba(0,255,255,0.2)]"
+                    : "bg-violet-50 border-violet-100"
               )}>
-                <div className={cn("flex items-center gap-2 mb-1", isPastel ? "text-white" : "text-violet-600")}>
+                <div className={cn("flex items-center gap-2 mb-1", isPastel || isRainbow ? "text-white" : "text-violet-600")}>
                   <Star className="w-4 h-4" />
                   <span className="text-xs font-medium">ไพ่ประจำวัน</span>
                 </div>
-                <p className={cn("text-xs", isPastel ? "text-white/70" : "text-gray-500")}>{todayDate()}</p>
+                <p className={cn("text-xs", isPastel || isRainbow ? "text-white/70" : "text-gray-500")}>{todayDate()}</p>
               </div>
             </Link>
           )}
@@ -252,13 +261,32 @@ export default function Home() {
               "p-4 rounded-2xl border transition-all",
               isPastel
                 ? "bg-white/20 backdrop-blur border-white/30"
-                : "bg-gray-50 border-gray-100"
+                : isRainbow
+                  ? "bg-[#1a1a2e]/80 border-[rgba(255,0,255,0.15)]"
+                  : "bg-gray-50 border-gray-100"
             )}>
-              <div className={cn("flex items-center gap-2 mb-1", isPastel ? "text-white" : "text-gray-600")}>
+              <div className={cn("flex items-center gap-2 mb-1", isPastel || isRainbow ? "text-white" : "text-gray-600")}>
                 <Sparkles className="w-4 h-4" />
                 <span className="text-xs font-medium">การอ่านของฉัน</span>
               </div>
-              <p className={cn("text-xs", isPastel ? "text-white/70" : "text-gray-500")}>ดูย้อนหลัง</p>
+              <p className={cn("text-xs", isPastel || isRainbow ? "text-white/70" : "text-gray-500")}>ดูย้อนหลัง</p>
+            </div>
+          </Link>
+
+          <Link href="/wallpaper">
+            <div className={cn(
+              "p-4 rounded-2xl border transition-all",
+              isPastel
+                ? "bg-amber-500/20 backdrop-blur border-amber-400/30"
+                : isRainbow
+                  ? "bg-[#1a1a2e]/80 border-[rgba(255,215,0,0.2)]"
+                  : "bg-amber-50 border-amber-100"
+            )}>
+              <div className={cn("flex items-center gap-2 mb-1", isPastel ? "text-amber-100" : isRainbow ? "text-white" : "text-amber-600")}>
+                <ImageIcon className="w-4 h-4" />
+                <span className="text-xs font-medium">วอลเปเปอร์เสริมดวง</span>
+              </div>
+              <p className={cn("text-xs", isPastel ? "text-amber-200/70" : isRainbow ? "text-white/60" : "text-amber-500/70")}>AI สร้างให้ วันละ 1 ครั้ง</p>
             </div>
           </Link>
 
@@ -268,16 +296,18 @@ export default function Home() {
                 "p-4 rounded-2xl border transition-all flex items-center justify-between",
                 isPastel
                   ? "bg-pink-500/20 backdrop-blur border-pink-400/30"
-                  : "bg-pink-50 border-pink-100"
+                  : isRainbow
+                    ? "bg-[#1a1a2e]/80 border-[rgba(255,0,255,0.2)]"
+                    : "bg-pink-50 border-pink-100"
               )}>
                 <div>
-                  <div className={cn("flex items-center gap-2 mb-1", isPastel ? "text-pink-100" : "text-pink-600")}>
+                  <div className={cn("flex items-center gap-2 mb-1", isPastel ? "text-pink-100" : isRainbow ? "text-white" : "text-pink-600")}>
                     <span className="text-base">❤️</span>
                     <span className="text-xs font-medium">ดูดวงความรัก</span>
                   </div>
-                  <p className={cn("text-xs", isPastel ? "text-pink-200/70" : "text-pink-500/70")}>เจาะลึกเรื่องหัวใจ</p>
+                  <p className={cn("text-xs", isPastel ? "text-pink-200/70" : isRainbow ? "text-white/60" : "text-pink-500/70")}>เจาะลึกเรื่องหัวใจ</p>
                 </div>
-                <ChevronRight className={cn("w-4 h-4", isPastel ? "text-pink-200/50" : "text-pink-300")} />
+                <ChevronRight className={cn("w-4 h-4", isPastel ? "text-pink-200/50" : isRainbow ? "text-white/40" : "text-pink-300")} />
               </div>
             </Link>
           )}
@@ -287,8 +317,8 @@ export default function Home() {
       {/* Packages Section */}
       <section className="px-5 pt-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className={cn("font-serif text-xl font-semibold", isPastel ? "text-white" : "text-gray-900")}>แพ็กเกจแนะนำ</h2>
-          <Link href="/pricing" className={cn("text-sm flex items-center gap-1", isPastel ? "text-white/80" : "text-violet-600")}>
+          <h2 className={cn("font-serif text-xl font-semibold", isPastel || isRainbow ? "text-white" : "text-gray-900")}>แพ็กเกจแนะนำ</h2>
+          <Link href="/pricing" className={cn("text-sm flex items-center gap-1", isPastel || isRainbow ? "text-white/80" : "text-violet-600")}>
             ดูทั้งหมด <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
@@ -317,7 +347,9 @@ export default function Home() {
                   "relative p-4 rounded-2xl border transition-all active:scale-[0.98]",
                   isPastel
                     ? "bg-white/15 backdrop-blur border-white/25 hover:bg-white/25"
-                    : "bg-white border-gray-100 hover:border-violet-200 shadow-sm"
+                    : isRainbow
+                      ? "bg-[#1a1a2e]/80 border-[rgba(255,0,255,0.15)] hover:border-[rgba(255,0,255,0.3)] shadow-sm"
+                      : "bg-white border-gray-100 hover:border-violet-200 shadow-sm"
                 )}>
                   {/* Badge */}
                   {badgeLabel && (
@@ -325,7 +357,9 @@ export default function Home() {
                       "inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full mb-2",
                       isPastel
                         ? "bg-white/20 text-white"
-                        : "bg-violet-100 text-violet-700"
+                        : isRainbow
+                          ? "bg-[rgba(255,0,255,0.2)] text-white"
+                          : "bg-violet-100 text-violet-700"
                     )}>
                       <Crown className="w-3 h-3" />
                       {badgeLabel}
@@ -336,34 +370,36 @@ export default function Home() {
                     {/* Left content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <h3 className={cn("font-semibold text-base leading-snug", isPastel ? "text-white" : "text-gray-900")}>
+                        <h3 className={cn("font-semibold text-base leading-snug", isPastel || isRainbow ? "text-white" : "text-gray-900")}>
                           {pkg.name}
                         </h3>
-                        <p className={cn("text-base font-bold shrink-0", isPastel ? "text-white" : "text-violet-600")}>
+                        <p className={cn("text-base font-bold shrink-0", isPastel || isRainbow ? "text-white" : "text-violet-600")}>
                           {pkg.price}
                         </p>
                       </div>
 
-                      <p className={cn("text-xs mt-0.5", isPastel ? "text-white/60" : "text-gray-400")}>
+                      <p className={cn("text-xs mt-0.5", isPastel || isRainbow ? "text-white/60" : "text-gray-400")}>
                         {pkg.description}
                       </p>
 
                       {pkg.detail && (
-                        <p className={cn("text-xs mt-1", isPastel ? "text-violet-200" : "text-violet-500")}>
+                        <p className={cn("text-xs mt-1", isPastel ? "text-violet-200" : isRainbow ? "text-[#ff00ff]/80" : "text-violet-500")}>
                           {pkg.detail}
                         </p>
                       )}
 
                       {/* Features */}
                       <div className="mt-2.5">
-                        <span className={cn("text-[11px]", isPastel ? "text-white/50" : "text-gray-400")}>รวม:</span>
+                        <span className={cn("text-[11px]", isPastel || isRainbow ? "text-white/50" : "text-gray-400")}>รวม:</span>
                         <div className="flex flex-wrap gap-1.5 mt-1">
                           {visibleFeatures.map((feature) => (
                             <span key={feature} className={cn(
                               "text-[11px] px-2 py-0.5 rounded-full whitespace-nowrap",
                               isPastel
                                 ? "bg-white/15 text-white/80"
-                                : "bg-gray-100 text-gray-600"
+                                : isRainbow
+                                  ? "bg-[rgba(255,0,255,0.1)] text-white/70"
+                                  : "bg-gray-100 text-gray-600"
                             )}>
                               {feature}
                             </span>
@@ -371,7 +407,7 @@ export default function Home() {
                           {extraCount > 0 && (
                             <span className={cn(
                               "text-[11px] px-2 py-0.5 rounded-full",
-                              isPastel ? "bg-white/10 text-white/60" : "bg-violet-50 text-violet-500"
+                              isPastel ? "bg-white/10 text-white/60" : isRainbow ? "bg-[rgba(255,0,255,0.1)] text-white/50" : "bg-violet-50 text-violet-500"
                             )}>
                               +{extraCount} รายการ
                             </span>
@@ -402,13 +438,15 @@ export default function Home() {
           "p-5 rounded-2xl border",
           isPastel
             ? "bg-white/20 backdrop-blur border-white/30"
-            : "bg-gradient-to-br from-amber-50 to-orange-50 border-amber-100"
+            : isRainbow
+              ? "bg-[#1a1a2e]/60 border-[rgba(255,215,0,0.2)]"
+              : "bg-gradient-to-br from-amber-50 to-orange-50 border-amber-100"
         )}>
-          <div className={cn("flex items-center gap-2 mb-2", isPastel ? "text-white" : "text-amber-600")}>
+          <div className={cn("flex items-center gap-2 mb-2", isPastel || isRainbow ? "text-white" : "text-amber-600")}>
             <Sparkles className="w-4 h-4" />
             <span className="text-xs font-medium">คำแนะนำวันนี้</span>
           </div>
-          <p className={cn("text-sm leading-relaxed", isPastel ? "text-white/90" : "text-gray-700")}>
+          <p className={cn("text-sm leading-relaxed", isPastel || isRainbow ? "text-white/90" : "text-gray-700")}>
             "การเปิดรับพลังงานบวกจะช่วยให้คุณผ่านพ้นวันที่ท้าทายไปได้ด้วยดี"
           </p>
         </div>

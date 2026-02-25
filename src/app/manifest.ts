@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "REFFORTUNE — ดูดวงกับเรฟ",
+    name: "REFFORTUNE — ดูดวงออนไลน์ แม่นยำ ครบวงจร",
     short_name: "REFFORTUNE",
     description:
-      "ดูดวงไพ่ทาโรต์ โหราศาสตร์ ไพ่ Oracle และวิเคราะห์เบอร์มงคล คำแนะนำแม่นยำ ใช้ได้จริง",
+      "ดูดวงออนไลน์ครบวงจร ไพ่ทาโรต์ โหราศาสตร์ นามมติ เลขศาสตร์ ดวงรายวัน ความรัก ฟรี! AI วิเคราะห์เชิงลึก วอลเปเปอร์เสริมดวง",
     start_url: "/",
     display: "standalone",
     background_color: "#140f28",

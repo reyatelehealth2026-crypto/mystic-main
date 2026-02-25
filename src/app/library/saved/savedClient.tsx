@@ -367,9 +367,9 @@ export default function SavedClient() {
 
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
           {chips.map((c) => (
-            <button key={c.key} type="button" onClick={() => setTypeFilter(c.key)} className="shrink-0">
-              <Chip selected={typeFilter === c.key}>{c.label}</Chip>
-            </button>
+            <Chip key={c.key} onClick={() => setTypeFilter(c.key)} selected={typeFilter === c.key} className="shrink-0">
+              {c.label}
+            </Chip>
           ))}
         </div>
 

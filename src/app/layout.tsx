@@ -19,11 +19,11 @@ const playfair = Playfair_Display({
   weight: ["400", "500", "600", "700"],
 });
 
-const SITE_URL = "https://tarot.reffortune.com";
+const SITE_URL = "https://www.reffortune.com";
 const SITE_NAME = "REFFORTUNE";
-const DEFAULT_TITLE = "REFFORTUNE — ดูดวงไพ่ทาโรต์ออนไลน์ แม่นยำ ทันใจ";
+const DEFAULT_TITLE = "REFFORTUNE — ดูดวงออนไลน์ แม่นยำ ครบวงจร | ไพ่ทาโรต์ โหราศาสตร์ นามมติ เลขศาสตร์";
 const DEFAULT_DESCRIPTION =
-  "ค้นหาคำตอบของชีวิตด้วยไพ่ทาโรต์และโหราศาสตร์ไทย ดูดวงรายวัน ความรัก การงาน การเงิน ฟรี! พร้อมเจาะลึกทุกคำถามที่คุณอยากรู้";
+  "ดูดวงออนไลน์ครบวงจรที่ REFFORTUNE ไพ่ทาโรต์ โหราศาสตร์ไทย นามมติ เลขศาสตร์ ดวงรายวัน ความรัก การงาน การเงิน ฟรี! พร้อม AI วิเคราะห์เชิงลึกแม่นยำ และวอลเปเปอร์เสริมดวง";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -38,17 +38,26 @@ export const metadata: Metadata = {
     "ไพ่ทาโรต์",
     "ไพ่ Oracle",
     "ดวงรายวัน",
+    "โหราศาสตร์",
+    "นามมติ",
+    "เซียมซี",
     "Numerology",
+    "เลขศาสตร์",
     "ดูดวงไพ่",
     "เปิดไพ่ทาโรต์",
     "ดูดวงความรัก",
     "ดูดวงการเงิน",
     "ดูดวงการงาน",
+    "ดวงรายปี",
+    "ดวงจีน",
+    "ไพ่จิตวิญญาณ",
+    "วอลเปเปอร์เสริมดวง",
+    "AI ดูดวง",
     "REFFORTUNE",
     "Reffortune",
   ],
-  authors: [{ name: "Reffortune", url: "https://www.facebook.com/reffortune" }],
-  creator: "Reffortune Team",
+  authors: [{ name: "REFFORTUNE", url: "https://www.reffortune.com" }],
+  creator: "REFFORTUNE Team",
   publisher: "REFFORTUNE",
   applicationName: "REFFORTUNE",
   formatDetection: {
@@ -68,10 +77,16 @@ export const metadata: Metadata = {
     url: SITE_URL,
     images: [
       {
-        url: "/tarot.jpg",
+        url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "REFFORTUNE — Tarot & Spiritual Guidance",
+        alt: "REFFORTUNE — ดูดวงออนไลน์ แม่นยำ ครบวงจร",
+      },
+      {
+        url: "/logo.png",
+        width: 400,
+        height: 400,
+        alt: "REFFORTUNE Logo",
       },
     ],
   },
@@ -81,7 +96,7 @@ export const metadata: Metadata = {
     description: DEFAULT_DESCRIPTION,
     creator: "@reffortune",
     site: "@reffortune",
-    images: ["/tarot.jpg"],
+    images: ["/og-image.jpg"],
   },
   robots: {
     index: true,
@@ -104,8 +119,14 @@ export const metadata: Metadata = {
     },
   },
   category: "lifestyle",
+  verification: {
+    google: "your-google-verification-code",
+    yandex: "your-yandex-verification-code",
+    yahoo: "your-yahoo-verification-code",
+  },
   other: {
-    "facebook-domain-verification": "your-verification-code", // Placeholder for future
+    "facebook-domain-verification": "your-facebook-verification-code",
+    "msvalidate.01": "your-bing-verification-code",
   },
 };
 

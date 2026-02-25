@@ -35,12 +35,13 @@ const socials = [
 export function SocialFooter() {
   const { theme } = useTheme();
   const isPastel = theme === "pastel";
+  const isRainbow = theme === "rainbow";
 
   return (
     <footer className="px-5 pb-20 pt-8 text-center">
-      <div className={cn("h-px w-full mb-8", isPastel ? "bg-white/20" : "bg-gray-100")} />
+      <div className={cn("h-px w-full mb-8", isPastel ? "bg-white/20" : isRainbow ? "bg-[rgba(255,0,255,0.2)]" : "bg-gray-100")} />
       
-      <h3 className={cn("text-sm font-medium mb-4", isPastel ? "text-white/80" : "text-gray-500")}>
+      <h3 className={cn("text-sm font-medium mb-4", isPastel || isRainbow ? "text-white/80" : "text-gray-500")}>
         ติดตามเราได้ที่
       </h3>
       
@@ -55,7 +56,9 @@ export function SocialFooter() {
               "p-3 rounded-full transition-all active:scale-95 flex items-center justify-center",
               isPastel 
                 ? "bg-white/20 backdrop-blur hover:bg-white/30 text-white border border-white/20" 
-                : "bg-white hover:bg-gray-50 text-gray-600 border border-gray-100 shadow-sm"
+                : isRainbow
+                  ? "bg-[#1a1a2e] hover:bg-[#252545] text-white border border-[rgba(255,0,255,0.2)] shadow-sm"
+                  : "bg-white hover:bg-gray-50 text-gray-600 border border-gray-100 shadow-sm"
             )}
             aria-label={social.name}
           >
@@ -64,7 +67,7 @@ export function SocialFooter() {
         ))}
       </div>
 
-      <div className={cn("text-xs space-y-2", isPastel ? "text-white/60" : "text-gray-400")}>
+      <div className={cn("text-xs space-y-2", isPastel || isRainbow ? "text-white/60" : "text-gray-400")}>
         <p>© 2026 REFFORTUNE</p>
         <div className="flex justify-center gap-3">
             <Link href="/terms" className="hover:underline opacity-80 hover:opacity-100">ข้อกำหนด</Link>

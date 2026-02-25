@@ -1,15 +1,33 @@
 # REFFORTUNE Web (Next.js)
 
-เว็บดูดวงออนไลน์ (Thai-first) สำหรับ REFFORTUNE
+เว็บดูดวงออนไลน์ครบวงจร (Thai-first) สำหรับ REFFORTUNE — https://www.reffortune.com
 
 ## ฟีเจอร์หลัก
 
-- ไพ่ทาโรต์ (เลือก 1/3/10 ใบ)
+### ดูดวง
+- ไพ่ทาโรต์ (เลือก 1/2/3/4/5/10 ใบ)
 - ไพ่จิตวิญญาณ (Spirit Card)
 - วิเคราะห์เบอร์มงคล (Numerology)
+- โหราศาสตร์ไทย (ดวงรายวัน/สัปดาห์/เดือน)
+- นามมติ (เซียมซีเสี่ยงทาย)
+- ดวงจีน (Chinese Zodiac)
+- ดูดวงความรัก (Love Tarot)
+- ความเข้ากัน (Compatibility)
+- วิเคราะห์ชื่อ (Name Numerology)
+- ไพ่รายวัน (Daily Card)
+
+### พิเศษ
+- วอลเปเปอร์เสริมดวง (AI สร้าง วันละ 1 ครั้ง)
 - ห้องสมุดไพ่ 78 ใบ
+- ประวัติการดูดวง
 - โหมดถามต่อเกี่ยวกับไพ่
 - ปุ่มนำทางลอย (FAB) + CTA แอดไลน์เด่นทุกหน้า
+
+### ธีม
+- โหมดสว่าง (Light)
+- โหมดพาสเทล (Pastel)
+- โหมดเวทมนตร์ (Rainbow)
+- โหมดนุ่ม (Soft)
 
 ---
 
@@ -48,6 +66,7 @@ npm run start
 ```env
 GEMINI_API_KEY=YOUR_GEMINI_API_KEY
 GEMINI_MODEL=gemini-2.0-flash
+GEMINI_IMAGE_MODEL=gemini-3-pro-image-preview  # สำหรับวอลเปเปอร์เสริมดวง
 ```
 
 > ถ้าไม่มี `GEMINI_API_KEY` บางหน้าอ่านผลเชิงลึกจะไม่ทำงานครบ
@@ -82,6 +101,7 @@ npm run build
 
 - `GEMINI_API_KEY`
 - `GEMINI_MODEL` (แนะนำ `gemini-2.0-flash`)
+- `GEMINI_IMAGE_MODEL` (แนะนำ `gemini-3-pro-image-preview` สำหรับวอลเปเปอร์)
 
 ใส่ครบทั้ง Environment ที่ใช้จริง (Production / Preview)
 
@@ -89,9 +109,11 @@ npm run build
 
 - Landing โหลดปกติ
 - Tarot pick/result ทำงานครบ
-- Spirit/Numerology แสดงผลได้
+- Spirit/Numerology/Horoscope แสดงผลได้
+- วอลเปเปอร์เสริมดวงทำงานได้
+- สลับธีมได้ทุกหน้า
 - CTA แอดไลน์และลิงก์แพ็กเกจกดได้
-- API routes ตอบได้ (`/api/ai/tarot`, `/api/ai/spirit`, `/api/ai/numerology`, `/api/ai/tarot-chat`)
+- API routes ตอบได้ (`/api/ai/tarot`, `/api/ai/spirit`, `/api/ai/numerology`, `/api/ai/tarot-chat`, `/api/ai/wallpaper`)
 
 ## 4) Deploy บน Vercel
 
@@ -110,6 +132,8 @@ npm run build
 - เปิดหน้าแรก
 - เปิดไพ่ 1 ครั้ง
 - ส่งคำถามในโหมดถามเกี่ยวกับไพ่ 1 ครั้ง
+- ทดสอบวอลเปเปอร์เสริมดวง 1 ครั้ง
+- สลับธีม 3 โหมด
 - เช็ก console/network ว่าไม่มี 500
 
 ---

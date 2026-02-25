@@ -154,7 +154,7 @@ export default function DailyCardPage() {
   const shareText = drawn
     ? `ไพ่รายวัน: ${drawn.card.nameTh ?? drawn.card.name} (${orientationLabel}) — REFFORTUNE`
     : "";
-  const shareUrl = typeof window !== "undefined" ? window.location.href : "https://tarot.reffortune.com/daily-card";
+  const shareUrl = typeof window !== "undefined" ? window.location.href : "https://www.reffortune.com/daily-card";
 
   const handleSharePlatform = useCallback(
     (platform: string) => {

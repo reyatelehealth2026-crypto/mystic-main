@@ -6,6 +6,8 @@ import { Sparkles, Share2, RefreshCw } from "lucide-react";
 import { analyzeThaiPhone } from "@/lib/numerology/engine";
 import { runReadingPipeline } from "@/lib/reading/pipeline";
 import { removeReading } from "@/lib/library/storage";
+import { useTheme } from "@/lib/theme/ThemeProvider";
+import { cn } from "@/lib/cn";
 
 function normalizeText(value: unknown): string {
   if (typeof value === "string") return value;
@@ -22,6 +24,9 @@ function normalizeText(value: unknown): string {
 }
 
 export default function NumerologyPage() {
+  const { theme } = useTheme();
+  const isPastel = theme === "pastel";
+  const isRainbow = theme === "rainbow";
   const [phone, setPhone] = useState("");
   const [submittedPhone, setSubmittedPhone] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -125,34 +130,39 @@ export default function NumerologyPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className={cn("min-h-screen", isPastel ? "bg-transparent" : isRainbow ? "bg-transparent" : "bg-white")}>
       {/* Header */}
       <header className="flex items-center justify-between px-5 pt-4 pb-2">
         <Link href="/" className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-violet-600" />
-          <span className="font-serif text-lg font-semibold text-violet-600">REFFORTUNE</span>
+          <Sparkles className={cn("w-5 h-5", isPastel || isRainbow ? "text-white" : "text-violet-600")} />
+          <span className={cn("font-serif text-lg font-semibold", isPastel || isRainbow ? "text-white" : "text-violet-600")}>REFFORTUNE</span>
         </Link>
       </header>
 
       <div className="px-5 pb-10 pt-6">
         <header className="space-y-2">
-          <h1 className="font-serif text-2xl font-semibold text-gray-900">วิเคราะห์เบอร์โทรศัพท์</h1>
-          <p className="text-sm text-gray-500">กรอกเบอร์ แล้วดูคะแนน/แนวโน้มงาน-เงิน-ความสัมพันธ์</p>
+          <h1 className={cn("font-serif text-2xl font-semibold", isPastel || isRainbow ? "text-white" : "text-gray-900")}>วิเคราะห์เบอร์โทรศัพท์</h1>
+          <p className={cn("text-sm", isPastel || isRainbow ? "text-white/70" : "text-gray-500")}>กรอกเบอร์ แล้วดูคะแนน/แนวโน้มงาน-เงิน-ความสัมพันธ์</p>
         </header>
 
-        <div className="mt-6 rounded-[24px] border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900">คำนวณ</h2>
-          <p className="mt-1 text-sm text-gray-500">ใส่เบอร์โทรศัพท์ (ระบบจะจัดรูปแบบให้เอง)</p>
+        <div className={cn("mt-6 rounded-[24px] border p-5 shadow-sm", isPastel ? "bg-white/20 backdrop-blur border-white/30" : isRainbow ? "bg-[#1a1a2e]/80 border-[rgba(255,0,255,0.2)]" : "border-gray-200 bg-white")}>
+          <h2 className={cn("text-lg font-semibold", isPastel || isRainbow ? "text-white" : "text-gray-900")}>คำนวณ</h2>
+          <p className={cn("mt-1 text-sm", isPastel || isRainbow ? "text-white/70" : "text-gray-500")}>ใส่เบอร์โทรศัพท์ (ระบบจะจัดรูปแบบให้เอง)</p>
 
           <form onSubmit={onSubmit} className="mt-5 space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-600">เบอร์โทรศัพท์</label>
+              <label className={cn("text-sm font-medium", isPastel || isRainbow ? "text-white/80" : "text-gray-600")}>เบอร์โทรศัพท์</label>
               <input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 inputMode="tel"
                 placeholder="เช่น 0812345678"
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                className={cn(
+                  "w-full rounded-xl border px-4 py-3 text-sm outline-none transition",
+                  isPastel ? "bg-white/20 border-white/30 text-white placeholder:text-white/50 focus:border-white/60" :
+                  isRainbow ? "bg-[#1a1a2e]/80 border-[rgba(255,0,255,0.3)] text-white placeholder:text-white/40 focus:border-[#ff00ff]" :
+                  "border-gray-200 bg-white text-gray-900 focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                )}
                 required
               />
               {error ? <p className="text-sm text-red-500">{error}</p> : null}
@@ -160,7 +170,12 @@ export default function NumerologyPage() {
 
             <button
               type="submit"
-              className="w-full h-12 rounded-xl bg-violet-600 text-white font-medium shadow-lg shadow-violet-200 hover:bg-violet-700 hover:shadow-xl transition-all active:scale-[0.98]"
+              className={cn(
+                "w-full h-12 rounded-xl font-medium shadow-lg transition-all active:scale-[0.98]",
+                isPastel ? "bg-white/30 backdrop-blur text-white border border-white/50 hover:bg-white/50" :
+                isRainbow ? "bg-gradient-to-r from-[#ff00ff] to-[#00ffff] text-white shadow-[rgba(255,0,255,0.3)]" :
+                "bg-violet-600 text-white shadow-violet-200 hover:bg-violet-700 hover:shadow-xl"
+              )}
             >
               วิเคราะห์
             </button>
@@ -169,30 +184,35 @@ export default function NumerologyPage() {
 
         {baseline && session && (
           <section className="mt-6 space-y-4">
-            <div className="rounded-[24px] border border-gray-200 bg-white p-5 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-900">สรุปคะแนน</h2>
-              <p className="mt-2 text-sm text-gray-600">
+            <div className={cn("rounded-[24px] border p-5 shadow-sm", isPastel ? "bg-white/20 backdrop-blur border-white/30" : isRainbow ? "bg-[#1a1a2e]/80 border-[rgba(255,0,255,0.2)]" : "border-gray-200 bg-white")}>
+              <h2 className={cn("text-lg font-semibold", isPastel || isRainbow ? "text-white" : "text-gray-900")}>สรุปคะแนน</h2>
+              <p className={cn("mt-2 text-sm", isPastel || isRainbow ? "text-white/80" : "text-gray-600")}>
                 คะแนน {" "}
-                <span className="font-semibold text-violet-600">{baseline.score}/99</span> ({baseline.tier}) •
+                <span className={cn("font-semibold", isPastel || isRainbow ? "text-white" : "text-violet-600")}>{baseline.score}/99</span> ({baseline.tier}) •
                 เลขรวม {baseline.total} • เลขราก {baseline.root}
               </p>
             </div>
 
-            <div className="rounded-[24px] border border-gray-200 bg-white p-5 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-900">คำทำนาย</h2>
+            <div className={cn("rounded-[24px] border p-5 shadow-sm", isPastel ? "bg-white/20 backdrop-blur border-white/30" : isRainbow ? "bg-[#1a1a2e]/80 border-[rgba(255,0,255,0.2)]" : "border-gray-200 bg-white")}>
+              <h2 className={cn("text-lg font-semibold", isPastel || isRainbow ? "text-white" : "text-gray-900")}>คำทำนาย</h2>
               {!aiReading ? (
-                <p className="mt-2 text-sm text-gray-400">กำลังสรุปคำทำนาย...</p>
+                <p className={cn("mt-2 text-sm", isPastel || isRainbow ? "text-white/50" : "text-gray-400")}>กำลังสรุปคำทำนาย...</p>
               ) : (
                 <>
-                  <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-gray-600">{aiReading.summary}</p>
-                  <div className="mt-4 rounded-xl border border-violet-100 bg-violet-50/50 p-4">
-                    <p className="text-xs font-medium text-violet-600">รายละเอียด</p>
-                    <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-gray-600">{aiReading.cardStructure}</p>
+                  <p className={cn("mt-2 whitespace-pre-line text-sm leading-relaxed", isPastel || isRainbow ? "text-white/80" : "text-gray-600")}>{aiReading.summary}</p>
+                  <div className={cn("mt-4 rounded-xl border p-4", isPastel ? "border-white/20 bg-white/10" : isRainbow ? "border-[rgba(255,0,255,0.2)] bg-[rgba(255,0,255,0.05)]" : "border-violet-100 bg-violet-50/50")}>
+                    <p className={cn("text-xs font-medium", isPastel || isRainbow ? "text-white" : "text-violet-600")}>รายละเอียด</p>
+                    <p className={cn("mt-2 whitespace-pre-line text-sm leading-relaxed", isPastel || isRainbow ? "text-white/80" : "text-gray-600")}>{aiReading.cardStructure}</p>
                   </div>
 
                   <div className="mt-6 flex flex-col gap-3">
                     <button
-                      className="w-full h-12 rounded-xl bg-violet-600 text-white font-medium shadow-lg shadow-violet-200 hover:bg-violet-700 hover:shadow-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                      className={cn(
+                        "w-full h-12 rounded-xl font-medium shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2",
+                        isPastel ? "bg-white/30 backdrop-blur text-white border border-white/50 hover:bg-white/50" :
+                        isRainbow ? "bg-gradient-to-r from-[#ff00ff] to-[#00ffff] text-white shadow-[rgba(255,0,255,0.3)]" :
+                        "bg-violet-600 text-white shadow-violet-200 hover:bg-violet-700 hover:shadow-xl"
+                      )}
                       onClick={() => {
                         if (navigator.share) {
                           navigator.share({
@@ -210,7 +230,12 @@ export default function NumerologyPage() {
                       แชร์ผลลัพธ์
                     </button>
                     <button
-                      className="w-full h-12 rounded-xl bg-white border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                      className={cn(
+                        "w-full h-12 rounded-xl font-medium transition-all active:scale-[0.98] flex items-center justify-center gap-2",
+                        isPastel ? "bg-white/10 border border-white/20 text-white hover:bg-white/20" :
+                        isRainbow ? "bg-[#1a1a2e] border border-[rgba(255,0,255,0.3)] text-white hover:border-[rgba(255,0,255,0.5)]" :
+                        "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300"
+                      )}
                       onClick={() => {
                         setSubmittedPhone(null);
                         setPhone("");

@@ -26,6 +26,7 @@ export function BottomTabBar() {
   const { theme } = useTheme();
 
   const isPastel = theme === "pastel";
+  const isRainbow = theme === "rainbow";
 
   return (
     <nav
@@ -33,10 +34,14 @@ export function BottomTabBar() {
         "fixed bottom-0 left-0 right-0 z-[9999] w-full",
         isPastel 
           ? "border-t border-white/30 bg-white/20 backdrop-blur-xl"
-          : "border-t border-violet-100 bg-white/90 backdrop-blur-xl",
+          : isRainbow
+            ? "border-t border-[rgba(255,0,255,0.2)] bg-[#0f0f1a]/95 backdrop-blur-xl"
+            : "border-t border-violet-100 bg-white/90 backdrop-blur-xl",
         isPastel 
-          ? "shadow-[0_-4px_20px_rgba(199,125,255,0.3)]" 
-          : "shadow-[0_-4px_20px_rgba(124,58,237,0.08)]"
+          ? "shadow-[0_-4px_20px_rgba(199,125,255,0.3)]"
+          : isRainbow
+            ? "shadow-[0_-4px_20px_rgba(255,0,255,0.15)]"
+            : "shadow-[0_-4px_20px_rgba(124,58,237,0.08)]"
       )}
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
@@ -56,19 +61,23 @@ export function BottomTabBar() {
                   ? active
                     ? "bg-white/30 text-white"
                     : "text-white/70 hover:text-white hover:bg-white/20"
-                  : active
-                    ? "bg-violet-50 text-violet-600"
-                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-50",
-                isPastel && "focus-visible:ring-white/50"
+                  : isRainbow
+                    ? active
+                      ? "bg-[rgba(255,0,255,0.2)] text-white"
+                      : "text-white/60 hover:text-white hover:bg-[rgba(255,0,255,0.1)]"
+                    : active
+                      ? "bg-violet-50 text-violet-600"
+                      : "text-gray-400 hover:text-gray-600 hover:bg-gray-50",
+                (isPastel || isRainbow) && "focus-visible:ring-white/50"
               )}
               aria-current={active ? "page" : undefined}
             >
-              <Icon className={cn("w-5 h-5", active && (isPastel ? "text-white" : "text-violet-600"))} />
-              <span className={cn("text-[10px] font-medium", active && (isPastel ? "text-white" : "text-violet-600"))}>
+              <Icon className={cn("w-5 h-5", active && (isPastel || isRainbow ? "text-white" : "text-violet-600"))} />
+              <span className={cn("text-[10px] font-medium", active && (isPastel || isRainbow ? "text-white" : "text-violet-600"))}>
                 {tab.label}
               </span>
               {active && (
-                <span className={cn("absolute -top-0.5 w-1 h-1 rounded-full", isPastel ? "bg-white" : "bg-violet-600")} />
+                <span className={cn("absolute -top-0.5 w-1 h-1 rounded-full", isPastel ? "bg-white" : isRainbow ? "bg-[#ff00ff]" : "bg-violet-600")} />
               )}
             </Link>
           );
