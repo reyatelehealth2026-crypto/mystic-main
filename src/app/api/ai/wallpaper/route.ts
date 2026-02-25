@@ -11,6 +11,10 @@ type WallpaperRequest = {
   topic: "finance" | "career" | "love" | "luck" | "health";
   // สัญลักษณ์มงคลจากไพ่ทาโรต์
   symbols: string;
+  // องค์ประกอบที่ผู้ใช้เลือกเพิ่ม
+  customElements?: string;
+  // ข้อความมงคลในภาพ
+  overlayText?: string;
   // เลขมงคล
   luckyNumber: number;
   // สไตล์ภาพ
@@ -50,13 +54,21 @@ function buildPrompt(req: WallpaperRequest): string {
     ? ` Incorporate these auspicious symbols and elements: ${req.symbols}.`
     : "";
 
+  const elementsPart = req.customElements
+    ? ` Also prominently feature these additional elements: ${req.customElements}.`
+    : "";
+
+  const textPart = req.overlayText
+    ? ` Include the sacred text "${req.overlayText}" rendered in minimal mystical ancient typography — like engraved stone or sacred Sanskrit/Thai script — subtle, elegant, and spiritually powerful. The text should be a focal point but harmonious with the overall design.`
+    : " No text, no letters, no words, no watermarks.";
+
   return `Create a stunning high-quality phone wallpaper for Thai spiritual fortune enhancement.
 
 Theme: ${topicDesc}.
 Style: ${styleDesc}.
-Color: ${colorDesc}.${symbolsPart}${luckyPart}
+Color: ${colorDesc}.${symbolsPart}${elementsPart}${luckyPart}${textPart}
 
-The design should be inspired by Thai mystical and spiritual aesthetics (สายมู), beautiful and serene, suitable as a phone lock screen wallpaper. The auspicious colors must be prominent and dominant in the composition. Vertical 9:16 aspect ratio, high resolution, photorealistic quality with artistic flair. No text, no letters, no watermarks, no words.`;
+The design should be inspired by Thai mystical and spiritual aesthetics (สายมู), beautiful and serene, suitable as a phone lock screen wallpaper. The auspicious colors must be prominent and dominant in the composition. Vertical 9:16 aspect ratio, high resolution, photorealistic quality with artistic flair.`;
 }
 
 // ──────────────────────────────────────────────

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import {
   Sparkles, Download, Share2, ChevronLeft, ChevronRight,
-  Loader2, Lock, ImageIcon, Calendar, Palette, Star, Hash, Wand2,
+  Loader2, Lock, ImageIcon, Calendar, Palette, Star, Hash, Wand2, Type,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme/ThemeProvider";
 import { cn } from "@/lib/cn";
@@ -58,12 +58,33 @@ const STYLES = [
   { id: "cosmic" as const, label: "จักรวาล", emoji: "🌌", desc: "กาแลคซี่ จักรวาล ลึกลับ" },
 ];
 
+const CUSTOM_ELEMENTS = [
+  { id: "flower", emoji: "🌸", label: "ดอกไม้", en: "blooming flowers, cherry blossoms, lotus" },
+  { id: "dragon", emoji: "🐉", label: "มังกร", en: "golden dragon, mystical dragon, celestial serpent" },
+  { id: "gem", emoji: "💎", label: "อัญมณี", en: "precious gems, crystals, glowing jewels" },
+  { id: "moon", emoji: "🌙", label: "พระจันทร์", en: "crescent moon, moonlight, lunar glow" },
+  { id: "star", emoji: "✨", label: "ดาว", en: "shining stars, golden starlight, celestial sparks" },
+  { id: "lantern", emoji: "🏮", label: "โคมไฟ", en: "glowing red lanterns, festive lights, paper lanterns" },
+  { id: "butterfly", emoji: "🦋", label: "ผีเสื้อ", en: "magical butterflies, golden butterflies, ethereal wings" },
+  { id: "lotus", emoji: "🪷", label: "บัวหลวง", en: "sacred lotus flower, pink lotus, divine bloom" },
+  { id: "elephant", emoji: "🐘", label: "ช้าง", en: "auspicious elephant, white elephant, Thai elephant" },
+  { id: "eye", emoji: "🧿", label: "ตาวิเศษ", en: "evil eye talisman, all-seeing eye, protective amulet" },
+];
+
+const PRESET_TEXTS: Record<WallpaperTopic, string[]> = {
+  finance: ["เงินไหลมา", "มั่งมีศรีสุข", "โชคลาภ", "ร่ำรวย"],
+  career: ["ก้าวหน้า", "สำเร็จ", "เป็นเลิศ", "เฮงรวย"],
+  love: ["รักมั่นคง", "คู่แท้", "เสน่ห์", "ความรัก"],
+  luck: ["โชคดี", "เฮง", "ปังปุริเย่", "ดวงดี"],
+  health: ["แข็งแรง", "อายุยืน", "สุขภาพดี", "มีสุข"],
+};
+
 export default function WallpaperPage() {
   const { theme } = useTheme();
   const isPastel = theme === "pastel";
   const isRainbow = theme === "rainbow";
 
-  // Wizard step: 1=birthdate, 2=topic+lucky number, 3=style, 4=generating/result
+  // Wizard step: 1=birthdate, 2=topic+lucky, 3=custom elements+text, 4=style, 5=generating/result
   const [step, setStep] = useState(1);
 
   // Step 1: Birth date
@@ -79,7 +100,12 @@ export default function WallpaperPage() {
   const [luckyNumbers, setLuckyNumbers] = useState<LuckyNumberOption[]>([]);
   const [selectedLucky, setSelectedLucky] = useState<number | null>(null);
 
-  // Step 3: Style
+  // Step 3: Custom elements + overlay text
+  const [selectedElements, setSelectedElements] = useState<string[]>([]);
+  const [overlayText, setOverlayText] = useState("");
+  const [customText, setCustomText] = useState("");
+
+  // Step 4: Style
   const [selectedStyle, setSelectedStyle] = useState<"minimal" | "cosmic">("minimal");
 
   // Result
@@ -95,7 +121,7 @@ export default function WallpaperPage() {
       setSavedData(saved);
       setGeneratedImage(saved.imageUrl);
       setAlreadyGenerated(true);
-      setStep(4);
+      setStep(5);
     }
   }, []);
 
@@ -134,7 +160,8 @@ export default function WallpaperPage() {
   const canGoNext = useMemo(() => {
     if (step === 1) return selectedColors.length >= 1;
     if (step === 2) return !!topicSymbols && selectedLucky !== null;
-    if (step === 3) return !!selectedStyle;
+    if (step === 3) return true; // optional step
+    if (step === 4) return !!selectedStyle;
     return false;
   }, [step, selectedColors, topicSymbols, selectedLucky, selectedStyle]);
 
@@ -142,19 +169,25 @@ export default function WallpaperPage() {
     if (step === 2 && !topicSymbols) {
       handleTopicSelect(selectedTopic);
     }
-    if (step < 4 && canGoNext) setStep(step + 1);
+    if (step < 5 && canGoNext) setStep(step + 1);
   }, [step, canGoNext, topicSymbols, handleTopicSelect, selectedTopic]);
 
   const goBack = useCallback(() => {
     if (step > 1) setStep(step - 1);
   }, [step]);
 
-  // ── Step 5: Generate wallpaper ──
+  // ── Generate wallpaper ──
   const handleGenerate = useCallback(async () => {
     if (alreadyGenerated || isGenerating) return;
     setIsGenerating(true);
     setError(null);
-    setStep(4);
+    setStep(5);
+
+    const finalText = customText.trim() || overlayText;
+    const elementDescs = selectedElements
+      .map((id) => CUSTOM_ELEMENTS.find((e) => e.id === id)?.en ?? "")
+      .filter(Boolean)
+      .join(", ");
 
     try {
       const resp = await fetch("/api/ai/wallpaper", {
@@ -164,6 +197,8 @@ export default function WallpaperPage() {
           selectedColors: selectedColors.map((c) => ({ nameEn: c.nameEn, hex: c.hex })),
           topic: selectedTopic,
           symbols: topicSymbols?.symbols ?? "",
+          customElements: elementDescs,
+          overlayText: finalText,
           luckyNumber: selectedLucky ?? 9,
           style: selectedStyle,
         }),
@@ -192,11 +227,11 @@ export default function WallpaperPage() {
     } finally {
       setIsGenerating(false);
     }
-  }, [alreadyGenerated, isGenerating, selectedColors, selectedTopic, topicSymbols, selectedLucky, selectedStyle]);
+  }, [alreadyGenerated, isGenerating, selectedColors, selectedTopic, topicSymbols, selectedLucky, selectedStyle, selectedElements, overlayText, customText]);
 
-  // Auto-trigger generate when entering step 4
+  // Auto-trigger generate when entering step 5
   useEffect(() => {
-    if (step === 4 && !generatedImage && !isGenerating && !alreadyGenerated && !error) {
+    if (step === 5 && !generatedImage && !isGenerating && !alreadyGenerated && !error) {
       handleGenerate();
     }
   }, [step, generatedImage, isGenerating, alreadyGenerated, error, handleGenerate]);
@@ -537,8 +572,101 @@ export default function WallpaperPage() {
           </div>
         )}
 
-        {/* ════════════════ STEP 3: Style ════════════════ */}
+        {/* ════════════════ STEP 3: Custom Elements + Text ════════════════ */}
         {step === 3 && (
+          <div className="space-y-5">
+            <div className="text-center mb-2">
+              <Type className={cn("w-8 h-8 mx-auto mb-2", isPastel || isRainbow ? "text-white" : "text-violet-500")} />
+              <h2 className={cn("font-serif text-xl font-bold", headingCls)}>ปรับแต่งภาพ</h2>
+              <p className={cn("text-sm mt-1", subCls)}>เลือกองค์ประกอบและข้อความมงคล (ไม่บังคับ)</p>
+            </div>
+
+            {/* Element chips */}
+            <div>
+              <p className={cn("text-sm font-semibold mb-3", headingCls)}>เน้นองค์ประกอบในภาพ</p>
+              <div className="flex flex-wrap gap-2">
+                {CUSTOM_ELEMENTS.map((el) => {
+                  const isSelected = selectedElements.includes(el.id);
+                  return (
+                    <button
+                      key={el.id}
+                      onClick={() => setSelectedElements((prev) =>
+                        isSelected ? prev.filter((id) => id !== el.id) : [...prev, el.id]
+                      )}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 py-2 rounded-full border text-sm transition-all active:scale-[0.96]",
+                        isSelected ? selectedCls : unselectedCls
+                      )}
+                    >
+                      <span>{el.emoji}</span>
+                      <span>{el.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Overlay text */}
+            <div>
+              <p className={cn("text-sm font-semibold mb-3", headingCls)}>ข้อความมงคลในภาพ</p>
+              <p className={cn("text-xs mb-2", subCls)}>ตัวอักษรขลัง แบบ sacred/ancient style</p>
+
+              {/* Preset text chips */}
+              <div className="flex flex-wrap gap-2 mb-3">
+                {PRESET_TEXTS[selectedTopic].map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setOverlayText(overlayText === t ? "" : t)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-full border text-sm font-medium transition-all active:scale-[0.96]",
+                      overlayText === t ? selectedCls : unselectedCls
+                    )}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+
+              {/* Custom text input */}
+              <div className="relative">
+                <input
+                  type="text"
+                  value={customText}
+                  onChange={(e) => {
+                    if (e.target.value.length <= 10) setCustomText(e.target.value);
+                  }}
+                  placeholder="หรือพิมพ์เองได้ (สูงสุด 10 ตัว)"
+                  className={cn(
+                    "w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all",
+                    isPastel
+                      ? "bg-white/20 backdrop-blur border-white/30 text-white placeholder-white/50 focus:border-white/60"
+                      : isRainbow
+                      ? "bg-[#1a1a2e] border-[rgba(255,0,255,0.2)] text-white placeholder-white/40 focus:border-[#ff00ff]/60"
+                      : "bg-white border-gray-200 text-gray-800 placeholder-gray-400 focus:border-violet-400"
+                  )}
+                />
+                <span className={cn("absolute right-3 top-1/2 -translate-y-1/2 text-xs", subCls)}>
+                  {customText.length}/10
+                </span>
+              </div>
+
+              {(overlayText || customText.trim()) && (
+                <div className={cn("mt-2 px-3 py-2 rounded-lg text-center text-sm", cardCls)}>
+                  <span className={cn("font-semibold tracking-widest", headingCls)}>
+                    ✦ {customText.trim() || overlayText} ✦
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <p className={cn("text-xs text-center", subCls)}>
+              ข้ามได้เลย ถ้าไม่ต้องการปรับแต่ง
+            </p>
+          </div>
+        )}
+
+        {/* ════════════════ STEP 4: Style ════════════════ */}
+        {step === 4 && (
           <div className="space-y-5">
             <div className="text-center mb-2">
               <Palette className={cn("w-8 h-8 mx-auto mb-2", isPastel || isRainbow ? "text-white" : "text-violet-500")} />
@@ -581,6 +709,16 @@ export default function WallpaperPage() {
               <p className={cn("text-xs", subCls)}>
                 เลขมงคล: <span className={headingCls}>{selectedLucky}</span>
               </p>
+              {selectedElements.length > 0 && (
+                <p className={cn("text-xs", subCls)}>
+                  องค์ประกอบ: <span className={headingCls}>{selectedElements.map(id => CUSTOM_ELEMENTS.find(e => e.id === id)?.emoji).join(" ")}</span>
+                </p>
+              )}
+              {(customText.trim() || overlayText) && (
+                <p className={cn("text-xs", subCls)}>
+                  ข้อความ: <span className={cn("font-semibold tracking-wider", headingCls)}>✦ {customText.trim() || overlayText} ✦</span>
+                </p>
+              )}
               <p className={cn("text-xs", subCls)}>
                 สไตล์: <span className={headingCls}>{STYLES.find(s => s.id === selectedStyle)?.label}</span>
               </p>
@@ -588,8 +726,8 @@ export default function WallpaperPage() {
           </div>
         )}
 
-        {/* ════════════════ STEP 4: Generating / Result ════════════════ */}
-        {step === 4 && (
+        {/* ════════════════ STEP 5: Generating / Result ════════════════ */}
+        {step === 5 && (
           <div className="space-y-6">
             {isGenerating && (
               <div className="text-center py-16">
@@ -605,7 +743,7 @@ export default function WallpaperPage() {
                   {error}
                 </p>
                 <button
-                  onClick={() => { setError(null); setStep(4); }}
+                  onClick={() => { setError(null); setStep(5); }}
                   className={cn("mt-4 px-6 py-2 rounded-xl text-sm font-semibold", btnSecondary)}
                 >
                   ลองใหม่
