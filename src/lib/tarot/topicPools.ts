@@ -14,6 +14,7 @@ export type WallpaperTopic = "finance" | "career" | "love" | "luck" | "health";
 export interface TopicInfo {
   id: WallpaperTopic;
   labelTh: string;
+  emoji: string;
   symbolDescEn: string; // สำหรับ prompt สร้างภาพ
   symbolDescTh: string;
 }
@@ -32,30 +33,35 @@ export const TOPIC_INFO: Record<WallpaperTopic, TopicInfo> = {
   finance: {
     id: "finance",
     labelTh: "การเงิน",
+    emoji: "💰",
     symbolDescEn: "golden pentacle coins, treasure, material abundance, financial prosperity",
     symbolDescTh: "เหรียญทอง ขุมทรัพย์ ความอุดมสมบูรณ์ทางการเงิน",
   },
   career: {
     id: "career",
     labelTh: "การงาน",
+    emoji: "💼",
     symbolDescEn: "blazing wands, fire of ambition, victory laurels, rising achievement",
     symbolDescTh: "ไม้เท้าลุกไฟ เปลวเพลิงแห่งความมุ่งมั่น พวงมาลัยชัยชนะ",
   },
   love: {
     id: "love",
     labelTh: "ความรัก",
+    emoji: "💕",
     symbolDescEn: "abundant garden, chalices of love, harmonious union, sacred feminine energy",
     symbolDescTh: "สวนอุดมสมบูรณ์ ถ้วยแห่งความรัก สหภาพที่กลมกลืน พลังหญิงศักดิ์สิทธิ์",
   },
   luck: {
     id: "luck",
     labelTh: "โชคลาภ",
+    emoji: "🍀",
     symbolDescEn: "spinning wheel of fortune, radiant sun, shining stars, golden coins, auspicious blessings",
     symbolDescTh: "วงล้อโชคชะตา ดวงอาทิตย์เปล่งรัศมี ดาวมงคล เหรียญทอง",
   },
   health: {
     id: "health",
     labelTh: "สุขภาพ",
+    emoji: "🌿",
     symbolDescEn: "healing star light, temperance balance, strength vitality, life force energy, renewal",
     symbolDescTh: "แสงดาวเยียวยา ความสมดุล พลังและความแข็งแกร่ง พลังชีวิต การฟื้นคืน",
   },
