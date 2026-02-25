@@ -10,6 +10,7 @@ import {
 import { useTheme } from "@/lib/theme/ThemeProvider";
 import { cn } from "@/lib/cn";
 import { calculateBirthColors, type AuspiciousColor, type BirthColorResult } from "@/lib/thai-astrology/colors";
+import { calculateLuckyElements, type LuckyElement, type LuckyElementsResult } from "@/lib/thai-astrology/luckyElements";
 import { getTopicSymbols, TOPIC_INFO, type WallpaperTopic, type TopicSymbols } from "@/lib/tarot/topicPools";
 import { getLuckyNumbers, type LuckyNumberOption } from "@/lib/tarot/luckyNumbers";
 
@@ -59,27 +60,6 @@ const STYLES = [
   { id: "cosmic" as const, label: "จักรวาล", emoji: "🌌", desc: "กาแลคซี่ จักรวาล ลึกลับ" },
 ];
 
-const CUSTOM_ELEMENTS = [
-  { id: "flower", emoji: "🌸", label: "ดอกไม้", en: "blooming flowers, cherry blossoms, lotus" },
-  { id: "dragon", emoji: "🐉", label: "มังกร", en: "golden dragon, mystical dragon, celestial serpent" },
-  { id: "gem", emoji: "💎", label: "อัญมณี", en: "precious gems, crystals, glowing jewels" },
-  { id: "moon", emoji: "🌙", label: "พระจันทร์", en: "crescent moon, moonlight, lunar glow" },
-  { id: "star", emoji: "✨", label: "ดาว", en: "shining stars, golden starlight, celestial sparks" },
-  { id: "lantern", emoji: "🏮", label: "โคมไฟ", en: "glowing red lanterns, festive lights, paper lanterns" },
-  { id: "butterfly", emoji: "🦋", label: "ผีเสื้อ", en: "magical butterflies, golden butterflies, ethereal wings" },
-  { id: "lotus", emoji: "🪷", label: "บัวหลวง", en: "sacred lotus flower, pink lotus, divine bloom" },
-  { id: "elephant", emoji: "🐘", label: "ช้าง", en: "auspicious elephant, white elephant, Thai elephant" },
-  { id: "eye", emoji: "🧿", label: "ตาวิเศษ", en: "evil eye talisman, all-seeing eye, protective amulet" },
-];
-
-const PRESET_TEXTS: Record<WallpaperTopic, string[]> = {
-  finance: ["เงินไหลมา", "มั่งมีศรีสุข", "โชคลาภ", "ร่ำรวย"],
-  career: ["ก้าวหน้า", "สำเร็จ", "เป็นเลิศ", "เฮงรวย"],
-  love: ["รักมั่นคง", "คู่แท้", "เสน่ห์", "ความรัก"],
-  luck: ["โชคดี", "เฮง", "ปังปุริเย่", "ดวงดี"],
-  health: ["แข็งแรง", "อายุยืน", "สุขภาพดี", "มีสุข"],
-};
-
 export default function WallpaperPage() {
   const { theme } = useTheme();
   const isPastel = theme === "pastel";
@@ -101,9 +81,9 @@ export default function WallpaperPage() {
   const [luckyNumbers, setLuckyNumbers] = useState<LuckyNumberOption[]>([]);
   const [selectedLucky, setSelectedLucky] = useState<number | null>(null);
 
-  // Step 3: Custom elements + overlay text
+  // Step 3: Custom elements + overlay text (calculated from birth date)
+  const [luckyElements, setLuckyElements] = useState<LuckyElementsResult | null>(null);
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
-  const [overlayText, setOverlayText] = useState("");
   const [customText, setCustomText] = useState("");
 
   // Step 4: Style
@@ -126,7 +106,7 @@ export default function WallpaperPage() {
     }
   }, []);
 
-  // ── Step 1: Calculate birth colors ──
+  // ── Step 1: Calculate birth colors and lucky elements ──
   const handleBirthSubmit = useCallback(() => {
     if (!birthDateStr) return;
     const date = new Date(birthDateStr);
@@ -136,6 +116,11 @@ export default function WallpaperPage() {
     const colors = calculateBirthColors(date, hourNum);
     setBirthColors(colors);
     setSelectedColors([]); // reset
+    
+    // Calculate lucky elements from birth date
+    const elements = calculateLuckyElements(date);
+    setLuckyElements(elements);
+    setSelectedElements([]); // reset selected elements
   }, [birthDateStr, birthTimeStr]);
 
   const toggleColor = useCallback((color: AuspiciousColor) => {
@@ -184,9 +169,9 @@ export default function WallpaperPage() {
     setError(null);
     setStep(5);
 
-    const finalText = customText.trim() || overlayText;
+    const finalText = customText.trim();
     const elementDescs = selectedElements
-      .map((id) => CUSTOM_ELEMENTS.find((e) => e.id === id)?.en ?? "")
+      .map((id) => luckyElements?.elements.find((e) => e.id === id)?.en ?? "")
       .filter(Boolean)
       .join(", ");
 
@@ -228,7 +213,7 @@ export default function WallpaperPage() {
     } finally {
       setIsGenerating(false);
     }
-  }, [alreadyGenerated, isGenerating, selectedColors, selectedTopic, topicSymbols, selectedLucky, selectedStyle, selectedElements, overlayText, customText]);
+  }, [alreadyGenerated, isGenerating, selectedColors, selectedTopic, topicSymbols, selectedLucky, selectedStyle, selectedElements, customText, luckyElements]);
 
   // Auto-trigger generate when entering step 5
   useEffect(() => {
@@ -593,64 +578,49 @@ export default function WallpaperPage() {
             <div className="text-center mb-2">
               <Type className={cn("w-8 h-8 mx-auto mb-2", isPastel || isRainbow ? "text-white" : "text-violet-500")} />
               <h2 className={cn("font-serif text-xl font-bold", headingCls)}>ปรับแต่งภาพ</h2>
-              <p className={cn("text-sm mt-1", subCls)}>เลือกองค์ประกอบและข้อความมงคล (ไม่บังคับ)</p>
+              <p className={cn("text-sm mt-1", subCls)}>เลือกองค์ประกอบและข้อความ (ไม่บังคับ)</p>
             </div>
 
-            {/* Element chips */}
-            <div>
-              <p className={cn("text-sm font-semibold mb-3", headingCls)}>เน้นองค์ประกอบในภาพ</p>
-              <div className="flex flex-wrap gap-2">
-                {CUSTOM_ELEMENTS.map((el) => {
-                  const isSelected = selectedElements.includes(el.id);
-                  return (
-                    <button
-                      key={el.id}
-                      onClick={() => setSelectedElements((prev) =>
-                        isSelected ? prev.filter((id) => id !== el.id) : [...prev, el.id]
-                      )}
-                      className={cn(
-                        "flex items-center gap-1.5 px-3 py-2 rounded-full border text-sm transition-all active:scale-[0.96]",
-                        isSelected ? selectedCls : unselectedCls
-                      )}
-                    >
-                      <span>{el.emoji}</span>
-                      <span>{el.label}</span>
-                    </button>
-                  );
-                })}
+            {/* Lucky Element chips - calculated from birth date */}
+            {luckyElements && (
+              <div>
+                <p className={cn("text-sm font-semibold mb-2", headingCls)}>องค์ประกอบมงคลสำหรับคุณ</p>
+                <p className={cn("text-xs mb-3", subCls)}>คำนวณจากวัน/เดือน/ปีเกิด</p>
+                <div className="flex flex-wrap gap-2">
+                  {luckyElements.elements.map((el) => {
+                    const isSelected = selectedElements.includes(el.id);
+                    return (
+                      <button
+                        key={el.id}
+                        onClick={() => setSelectedElements((prev) =>
+                          isSelected ? prev.filter((id) => id !== el.id) : [...prev, el.id]
+                        )}
+                        className={cn(
+                          "px-3 py-2 rounded-full border text-sm transition-all active:scale-[0.96]",
+                          isSelected ? selectedCls : unselectedCls
+                        )}
+                      >
+                        {el.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Overlay text */}
+            {/* Custom text input */}
             <div>
-              <p className={cn("text-sm font-semibold mb-3", headingCls)}>ข้อความมงคลในภาพ</p>
-              <p className={cn("text-xs mb-2", subCls)}>ตัวอักษรขลัง แบบ sacred/ancient style</p>
+              <p className={cn("text-sm font-semibold mb-2", headingCls)}>เพิ่มข้อความในภาพ</p>
+              <p className={cn("text-xs mb-3", subCls)}>ข้อความเล็กๆ ใต้รูปเหมือนลายเซ็นศิลปิน (ไม่บังคับ)</p>
 
-              {/* Preset text chips */}
-              <div className="flex flex-wrap gap-2 mb-3">
-                {PRESET_TEXTS[selectedTopic].map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setOverlayText(overlayText === t ? "" : t)}
-                    className={cn(
-                      "px-3 py-1.5 rounded-full border text-sm font-medium transition-all active:scale-[0.96]",
-                      overlayText === t ? selectedCls : unselectedCls
-                    )}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-
-              {/* Custom text input */}
               <div className="relative">
                 <input
                   type="text"
                   value={customText}
                   onChange={(e) => {
-                    if (e.target.value.length <= 10) setCustomText(e.target.value);
+                    if (e.target.value.length <= 12) setCustomText(e.target.value);
                   }}
-                  placeholder="หรือพิมพ์เองได้ (สูงสุด 10 ตัว)"
+                  placeholder="พิมพ์ข้อความ (สูงสุด 12 ตัว)"
                   className={cn(
                     "w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all",
                     isPastel
@@ -659,17 +629,22 @@ export default function WallpaperPage() {
                       ? "bg-[#1a1a2e] border-[rgba(255,0,255,0.2)] text-white placeholder-white/40 focus:border-[#ff00ff]/60"
                       : "bg-white border-gray-200 text-gray-800 placeholder-gray-400 focus:border-violet-400"
                   )}
+                  style={{ fontFamily: "'Srisakdi', 'Charm', 'Noto Sans Thai', cursive" }}
                 />
                 <span className={cn("absolute right-3 top-1/2 -translate-y-1/2 text-xs", subCls)}>
-                  {customText.length}/10
+                  {customText.length}/12
                 </span>
               </div>
 
-              {(overlayText || customText.trim()) && (
-                <div className={cn("mt-2 px-3 py-2 rounded-lg text-center text-sm", cardCls)}>
-                  <span className={cn("font-semibold tracking-widest", headingCls)}>
-                    ✦ {customText.trim() || overlayText} ✦
+              {customText.trim() && (
+                <div className={cn("mt-3 px-3 py-2 rounded-lg text-center", cardCls)}>
+                  <span 
+                    className={cn("text-xs italic tracking-wide", headingCls)}
+                    style={{ fontFamily: "'Srisakdi', 'Charm', 'Noto Sans Thai', cursive" }}
+                  >
+                    — {customText.trim()} —
                   </span>
+                  <p className={cn("text-[10px] mt-1", subCls)}>ตัวอย่างลายเซ็นข้อความ</p>
                 </div>
               )}
             </div>
@@ -724,14 +699,14 @@ export default function WallpaperPage() {
               <p className={cn("text-xs", subCls)}>
                 เลขมงคล: <span className={headingCls}>{selectedLucky}</span>
               </p>
-              {selectedElements.length > 0 && (
+              {selectedElements.length > 0 && luckyElements && (
                 <p className={cn("text-xs", subCls)}>
-                  องค์ประกอบ: <span className={headingCls}>{selectedElements.map(id => CUSTOM_ELEMENTS.find(e => e.id === id)?.emoji).join(" ")}</span>
+                  องค์ประกอบ: <span className={headingCls}>{selectedElements.map(id => luckyElements.elements.find(e => e.id === id)?.label).filter(Boolean).join(", ")}</span>
                 </p>
               )}
-              {(customText.trim() || overlayText) && (
+              {customText.trim() && (
                 <p className={cn("text-xs", subCls)}>
-                  ข้อความ: <span className={cn("font-semibold tracking-wider", headingCls)}>✦ {customText.trim() || overlayText} ✦</span>
+                  ข้อความ: <span className={cn("font-semibold tracking-wider", headingCls)}>✦ {customText.trim()} ✦</span>
                 </p>
               )}
               <p className={cn("text-xs", subCls)}>
