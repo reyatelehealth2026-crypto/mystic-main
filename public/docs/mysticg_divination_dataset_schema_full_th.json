@@ -1,0 +1,163 @@
+{
+  "kb_version": "1.0",
+  "locale": "th-TH",
+  "domain": "divination_thailand",
+  "intent_support": ["chat", "prediction", "matching"],
+  "tone": {
+    "style": "มูละมุน",
+    "delivery": "ฟันธงแบบคำทำนายตรงๆ",
+    "must_include": ["actionable_advice"],
+    "must_avoid": ["fearmongering", "fatalism", "guarantees"]
+  },
+  "global_safety": {
+    "positioning": "Cultural/entertainment and reflective guidance; not evidence-based prediction.",
+    "hard_limits": [
+      "No medical diagnosis or treatment advice.",
+      "No legal advice or instructions to evade law.",
+      "No guaranteed financial outcomes; avoid urging risky investments.",
+      "No coercion, threats, curses, or fear-based manipulation.",
+      "No discriminatory or physiognomy-based judgments as facts."
+    ],
+    "privacy": {
+      "sensitive_inputs": ["birth_date", "birth_time", "birth_place", "face_photo", "palm_photo", "home_address"],
+      "minimization": "Collect only what is necessary; allow approximate data; do not store unless asked."
+    }
+  },
+  "message_formats": {
+    "reading": {
+      "summary": "string",
+      "opportunities": ["string"],
+      "risks": ["string"],
+      "actions": ["string"],
+      "timeframe": "string",
+      "confidence": "low|med|high",
+      "disclaimer": "string"
+    },
+    "matching": {
+      "summary": "string",
+      "strengths": ["string"],
+      "risks": ["string"],
+      "how_to_move_forward": ["string"],
+      "timeframe": "string",
+      "confidence": "low|med|high",
+      "disclaimer": "string"
+    }
+  },
+  "systems": [
+    {
+      "system_id": "thai_astrology",
+      "name_th": "โหราศาสตร์ไทย",
+      "primary_use": ["work", "money", "love", "timing", "matching"],
+      "required_inputs": [
+        {"key": "birth_date", "type": "date", "required": true},
+        {"key": "birth_time", "type": "time", "required": false},
+        {"key": "birth_place", "type": "string", "required": false},
+        {"key": "question", "type": "string", "required": false},
+        {"key": "time_horizon", "type": "string", "required": false, "enum": ["1m", "3m", "6m"]}
+      ],
+      "output": "reading"
+    },
+    {
+      "system_id": "tarot_th",
+      "name_th": "ไพ่ยิปซี/ไพ่ทาโรต์",
+      "primary_use": ["work", "love", "decision", "matching"],
+      "required_inputs": [
+        {"key": "question", "type": "string", "required": true},
+        {"key": "time_horizon", "type": "string", "required": false, "enum": ["2w", "1m", "3m"]},
+        {"key": "spread", "type": "string", "required": false, "enum": ["3-card", "5-card", "A/B", "love"]}
+      ],
+      "output": {
+        "summary": "string",
+        "cards": [
+          {"position": "string", "card": "string", "keywords": ["string"], "meaning": "string"}
+        ],
+        "opportunities": ["string"],
+        "risks": ["string"],
+        "actions": ["string"],
+        "timeframe": "string",
+        "confidence": "low|med|high",
+        "disclaimer": "string"
+      }
+    },
+    {
+      "system_id": "numerology",
+      "name_th": "เลขศาสตร์",
+      "primary_use": ["work", "money", "love"],
+      "required_inputs": [
+        {"key": "numbers", "type": "string", "required": true},
+        {"key": "goal", "type": "string", "required": false, "enum": ["work", "money", "love", "clients"]}
+      ],
+      "output": "reading"
+    },
+    {
+      "system_id": "feng_shui",
+      "name_th": "ฮวงจุ้ย",
+      "primary_use": ["work", "money", "productivity", "timing"],
+      "required_inputs": [
+        {"key": "site_type", "type": "string", "required": true, "enum": ["home", "office", "shop"]},
+        {"key": "problem_statement", "type": "string", "required": true},
+        {"key": "layout", "type": "string", "required": false},
+        {"key": "facing_direction", "type": "string", "required": false}
+      ],
+      "output": {
+        "summary": "string",
+        "quick_fixes": ["string"],
+        "deeper_changes": ["string"],
+        "confidence": "low|med|high",
+        "disclaimer": "string"
+      }
+    },
+    {
+      "system_id": "palmistry",
+      "name_th": "ดูลายมือ",
+      "primary_use": ["work", "love"],
+      "required_inputs": [
+        {"key": "palm_photo", "type": "image", "required": false},
+        {"key": "handedness", "type": "string", "required": false, "enum": ["left", "right", "both"]},
+        {"key": "question", "type": "string", "required": false}
+      ],
+      "output": "reading"
+    },
+    {
+      "system_id": "physiognomy",
+      "name_th": "โหงวเฮ้ง",
+      "primary_use": ["work", "love"],
+      "required_inputs": [
+        {"key": "face_photo", "type": "image", "required": false},
+        {"key": "question", "type": "string", "required": false}
+      ],
+      "safety_style": [
+        "Avoid claims about morality/competence from facial features.",
+        "Avoid discriminatory content; present as cultural belief only."
+      ],
+      "output": "reading"
+    },
+    {
+      "system_id": "chinese_zodiac",
+      "name_th": "นักษัตรจีน/ปีนักษัตร",
+      "primary_use": ["matching", "work", "love"],
+      "required_inputs": [
+        {"key": "birth_year", "type": "integer", "required": true},
+        {"key": "question", "type": "string", "required": false}
+      ],
+      "output": "reading"
+    },
+    {
+      "system_id": "thai_lunar_calendar",
+      "name_th": "ปฏิทินจันทรคติไทย/ฤกษ์ยาม",
+      "primary_use": ["timing"],
+      "required_inputs": [
+        {"key": "target_activity", "type": "string", "required": true},
+        {"key": "date_range", "type": "string", "required": false},
+        {"key": "constraints", "type": "string", "required": false}
+      ],
+      "output": {
+        "summary": "string",
+        "windows": [{"window": "string", "notes": "string"}],
+        "actions": ["string"],
+        "confidence": "low|med|high",
+        "disclaimer": "string"
+      }
+    }
+  ]
+}

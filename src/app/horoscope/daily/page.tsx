@@ -1,0 +1,53 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { AppBar } from "@/components/nav/AppBar";
+import { Button } from "@/components/ui/Button";
+import { ZodiacSelector } from "@/components/horoscope/ZodiacSelector";
+import { ZodiacSign } from "@/lib/horoscope/types";
+import { PrivacyNotice } from "@/components/ui/PrivacyNotice";
+import { ReadingType } from "@/lib/reading/types";
+
+export default function DailyHoroscopePage() {
+  const router = useRouter();
+  const [selectedSign, setSelectedSign] = useState<ZodiacSign | undefined>();
+
+  const handleSubmit = () => {
+    if (!selectedSign) return;
+    router.push(`/horoscope/daily/result?sign=${selectedSign}`);
+  };
+
+  return (
+    <main className="mx-auto w-full max-w-lg">
+      {/* Privacy Notice - shows only on first use */}
+      <PrivacyNotice 
+        featureType={ReadingType.HOROSCOPE}
+        featureName="ดูดวงรายวัน"
+      />
+      
+      <header className="px-5 pt-7 pb-3">
+        <AppBar title="ดูดวงรายวัน" className="px-0 pt-0 pb-0" />
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-fg">เลือกราศีของคุณ</h1>
+        <p className="mt-1 text-sm text-fg-muted">
+          เลือกราศีเพื่อดูดวงรายวันของคุณ
+        </p>
+      </header>
+
+      <div className="px-5 pb-6">
+        <ZodiacSelector value={selectedSign} onChange={setSelectedSign} className="mt-4" />
+
+        <div className="sticky bottom-20 z-30 mt-6">
+          <Button
+            className="w-full"
+            size="lg"
+            onClick={handleSubmit}
+            disabled={!selectedSign}
+          >
+            ดูดวงรายวัน
+          </Button>
+        </div>
+      </div>
+    </main>
+  );
+}

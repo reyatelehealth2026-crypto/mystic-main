@@ -1,0 +1,122 @@
+{
+  "kb_version": "1.0",
+  "locale": "th-TH",
+  "domain": "divination_thailand",
+  "tone": {
+    "style": "มูละมุน",
+    "delivery": "ฟันธงแบบคำทำนายตรงๆ",
+    "must_include": ["actionable_advice"],
+    "must_avoid": ["fearmongering", "fatalism", "guarantees"]
+  },
+  "global_safety": {
+    "positioning": "Cultural/entertainment and reflective guidance; not evidence-based prediction.",
+    "hard_limits": [
+      "No medical diagnosis or treatment advice.",
+      "No legal advice or instructions to evade law.",
+      "No guaranteed financial outcomes; avoid urging risky investments.",
+      "No coercion, threats, curses, or fear-based manipulation.",
+      "No discrimination or physiognomy-based judgments as facts."
+    ],
+    "privacy": {
+      "sensitive_inputs": ["birth_date", "birth_time", "birth_place", "face_photo", "palm_photo", "home_address"],
+      "minimization": "Collect only what is necessary; allow approximate data; do not store unless asked."
+    }
+  },
+  "message_format": {
+    "work_reading": {
+      "summary": "string",
+      "opportunities": ["string"],
+      "risks": ["string"],
+      "actions": ["string"],
+      "timeframe": "string",
+      "confidence": "low|med|high",
+      "disclaimer": "string"
+    }
+  },
+  "systems": [
+    {
+      "system_id": "thai_astrology",
+      "name_th": "โหราศาสตร์ไทย",
+      "primary_use": ["work", "money", "timing"],
+      "required_inputs": [
+        {"key": "birth_date", "type": "date", "required": true},
+        {"key": "birth_time", "type": "time", "required": false, "notes": "If unknown, allow approximate and reduce confidence."},
+        {"key": "birth_place", "type": "string", "required": false},
+        {"key": "question", "type": "string", "required": false},
+        {"key": "time_horizon", "type": "string", "required": false, "enum": ["1m", "3m", "6m"]}
+      ],
+      "output": "work_reading"
+    },
+    {
+      "system_id": "tarot_th",
+      "name_th": "ไพ่ยิปซี/ไพ่ทาโรต์",
+      "primary_use": ["work", "decision", "matching"],
+      "required_inputs": [
+        {"key": "question", "type": "string", "required": true},
+        {"key": "time_horizon", "type": "string", "required": false, "enum": ["2w", "1m", "3m"]},
+        {"key": "spread", "type": "string", "required": false, "enum": ["3-card", "5-card", "A/B"]}
+      ],
+      "output": {
+        "summary": "string",
+        "cards": [
+          {"position": "string", "card": "string", "keywords": ["string"], "meaning": "string"}
+        ],
+        "opportunities": ["string"],
+        "risks": ["string"],
+        "actions": ["string"],
+        "timeframe": "string",
+        "disclaimer": "string"
+      }
+    },
+    {
+      "system_id": "numerology",
+      "name_th": "เลขศาสตร์",
+      "primary_use": ["work", "money"],
+      "required_inputs": [
+        {"key": "numbers", "type": "string", "required": true, "notes": "phone/house/plate"},
+        {"key": "goal", "type": "string", "required": false, "enum": ["work", "money", "clients"]}
+      ],
+      "output": "work_reading"
+    },
+    {
+      "system_id": "feng_shui",
+      "name_th": "ฮวงจุ้ย",
+      "primary_use": ["work", "money", "productivity"],
+      "required_inputs": [
+        {"key": "site_type", "type": "string", "required": true, "enum": ["home", "office", "shop"]},
+        {"key": "problem_statement", "type": "string", "required": true},
+        {"key": "layout", "type": "string", "required": false},
+        {"key": "facing_direction", "type": "string", "required": false}
+      ],
+      "output": {
+        "summary": "string",
+        "quick_fixes": ["string"],
+        "deeper_changes": ["string"],
+        "disclaimer": "string"
+      }
+    }
+  ],
+  "example_records": [
+    {
+      "system_id": "tarot_th",
+      "input": {
+        "question": "ควรย้ายงานใน 3 เดือนนี้ไหม",
+        "time_horizon": "3m",
+        "spread": "3-card"
+      },
+      "output": {
+        "summary": "ย้ายได้ แต่ต้องย้ายแบบวางแผน—เลือกที่ให้พื้นที่โชว์ฝีมือ แล้วจะไปได้ไกลกว่าเดิม",
+        "cards": [
+          {"position": "ปัจจุบัน", "card": "(placeholder)", "keywords": ["transition"], "meaning": "มีการเปลี่ยนจังหวะงาน"},
+          {"position": "อุปสรรค", "card": "(placeholder)", "keywords": ["uncertainty"], "meaning": "ความไม่ชัดเรื่องเงื่อนไข/ทีม"},
+          {"position": "คำแนะนำ", "card": "(placeholder)", "keywords": ["plan"], "meaning": "เตรียมพอร์ต/สคริปต์ต่อรอง"}
+        ],
+        "opportunities": ["มีโอกาสได้ทีมใหม่ที่โตไว", "ได้สกิลที่ต่อยอดเงินเดือน"],
+        "risks": ["สัญญา/ข้อผูกมัดต้องอ่านละเอียด", "งานที่คำบรรยายสวยแต่ความจริงหนัก"],
+        "actions": ["ลิสต์ must-have 5 ข้อ", "อัปเดตพอร์ต 3 ชิ้น", "ซ้อมสัมภาษณ์และต่อรองเงินเดือน"],
+        "timeframe": "1–6 สัปดาห์แรกจะชัดเรื่องการเรียกคุย/offer",
+        "disclaimer": "ใช้เพื่อแนะแนวและการตัดสินใจของคุณเป็นหลัก"
+      }
+    }
+  ]
+}

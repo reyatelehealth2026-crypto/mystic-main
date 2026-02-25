@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Enhancement Quick Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #2196F3;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .pass {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .fail {
+            color: #f44336;
+            font-weight: bold;
+        }
+        .warning {
+            color: #ff9800;
+            font-weight: bold;
+        }
+        .input-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        textarea {
+            min-height: 100px;
+            font-family: inherit;
+        }
+        .info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #2196F3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔮 AI Enhancement Quick Test</h1>
+        
+        <div class="info">
+            <strong>วัตถุประสงค์:</strong> ทดสอบว่า AI ใช้แหล่งข้อมูลใหม่ที่ปรับปรุงแล้วหรือไม่<br>
+            <strong>วิธีใช้:</strong> กรอกข้อมูล → กด "ทดสอบ AI" → ดูผลลัพธ์
+        </div>
+
+        <div class="test-section">
+            <h2>ข้อมูลการทดสอบ</h2>
+            
+            <div class="input-group">
+                <label>API Endpoint:</label>
+                <input type="text" id="apiEndpoint" value="http://localhost:3000/api/ai/tarot" />
+            </div>
+
+            <div class="input-group">
+                <label>คำถาม:</label>
+                <input type="text" id="question" value="งานของฉันจะเป็นอย่างไรในอีก 3 เดือนข้างหน้า" />
+            </div>
+
+            <div class="input-group">
+                <label>จำนวนไพ่:</label>
+                <select id="cardCount">
+                    <option value="1">1 ใบ</option>
+                    <option value="2">2 ใบ</option>
+                    <option value="3" selected>3 ใบ (Past-Present-Future)</option>
+                    <option value="4">4 ใบ (Action Plan)</option>
+                </select>
+            </div>
+
+            <button onclick="runTest()" id="testButton">🚀 ทดสอบ AI</button>
+            <button onclick="clearResults()">🗑️ ล้างผลลัพธ์</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        async function runTest() {
+            const resultsDiv = document.getElementById('results');
+            const testButton = document.getElementById('testButton');
+            const apiEndpoint = document.getElementById('apiEndpoint').value;
+            const question = document.getElementById('question').value;
+            const cardCount = parseInt(document.getElementById('cardCount').value);
+
+            testButton.disabled = true;
+            resultsDiv.innerHTML = '⏳ กำลังทดสอบ...\n';
+
+            try {
+                // Generate sample cards
+                const cards = generateSampleCards(cardCount);
+
+                // Call API
+                const response = await fetch(apiEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cards, count: cardCount, question })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                if (!data.ok || !data.ai) {
+                    throw new Error('Invalid response format');
+                }
+
+                // Run tests
+                const testResults = runEnhancementTests(data.ai);
+                
+                // Display results
+                resultsDiv.innerHTML = formatResults(testResults, data.ai);
+
+            } catch (error) {
+                resultsDiv.innerHTML = `❌ เกิดข้อผิดพลาด:\n${error.message}\n\nกรุณาตรวจสอบ:\n1. Dev server กำลังรันอยู่หรือไม่\n2. API endpoint ถูกต้องหรือไม่\n3. GEMINI_API_KEY ถูกตั้งค่าหรือไม่`;
+            } finally {
+                testButton.disabled = false;
+            }
+        }
+
+        function generateSampleCards(count) {
+            const sampleCards = [
+                { id: 'major-00', orientation: 'upright' },  // The Fool
+                { id: 'major-01', orientation: 'upright' },  // The Magician
+                { id: 'major-02', orientation: 'reversed' }, // The High Priestess
+                { id: 'major-03', orientation: 'upright' }   // The Empress
+            ];
+            return sampleCards.slice(0, count);
+        }
+
+        function runEnhancementTests(response) {
+            const results = [];
+
+            // Test 1: New Fields
+            const hasNewFields = 
+                response.cards?.some(card => card.psychologicalLayer && card.energyPattern) &&
+                response.deeperInsight;
+            results.push({
+                name: 'New Fields Present',
+                passed: hasNewFields,
+                details: hasNewFields 
+                    ? '✅ มี psychologicalLayer, energyPattern, deeperInsight'
+                    : '❌ ไม่มีฟิลด์ใหม่ - AI อาจไม่ได้ใช้ enhanced prompts'
+            });
+
+            // Test 2: Summary Length
+            const summary = response.summary || '';
+            const summaryThaiChars = (summary.match(/[\u0E00-\u0E7F]/g) || []).length;
+            const summaryPassed = summaryThaiChars >= 100 && summary.length >= 200;
+            results.push({
+                name: 'Summary Length',
+                passed: summaryPassed,
+                details: `Thai chars: ${summaryThaiChars} (ต้อง ≥100), Length: ${summary.length} (ต้อง ≥200)`
+            });
+
+            // Test 3: Actions Structure
+            const actions = response.actions || [];
+            const actionsPassed = actions.length >= 3;
+            results.push({
+                name: 'Actionable Steps',
+                passed: actionsPassed,
+                details: `มี ${actions.length} ขั้นตอน (ต้อง ≥3)`
+            });
+
+            // Test 4: Depth Indicators
+            const fullText = JSON.stringify(response);
+            const depthIndicators = ['เพราะว่า', 'เนื่องจาก', 'ซึ่งหมายความว่า', 'ดังนั้น'];
+            const foundIndicators = depthIndicators.filter(ind => fullText.includes(ind));
+            const depthPassed = foundIndicators.length >= 2;
+            results.push({
+                name: 'Depth Indicators',
+                passed: depthPassed,
+                details: `พบ ${foundIndicators.length} indicators: ${foundIndicators.join(', ')}`
+            });
+
+            // Test 5: Cultural Context
+            const culturalKeywords = ['กรรม', 'สติ', 'ปัญญา', 'เมตตา', 'สมดุล'];
+            const foundCultural = culturalKeywords.filter(kw => fullText.includes(kw));
+            const culturalPassed = foundCultural.length >= 1;
+            results.push({
+                name: 'Thai Cultural Context',
+                passed: culturalPassed,
+                details: `พบ ${foundCultural.length} keywords: ${foundCultural.join(', ')}`
+            });
+
+            const passedCount = results.filter(r => r.passed).length;
+            const totalTests = results.length;
+
+            return { results, passedCount, totalTests };
+        }
+
+        function formatResults(testResults, aiResponse) {
+            const { results, passedCount, totalTests } = testResults;
+            
+            let output = '═'.repeat(60) + '\n';
+            output += 'AI ENHANCEMENT TEST RESULTS\n';
+            output += '═'.repeat(60) + '\n\n';
+
+            results.forEach((result, index) => {
+                const icon = result.passed ? '✅' : '❌';
+                output += `${index + 1}. ${icon} ${result.name}\n`;
+                output += `   ${result.details}\n\n`;
+            });
+
+            output += '═'.repeat(60) + '\n';
+            output += `OVERALL: ${passedCount}/${totalTests} tests passed (${Math.round(passedCount/totalTests*100)}%)\n\n`;
+
+            if (passedCount === totalTests) {
+                output += '✅ AI IS USING ENHANCED PROMPTS AND CULTURAL CONTEXT\n';
+            } else if (passedCount >= totalTests * 0.7) {
+                output += `⚠️  AI IS PARTIALLY USING ENHANCEMENTS\n`;
+            } else {
+                output += '❌ AI IS NOT USING ENHANCED PROMPTS\n';
+            }
+            output += '═'.repeat(60) + '\n\n';
+
+            // Show sample of response
+            output += '📋 SAMPLE RESPONSE:\n';
+            output += '─'.repeat(60) + '\n';
+            output += `Summary: ${aiResponse.summary?.substring(0, 200)}...\n\n`;
+            
+            if (aiResponse.deeperInsight) {
+                output += `Deeper Insight: ${aiResponse.deeperInsight}\n\n`;
+            }
+
+            if (aiResponse.cards?.[0]) {
+                const card = aiResponse.cards[0];
+                output += `First Card:\n`;
+                output += `  - Position: ${card.position}\n`;
+                output += `  - Card: ${card.card}\n`;
+                if (card.psychologicalLayer) {
+                    output += `  - Psychological: ${card.psychologicalLayer.substring(0, 100)}...\n`;
+                }
+                if (card.energyPattern) {
+                    output += `  - Energy: ${card.energyPattern.substring(0, 100)}...\n`;
+                }
+            }
+
+            return output;
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+    </script>
+</body>
+</html>

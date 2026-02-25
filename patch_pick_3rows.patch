@@ -1,0 +1,66 @@
+From 25ef9fa1d9731f02f10c40d1c2cb24691db43849 Mon Sep 17 00:00:00 2001
+From: Jxvrzy <jxvrzy@users.noreply.github.com>
+Date: Fri, 13 Feb 2026 12:31:35 +0700
+Subject: [PATCH] ui(pick): fan deck into 3 overlapped rows
+
+---
+ src/app/tarot/pick/PickClient.tsx | 23 +++++++++++++++++------
+ 1 file changed, 17 insertions(+), 6 deletions(-)
+
+diff --git a/src/app/tarot/pick/PickClient.tsx b/src/app/tarot/pick/PickClient.tsx
+index f56d412..6a5aa48 100644
+--- a/src/app/tarot/pick/PickClient.tsx
++++ b/src/app/tarot/pick/PickClient.tsx
+@@ -22,8 +22,12 @@ export default function PickClient() {
+   const [selected, setSelected] = useState<string[]>([]);
+   const [question, setQuestion] = useState("");
+   const canSelectMore = selected.length < count;
+-  const splitIndex = Math.ceil(shuffled.length / 2);
+-  const deckRows = [shuffled.slice(0, splitIndex), shuffled.slice(splitIndex)];
++  const chunkSize = Math.ceil(shuffled.length / 3);
++  const deckRows = [
++    shuffled.slice(0, chunkSize),
++    shuffled.slice(chunkSize, chunkSize * 2),
++    shuffled.slice(chunkSize * 2),
++  ];
+ 
+   useEffect(() => {
+     trackEvent("reading_start", { vertical: "tarot", step: "pick_view", count });
+@@ -89,13 +93,18 @@ export default function PickClient() {
+         </div>
+ 
+         <div className="overflow-x-auto pb-3">
+-          <div className="min-w-max space-y-3 px-3 py-2">
++          <div className="min-w-max space-y-5 px-3 py-3">
+             {deckRows.map((row, rowIndex) => (
+-              <div key={rowIndex} className="flex items-end">
++              <div key={rowIndex} className="flex items-end pl-2">
+                 {row.map((card, index) => {
+                   const pickedIndex = selected.findIndex((token) => token.startsWith(`${card.id}.`));
+                   const isPicked = pickedIndex >= 0;
+ 
++                  // 3-row spread: slight fan per row + mild per-card offset.
++                  const overlap = 34;
++                  const baseRotate = rowIndex === 0 ? -3 : rowIndex === 1 ? 0 : 3;
++                  const rotate = baseRotate + ((index % 7) - 3) * 0.6;
++
+                   return (
+                     <button
+                       key={card.id}
+@@ -103,9 +112,11 @@ export default function PickClient() {
+                       disabled={!canSelectMore && !isPicked}
+                       onClick={() => onSelect(card.id)}
+                       style={{
+-                        marginLeft: index === 0 ? 0 : -38,
++                        marginLeft: index === 0 ? 0 : -overlap,
+                         zIndex: isPicked ? 200 + pickedIndex : index,
+-                        transform: isPicked ? "translateY(-10px)" : "translateY(0px)",
++                        transform: isPicked
++                          ? `translateY(-10px) rotate(${baseRotate}deg)`
++                          : `rotate(${rotate}deg)`,
+                       }}
+                       className={`group relative h-[154px] w-[100px] shrink-0 overflow-hidden rounded-xl border shadow-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                         isPicked
+-- 
+2.43.0
+

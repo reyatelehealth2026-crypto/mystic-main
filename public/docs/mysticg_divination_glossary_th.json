@@ -1,0 +1,37 @@
+{
+  "version": "1.0",
+  "locale": "th-TH",
+  "terms": [
+    {"term": "ผูกดวง", "domain": "thai_astrology", "definition": "คำนวณดวงกำเนิดจากวัน/เวลา/สถานที่เกิด"},
+    {"term": "ลัคนา", "domain": "thai_astrology", "definition": "จุดตั้งต้นของดวง (ascendant) ใช้แบ่งเรือน/ภพ"},
+    {"term": "เรือน", "domain": "thai_astrology", "definition": "พื้นที่ชีวิต/เรื่องที่พิจารณาในดวง"},
+    {"term": "ภพ", "domain": "thai_astrology", "definition": "คำเรียกอีกแบบของเรือน"},
+    {"term": "ดาว", "domain": "thai_astrology", "definition": "ดาว/เคราะห์ที่ใช้ตีความในดวง"},
+    {"term": "ดวงจร", "domain": "thai_astrology", "definition": "การดูแนวโน้มตามเวลา/จังหวะ"},
+    {"term": "ฤกษ์ยาม", "domain": "thai_astrology", "definition": "การเลือกวัน/เวลาเหมาะกับกิจกรรม"},
+
+    {"term": "ไพ่ยิปซี", "domain": "tarot", "definition": "คำเรียกในไทยที่มักหมายถึงไพ่ทาโรต์/การดูไพ่"},
+    {"term": "ไพ่ทาโรต์", "domain": "tarot", "definition": "ไพ่ทำนายแบบ Tarot"},
+    {"term": "เมเจอร์อาร์คานา", "domain": "tarot", "definition": "ไพ่ชุดใหญ่ 22 ใบ (อาร์คีไทป์หลัก)"},
+    {"term": "ไมเนอร์อาร์คานา", "domain": "tarot", "definition": "ไพ่ชุดย่อย 56 ใบ"},
+    {"term": "สเปรด", "domain": "tarot", "definition": "ผังวางไพ่/ตำแหน่งคำตอบ"},
+
+    {"term": "เลขศาสตร์", "domain": "numerology", "definition": "การตีความความหมายจากตัวเลข (ชื่อ/เบอร์/เลขอื่นๆ)"},
+    {"term": "เบอร์มงคล", "domain": "numerology", "definition": "เลขศาสตร์จากเบอร์โทร (นิยมมากในไทย)"},
+    {"term": "ผลรวม", "domain": "numerology", "definition": "การบวกเลขเพื่อหาค่าตีความ (แล้วแต่สำนัก)"},
+
+    {"term": "ฮวงจุ้ย", "domain": "feng_shui", "definition": "ศาสตร์ความเชื่อการจัดสภาพแวดล้อม/ทิศ/การไหลเวียนเพื่อความเป็นมงคล"},
+    {"term": "ชี่", "domain": "feng_shui", "definition": "พลัง/การไหลเวียน (氣) ตามความเชื่อจีน"},
+    {"term": "ฮวงซุ้ย", "domain": "feng_shui", "definition": "ฮวงจุ้ยสุสาน/ที่ฝัง"},
+
+    {"term": "ลายมือ", "domain": "palmistry", "definition": "การอ่านเส้น/ลักษณะฝ่ามือ"},
+    {"term": "เส้นชีวิต", "domain": "palmistry", "definition": "เส้นหลักที่ใช้ตีความตามความเชื่อ"},
+    {"term": "เส้นสมอง", "domain": "palmistry", "definition": "เส้นหลักที่ใช้ตีความตามความเชื่อ"},
+    {"term": "เส้นหัวใจ", "domain": "palmistry", "definition": "เส้นหลักที่ใช้ตีความตามความเชื่อ"},
+
+    {"term": "โหงวเฮ้ง", "domain": "physiognomy", "definition": "ความเชื่อการอ่านใบหน้า/ลักษณะ"},
+    {"term": "นักษัตร", "domain": "chinese_zodiac", "definition": "ปีนักษัตรจีน 12 สัตว์"},
+
+    {"term": "ปฏิทินจันทรคติไทย", "domain": "lunar_calendar", "definition": "ระบบปฏิทินตามจันทร์ในบริบทไทย (ขึ้น/แรม/เดือน)"}
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "additionalDirectories": [
+      "C:\\Users\\Administrator\\Desktop\\mystic-v2\\scripts",
+      "C:\\Users\\Administrator\\Desktop\\mystic-v2",
+      "C:\\Users\\Administrator\\Desktop\\mystic-v2\\src\\app\\admin\\packages"
+    ]
+  }
+}
