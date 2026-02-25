@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   Sparkles, Download, Share2, ChevronLeft, ChevronRight,
   Loader2, Lock, ImageIcon, Calendar, Palette, Star, Hash, Wand2, Type,
+  Coins, Briefcase, Heart, Clover, Activity,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme/ThemeProvider";
 import { cn } from "@/lib/cn";
@@ -45,12 +46,12 @@ function saveTodayWallpaper(data: SavedWallpaper) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
-const TOPICS: { id: WallpaperTopic; label: string; emoji: string }[] = [
-  { id: "finance", label: "การเงิน", emoji: "�" },
-  { id: "career", label: "การงาน", emoji: "�" },
-  { id: "love", label: "ความรัก", emoji: "💕" },
-  { id: "luck", label: "โชคลาภ", emoji: "🍀" },
-  { id: "health", label: "สุขภาพ", emoji: "�" },
+const TOPICS: { id: WallpaperTopic; label: string; sublabel: string }[] = [
+  { id: "finance", label: "การเงิน", sublabel: "Pentacles" },
+  { id: "career", label: "การงาน", sublabel: "Wands" },
+  { id: "love", label: "ความรัก", sublabel: "Cups" },
+  { id: "luck", label: "โชคลาภ", sublabel: "Arcana" },
+  { id: "health", label: "สุขภาพ", sublabel: "All Suits" },
 ];
 
 const STYLES = [
@@ -499,21 +500,35 @@ export default function WallpaperPage() {
             </div>
 
             <div className="grid grid-cols-3 gap-2">
-              {TOPICS.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => handleTopicSelect(t.id)}
-                  className={cn(
-                    "p-3 rounded-2xl border text-center transition-all active:scale-[0.97]",
-                    selectedTopic === t.id && topicSymbols ? selectedCls : unselectedCls
-                  )}
-                >
-                  <span className="text-2xl">{t.emoji}</span>
-                  <p className={cn("text-xs font-medium mt-1", isPastel || isRainbow ? "text-white" : "text-gray-700")}>
-                    {t.label}
-                  </p>
-                </button>
-              ))}
+              {TOPICS.map((t) => {
+                const isActive = selectedTopic === t.id && !!topicSymbols;
+                const iconCls = cn("w-5 h-5 mx-auto mb-1", isActive
+                  ? isPastel || isRainbow ? "text-white" : "text-violet-600"
+                  : isPastel || isRainbow ? "text-white/70" : "text-gray-400"
+                );
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => handleTopicSelect(t.id)}
+                    className={cn(
+                      "p-3 rounded-2xl border text-center transition-all active:scale-[0.97]",
+                      isActive ? selectedCls : unselectedCls
+                    )}
+                  >
+                    {t.id === "finance" && <Coins className={iconCls} />}
+                    {t.id === "career" && <Briefcase className={iconCls} />}
+                    {t.id === "love" && <Heart className={iconCls} />}
+                    {t.id === "luck" && <Clover className={iconCls} />}
+                    {t.id === "health" && <Activity className={iconCls} />}
+                    <p className={cn("text-xs font-medium", isPastel || isRainbow ? "text-white" : "text-gray-700")}>
+                      {t.label}
+                    </p>
+                    <p className={cn("text-[10px] opacity-60", isPastel || isRainbow ? "text-white" : "text-gray-500")}>
+                      {t.sublabel}
+                    </p>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Lucky numbers */}
