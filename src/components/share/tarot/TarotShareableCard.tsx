@@ -145,12 +145,14 @@ export function TarotShareableCard({ data, onShare, className }: TarotShareableC
                 </div>
               )}
               
-              {/* Orientation badge */}
+              {/* Orientation badge - REMOVED as requested */}
+              {/*
               <div className="absolute top-2 right-2 bg-white/95 backdrop-blur px-2 py-1 rounded-full shadow-md">
                 <span className="text-violet-600 text-[10px] font-bold">
                   {card.orientation === "upright" ? "☀️" : "🌙"}
                 </span>
               </div>
+              */}
             </div>
           ))}
         </div>

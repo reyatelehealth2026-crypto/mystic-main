@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>คู่มือการใช้งาน Cursor IDE แบบเจาะลึก</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Chosen Palette: Warm Neutrals & Tech Accent -->
+    <!-- Application Structure Plan: 
+         1. Hero Section: Overview and Goal.
+         2. Interactive Dashboard (The Core): A grid of cards categorized by Skill Level (Level 1, 2, 3). Users can filter these.
+         3. Workflow Simulator: An interactive tool where users select a task (e.g., "Refactor", "New Feature") and get a recommended workflow based on the guide.
+         4. Analytics View: A visual breakdown of tool usage recommendations using Chart.js.
+         5. Pro-Tips Rotator: A dynamic section for best practices.
+         Why this structure? The guide is hierarchical (Levels), so a filtered grid is best for exploration. The "Workflow Simulator" turns static advice into actionable steps.
+    -->
+    
+    <!-- Visualization & Content Choices:
+         1. Feature Cards: Text + Unicode Icons -> Goal: Inform & Organize -> JS Filter -> Clean and readable.
+         2. Workflow Simulator: Dropdown + Dynamic Text -> Goal: Change/Guide -> JS Update -> Simulates real-world decision making.
+         3. Usage Distribution Chart: Chart.js Doughnut -> Goal: Compare -> Visualizes the balance of tools needed (Basic vs Advanced).
+         4. NO SVG/Mermaid: Using Chart.js for data and standard HTML/CSS for layout.
+    -->
+    
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #fcfbf9; /* Warm neutral background */
+            color: #2d3748;
+        }
+        
+        /* Chart Container Styling - Mandatory Requirements */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px; /* Constrained max width */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px; /* Base height */
+            max-height: 350px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .level-badge-1 { background-color: #d1fae5; color: #065f46; } /* Green */
+        .level-badge-2 { background-color: #fef3c7; color: #92400e; } /* Yellow/Orange */
+        .level-badge-3 { background-color: #fee2e2; color: #991b1b; } /* Red */
+        
+        .code-block {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: monospace;
+            overflow-x: auto;
+            margin-top: 0.5rem;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <span class="text-2xl font-bold text-indigo-600 tracking-tight">Cursor Master</span>
+                </div>
+                <div class="text-sm text-gray-500 hidden sm:block">
+                    Interactive Guide (Basic to Advanced)
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-12">
+
+        <!-- Hero Section -->
+        <section class="text-center space-y-4 max-w-3xl mx-auto">
+            <h1 class="text-4xl font-extrabold text-gray-900 sm:text-5xl">
+                ยกระดับการเขียนโค้ดด้วย <span class="text-indigo-600">Cursor IDE</span>
+            </h1>
+            <p class="text-xl text-gray-600 leading-relaxed">
+                คู่มือฉบับสมบูรณ์สำหรับ Developer เพื่อดึงพลังของ AI มาช่วยเขียนโค้ดได้อย่างเต็มประสิทธิภาพ ตั้งแต่ระดับพื้นฐานไปจนถึงระดับ DevOps
+            </p>
+        </section>
+
+        <!-- Stats & Overview Section -->
+        <!-- Context: Provides a visual breakdown of the guide's content distribution to set expectations. -->
+        <section class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div class="space-y-4">
+                    <h2 class="text-2xl font-bold text-gray-800">ภาพรวมเนื้อหา (Content Breakdown)</h2>
+                    <p class="text-gray-600">
+                        ส่วนนี้แสดงสัดส่วนความสำคัญของเครื่องมือในแต่ละระดับ เพื่อให้คุณเห็นภาพรวมว่าการใช้งาน Cursor ครอบคลุมส่วนงานใดบ้าง ตั้งแต่การช่วยพิมพ์งานรายวันไปจนถึงการจัดการระบบอัตโนมัติ
+                    </p>
+                    <ul class="space-y-2">
+                        <li class="flex items-center space-x-2">
+                            <span class="w-3 h-3 rounded-full bg-green-400"></span>
+                            <span class="text-gray-700"><strong>Level 1 (Basic):</strong> เน้นความเร็วและ Flow ในการทำงาน</span>
+                        </li>
+                        <li class="flex items-center space-x-2">
+                            <span class="w-3 h-3 rounded-full bg-yellow-400"></span>
+                            <span class="text-gray-700"><strong>Level 2 (Intermediate):</strong> เน้นบริบทและโครงสร้างโค้ด</span>
+                        </li>
+                        <li class="flex items-center space-x-2">
+                            <span class="w-3 h-3 rounded-full bg-red-400"></span>
+                            <span class="text-gray-700"><strong>Level 3 (Advanced):</strong> เน้น Automation และการเชื่อมต่อภายนอก</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="flex justify-center flex-col items-center w-full">
+                    <div class="chart-container">
+                        <canvas id="contentChart"></canvas>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2 text-center">สัดส่วนความสำคัญของฟีเจอร์ในคู่มือ</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tool Explorer Section -->
+        <!-- Context: The main interactive library. Users can filter by skill level to find relevant tools. -->
+        <section id="explorer" class="space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-center border-b border-gray-200 pb-4">
+                <div class="mb-4 md:mb-0">
+                    <h2 class="text-2xl font-bold text-gray-800">สำรวจเครื่องมือ (Tool Explorer)</h2>
+                    <p class="text-gray-500 text-sm">เลือกดูเครื่องมือตามระดับความเชี่ยวชาญของคุณ</p>
+                </div>
+                
+                <!-- Filters -->
+                <div class="flex space-x-2 bg-gray-100 p-1 rounded-lg">
+                    <button onclick="filterContent('all')" id="btn-all" class="filter-btn px-4 py-2 rounded-md text-sm font-medium bg-white shadow-sm text-gray-800 transition-all">ทั้งหมด</button>
+                    <button onclick="filterContent('level1')" id="btn-level1" class="filter-btn px-4 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-800 transition-all">Level 1 🟢</button>
+                    <button onclick="filterContent('level2')" id="btn-level2" class="filter-btn px-4 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-800 transition-all">Level 2 🟡</button>
+                    <button onclick="filterContent('level3')" id="btn-level3" class="filter-btn px-4 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-800 transition-all">Level 3 🔴</button>
+                </div>
+            </div>
+
+            <!-- Content Grid -->
+            <div id="content-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Cards will be injected here by JS -->
+            </div>
+        </section>
+
+        <!-- Workflow Simulator -->
+        <!-- Context: Translates knowledge into action. Users pick a scenario, and the app prescribes the best Cursor workflow. -->
+        <section class="bg-indigo-50 rounded-2xl p-6 sm:p-10 border border-indigo-100">
+            <div class="max-w-4xl mx-auto space-y-6">
+                <div class="text-center space-y-2">
+                    <h2 class="text-2xl font-bold text-indigo-900">จำลองสถานการณ์ (Workflow Simulator)</h2>
+                    <p class="text-indigo-700">เลือกงานที่คุณกำลังทำอยู่ แล้วระบบจะแนะนำ Workflow ที่ดีที่สุดจากคู่มือ</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm">
+                    <label for="task-select" class="block text-sm font-medium text-gray-700 mb-2">ฉันกำลังจะทำอะไร?</label>
+                    <select id="task-select" onchange="updateWorkflow()" class="block w-full pl-3 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md border">
+                        <option value="default" disabled selected>-- เลือกงานของคุณ --</option>
+                        <option value="refactor">Refactor โค้ดหรือฟังก์ชันเก่า</option>
+                        <option value="new_feature">เริ่มเขียน Feature ใหม่ตั้งแต่ศูนย์</option>
+                        <option value="fix_bug">แก้บั๊กในระบบที่ซับซ้อน</option>
+                        <option value="design_ui">ทำหน้า UI จาก Mockup</option>
+                        <option value="review_pr">Review PR ของทีม</option>
+                        <option value="large_update">อัปเดต Dependency ทั้งโปรเจกต์</option>
+                    </select>
+                </div>
+
+                <!-- Result Display -->
+                <div id="workflow-result" class="hidden bg-white p-6 rounded-xl shadow-sm border-l-4 border-indigo-500 transition-all duration-300">
+                    <h3 class="text-lg font-bold text-gray-900 mb-2" id="wf-title"></h3>
+                    <div class="space-y-4" id="wf-steps"></div>
+                    <div class="mt-4 p-3 bg-gray-50 rounded text-sm text-gray-600 italic" id="wf-tip"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pro-Tips Section -->
+        <!-- Context: Quick, digestible tips to maximize efficiency. -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="space-y-4">
+                <h2 class="text-2xl font-bold text-gray-800">Pro-Tips & Best Practices 💡</h2>
+                <p class="text-gray-600">เทคนิคจากเพื่อนร่วมทีมที่จะช่วยให้คุณใช้งาน Cursor ได้อย่างมือโปร</p>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-orange-100 h-full">
+                    <div id="tip-container" class="space-y-4">
+                        <h3 class="text-lg font-semibold text-orange-600" id="tip-title">Loading...</h3>
+                        <p class="text-gray-700" id="tip-desc">Loading...</p>
+                        <div class="flex justify-between items-center pt-4">
+                            <button onclick="prevTip()" class="text-gray-400 hover:text-gray-600 text-2xl">❮</button>
+                            <span class="text-xs text-gray-400" id="tip-counter">1/4</span>
+                            <button onclick="nextTip()" class="text-gray-400 hover:text-gray-600 text-2xl">❯</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visualization: Efficiency Gain (Conceptual) -->
+            <div class="space-y-4">
+                 <h2 class="text-2xl font-bold text-gray-800">ผลลัพธ์ที่คาดหวัง</h2>
+                 <p class="text-gray-600">การประยุกต์ใช้เครื่องมือตามระดับจะช่วยลดเวลาการทำงานในด้านต่างๆ</p>
+                 <div class="bg-white p-6 rounded-xl shadow-sm border border-blue-100 flex justify-center items-center">
+                    <div class="chart-container">
+                        <canvas id="efficiencyChart"></canvas>
+                    </div>
+                 </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p class="mb-2">Cursor Master Guide - Based on the provided Source Report.</p>
+            <p class="text-gray-400 text-sm">Generated by AI • 2024</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- Data Source ---
+        const guideData = [
+            {
+                id: 1,
+                title: "Tab (Autocomplete)",
+                level: "level1",
+                levelName: "Level 1: Basic",
+                icon: "⚡",
+                desc: "รวดเร็วที่สุด เหมาะกับงานพิมพ์โค้ดทีละบรรทัด หรือแก้ไขจุดเล็กๆ ในไฟล์เดียว",
+                detail: "ใช้ Tab เพื่อเติมโค้ดอัตโนมัติ ช่วยลดเวลาการพิมพ์งานจุกจิกประจำวันได้ดีเยี่ยม",
+                badgeClass: "level-badge-1"
+            },
+            {
+                id: 2,
+                title: "Inline Edit (Cmd+K)",
+                level: "level1",
+                levelName: "Level 1: Basic",
+                icon: "✏️",
+                desc: "คลุมดำโค้ดเฉพาะจุดแล้วสั่งแก้ เหมาะกับการ Refactor โฟกัสแค่ฟังก์ชันนั้นๆ",
+                detail: "กด Cmd/Ctrl + K เพื่อเรียกหน้าต่างคำสั่ง แก้ไขโค้ดเฉพาะส่วนโดยไม่ต้องคุยกับ Chat ใหญ่",
+                badgeClass: "level-badge-1"
+            },
+            {
+                id: 3,
+                title: "Chat (Cmd+L)",
+                level: "level1",
+                levelName: "Level 1: Basic",
+                icon: "💬",
+                desc: "เหมาะกับงานใหญ่ที่กระทบหลายไฟล์ ให้ AI ช่วยวิเคราะห์ หรือเริ่มฟีเจอร์ใหม่",
+                detail: "ใช้ Chat Panel ด้านข้างเพื่อปรึกษา AI เกี่ยวกับ Logic ที่ซับซ้อน หรือขอให้วิเคราะห์ทั้งโปรเจกต์",
+                badgeClass: "level-badge-1"
+            },
+            {
+                id: 4,
+                title: "Custom Commands",
+                level: "level1",
+                levelName: "Level 1: Basic",
+                icon: "🛠️",
+                desc: "สร้างทางลัดคำสั่งส่วนตัว เช่น /pr-review ไว้ใน .cursor/commands/",
+                detail: "สร้างไฟล์ .md ในโฟลเดอร์ .cursor/commands/ เพื่อเก็บ Prompt ที่ใช้บ่อย",
+                code: "# ตัวอย่างไฟล์ pr-review.md\n1. ดูโค้ดที่เปลี่ยนแปลง\n2. สรุป Bullet points\n3. เช็คหาจุดที่อาจเกิดบั๊ก",
+                badgeClass: "level-badge-1"
+            },
+            {
+                id: 5,
+                title: "Mermaid Diagrams",
+                level: "level1",
+                levelName: "Level 1: Basic",
+                icon: "📊",
+                desc: "สั่ง AI สร้าง Flowchart หรือ Sequence Diagram อธิบายระบบ",
+                detail: "ช่วยในการ Onboarding ทีม หรือทำความเข้าใจ Data Flow ที่ซับซ้อน",
+                badgeClass: "level-badge-1"
+            },
+            {
+                id: 6,
+                title: "Project Rules",
+                level: "level2",
+                levelName: "Level 2: Intermediate",
+                icon: "📜",
+                desc: "สอน AI ให้รู้กฎของทีมผ่านไฟล์ .cursorrules",
+                detail: "กำหนด Coding Standard, Tech Stack, และข้อห้ามต่างๆ เพื่อให้ AI เขียนโค้ดได้ตรงใจ",
+                code: "---\nglobs: *.tsx, *.ts\n---\n- ใช้ TypeScript อย่างเคร่งครัด\n- ใช้ Tailwind CSS\n- แยก Logic เป็น Custom Hooks",
+                badgeClass: "level-badge-2"
+            },
+            {
+                id: 7,
+                title: "TDD with Agent",
+                level: "level2",
+                levelName: "Level 2: Intermediate",
+                icon: "✅",
+                desc: "ให้ Agent เขียน Test ก่อน -> รันให้พัง -> เขียนโค้ดแก้ -> Refactor",
+                detail: "กระบวนการ Test-Driven Development โดยใช้ AI ช่วยเขียนทั้ง Test และ Implementation",
+                badgeClass: "level-badge-2"
+            },
+            {
+                id: 8,
+                title: "Design to Code",
+                level: "level2",
+                levelName: "Level 2: Intermediate",
+                icon: "🎨",
+                desc: "แปะภาพ Mockup ให้ AI สร้าง React Component + Tailwind",
+                detail: "ลดเวลาการขึ้นโครง UI โดยการโยนภาพ Figma หรือ Screenshot ลงในแชท",
+                badgeClass: "level-badge-2"
+            },
+            {
+                id: 9,
+                title: "MCP Integration",
+                level: "level3",
+                levelName: "Level 3: Advanced",
+                icon: "🔌",
+                desc: "เชื่อมต่อ AI กับ Database, Figma, Linear หรือ API ภายนอก",
+                detail: "Model Context Protocol ช่วยให้ AI เข้าถึงข้อมูลนอกเหนือจากแค่ไฟล์โค้ด",
+                code: '{\n  "mcpServers": {\n    "my-db": {\n      "command": "node",\n      "args": ["db-server.js"]\n    }\n  }\n}',
+                badgeClass: "level-badge-3"
+            },
+            {
+                id: 10,
+                title: "Cursor CLI",
+                level: "level3",
+                levelName: "Level 3: Advanced",
+                icon: "💻",
+                desc: "สั่งงาน AI ผ่าน Terminal สำหรับงาน Script หรือ CI/CD",
+                detail: "ใช้คำสั่ง `agent` ใน terminal เพื่อสั่งงาน AI โดยไม่ต้องเปิดหน้า Editor",
+                badgeClass: "level-badge-3"
+            },
+            {
+                id: 11,
+                title: "Cloud Agents",
+                level: "level3",
+                levelName: "Level 3: Advanced",
+                icon: "☁️",
+                desc: "ผู้ช่วยเบื้องหลังสำหรับงานถึกๆ นานๆ",
+                detail: "โยนงาน Update Dependency หรือ Refactor ทั้งโปรเจกต์ไปรันบน Cloud",
+                badgeClass: "level-badge-3"
+            }
+        ];
+
+        const workflows = {
+            refactor: {
+                title: "Refactor Legacy Code (ปรับปรุงโค้ดเก่า)",
+                steps: [
+                    "1. **ใช้ Chat (`Cmd+L`)**: ถาม AI เพื่อทำความเข้าใจบริบทโค้ดชุดนี้ก่อน",
+                    "2. **ใช้ Project Rules**: ตรวจสอบว่า `.cursorrules` มีกฎการเขียนโค้ดที่ต้องการแล้ว",
+                    "3. **ใช้ Inline Edit (`Cmd+K`)**: คลุมดำส่วนที่ต้องการแก้ แล้วสั่ง Refactor ตามกฎ",
+                    "4. **ใช้ TDD**: สั่งให้ AI เขียน Test ครอบฟังก์ชันเดิมก่อนแก้ เพื่อป้องกันบั๊ก"
+                ],
+                tip: "Tip: สร้าง Custom Command `/refactor-clean` ที่ระบุ Style Guide ของคุณไว้ใช้ซ้ำ"
+            },
+            new_feature: {
+                title: "New Feature from Scratch (เริ่มฟีเจอร์ใหม่)",
+                steps: [
+                    "1. **Plan Mode**: สั่ง Chat ว่า 'สร้าง Plan สำหรับฟีเจอร์นี้ ถ้ามีอะไรไม่เคลียร์ให้ถาม 3 คำถาม'",
+                    "2. **Design to Code**: ถ้ามีภาพ UI ให้โยนเข้า Chat แล้วสั่งเจนโค้ดโครงร่าง",
+                    "3. **Chat**: ให้ AI สร้างโครงสร้างไฟล์และ Boilerplate",
+                    "4. **Tab**: ใช้ Autocomplete ช่วยเติม Logic รายบรรทัด"
+                ],
+                tip: "Tip: ใช้ Plan Mode เสมอก่อนเริ่มงานใหญ่ เพื่อป้องกัน AI มั่วโค้ด (Hallucination)"
+            },
+            fix_bug: {
+                title: "Fix Complex Bug (แก้บั๊กซับซ้อน)",
+                steps: [
+                    "1. **Mermaid Diagram**: สั่ง Chat ให้วาด Data Flow ของระบบที่มีปัญหา เพื่อหาจุดบกพร่อง",
+                    "2. **Chat**: แปะ Error Log แล้วถามสาเหตุที่เป็นไปได้",
+                    "3. **Inline Edit**: สั่งแก้โค้ดเฉพาะจุดที่พบปัญหา"
+                ],
+                tip: "Tip: ให้ Context เฉพาะไฟล์ที่เกี่ยวข้อง (@filename) อย่าให้ AI เดาทั้งโปรเจกต์"
+            },
+            design_ui: {
+                title: "Implement UI from Mockup (ทำ UI)",
+                steps: [
+                    "1. **Design to Code**: แคปภาพจาก Figma แล้วโยนเข้า Chat",
+                    "2. **Rules**: ตรวจสอบว่า `.cursorrules` บังคับใช้ Tailwind CSS หรือ Library ที่ทีมใช้",
+                    "3. **MCP (Advanced)**: ถ้าตั้งค่า Figma MCP ไว้ สั่งให้ดึง Token สี/Font จาก Figma โดยตรง"
+                ],
+                tip: "Tip: ระบุใน Rules ว่า 'Mobile-first' หรือ 'Responsive' เสมอ"
+            },
+            review_pr: {
+                title: "Code Review / PR",
+                steps: [
+                    "1. **Custom Command**: ใช้คำสั่ง `/pr-review` (ที่สร้างไว้ใน Level 1)",
+                    "2. **Chat**: ให้ AI สรุปความเปลี่ยนแปลงและหา Security issues",
+                    "3. **Inline Edit**: ถ้าเจอจุดแก้เล็กๆ น้อยๆ ใช้ Cmd+K แก้แล้ว Commit ได้เลย"
+                ],
+                tip: "Tip: สร้าง Template ในการ Review ไว้ใน Command เพื่อมาตรฐานเดียวกัน"
+            },
+            large_update: {
+                title: "Massive Updates (งานถึก)",
+                steps: [
+                    "1. **Cloud Agents**: ใช้คำสั่ง `agent -c` ผ่าน CLI",
+                    "2. **Prompt**: สั่ง 'Update dependencies และแก้ breaking changes ทั้งหมด'",
+                    "3. **Wait**: ปิดคอมไปนอน รอ Agent ทำงานเสร็จแล้วค่อยมาตรวจ PR"
+                ],
+                tip: "Tip: เหมาะกับงานที่ใช้เวลานานและกินทรัพยากรเครื่อง"
+            }
+        };
+
+        const proTips = [
+            { title: "Plan ก่อนเสมอ", desc: "ก่อนแก้โค้ดชุดใหญ่ ใช้โหมด Plan หรือสั่ง 'สร้าง Plan ออกมาก่อน' เพื่อป้องกัน AI มั่ว" },
+            { title: "Context ที่ชัดเจน", desc: "ใช้ @ไฟล์ หรือ @โฟลเดอร์ เพื่อระบุขอบเขตงานให้ AI อย่าปล่อยให้เดาทั้งโปรเจกต์" },
+            { title: "Bring Your Own Key", desc: "ตั้งค่า API Key ส่วนตัว (OpenAI/Anthropic) ใน Settings เพื่อความเป็นส่วนตัวสูงสุดและไม่ติด Limit" },
+            { title: "Long-running loops", desc: "สร้าง Hook ให้ AI รันโค้ด > ดู Error > แก้เอง วนไปจนกว่า Test จะผ่าน (สาย Automation)" }
+        ];
+
+        let currentTipIndex = 0;
+
+        // --- Core Functions ---
+
+        function init() {
+            renderGrid(guideData);
+            renderUsageChart();
+            renderEfficiencyChart();
+            updateTipDisplay();
+        }
+
+        function filterContent(filter) {
+            // Update Buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'shadow-sm', 'text-gray-800');
+                btn.classList.add('text-gray-600');
+            });
+            document.getElementById(`btn-${filter}`).classList.add('bg-white', 'shadow-sm', 'text-gray-800');
+            document.getElementById(`btn-${filter}`).classList.remove('text-gray-600');
+
+            // Filter Data
+            const filtered = filter === 'all' ? guideData : guideData.filter(item => item.level === filter);
+            renderGrid(filtered);
+        }
+
+        function renderGrid(data) {
+            const container = document.getElementById('content-grid');
+            container.innerHTML = '';
+            
+            data.forEach(item => {
+                const card = document.createElement('div');
+                card.className = `bg-white rounded-xl shadow-sm border border-gray-100 p-6 card-hover transition-all duration-300 flex flex-col h-full`;
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="text-4xl" role="img" aria-label="icon">${item.icon}</span>
+                        <span class="text-xs px-2 py-1 rounded-full font-semibold ${item.badgeClass}">${item.levelName}</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">${item.title}</h3>
+                    <p class="text-gray-600 text-sm mb-4 flex-grow">${item.desc}</p>
+                    <div class="bg-gray-50 p-3 rounded-lg text-sm text-gray-700 border border-gray-100 mt-auto">
+                        <strong>Detail:</strong> ${item.detail}
+                        ${item.code ? `<div class="code-block text-xs">${escapeHtml(item.code)}</div>` : ''}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function updateWorkflow() {
+            const select = document.getElementById('task-select');
+            const resultDiv = document.getElementById('workflow-result');
+            const key = select.value;
+
+            if (key === 'default') return;
+
+            const data = workflows[key];
+            document.getElementById('wf-title').innerText = data.title;
+            
+            const stepsHtml = data.steps.map(step => {
+                // Formatting bold text manually for simple JS
+                return `<div class="flex items-start space-x-2"><span class="text-indigo-500 mt-1">➜</span><p class="text-gray-700">${step.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</p></div>`
+            }).join('');
+            
+            document.getElementById('wf-steps').innerHTML = stepsHtml;
+            document.getElementById('wf-tip').innerText = data.tip;
+
+            resultDiv.classList.remove('hidden');
+        }
+
+        // Tips Rotator
+        function updateTipDisplay() {
+            const tip = proTips[currentTipIndex];
+            document.getElementById('tip-title').innerText = tip.title;
+            document.getElementById('tip-desc').innerText = tip.desc;
+            document.getElementById('tip-counter').innerText = `${currentTipIndex + 1}/${proTips.length}`;
+        }
+
+        function nextTip() {
+            currentTipIndex = (currentTipIndex + 1) % proTips.length;
+            updateTipDisplay();
+        }
+
+        function prevTip() {
+            currentTipIndex = (currentTipIndex - 1 + proTips.length) % proTips.length;
+            updateTipDisplay();
+        }
+
+        // Utilities
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // --- Charts ---
+
+        function renderUsageChart() {
+            const ctx = document.getElementById('contentChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Basic Skills (Level 1)', 'Structure/Rules (Level 2)', 'Automation/MCP (Level 3)'],
+                    datasets: [{
+                        data: [45, 30, 25], // Estimated weight based on the guide text
+                        backgroundColor: ['#34d399', '#fbbf24', '#f87171'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        function renderEfficiencyChart() {
+            const ctx = document.getElementById('efficiencyChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Coding Speed', 'Bug Reduction', 'Onboarding Time', 'Consistency'],
+                    datasets: [
+                        {
+                            label: 'Without Cursor Guide',
+                            data: [40, 50, 30, 40],
+                            backgroundColor: '#e2e8f0'
+                        },
+                        {
+                            label: 'With Master Guide',
+                            data: [90, 85, 80, 95],
+                            backgroundColor: '#6366f1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, max: 100 }
+                    }
+                }
+            });
+        }
+
+        // Initialize on load
+        window.onload = init;
+
+    </script>
+</body>
+</html>
