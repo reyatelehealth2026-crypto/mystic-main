@@ -16,6 +16,10 @@ import { motion, AnimatePresence } from "framer-motion";
 const allowedCounts = new Set([1, 2, 3, 4, 5, 6, 10]);
 
 const CardBackImage = "/card/backcard.png"; // Use user-provided asset
+const SHUFFLE_DELAY_MS = 80;
+const GRID_FADE_DURATION = 0.1;
+const GRID_STAGGER_DELAY = 0.0015;
+const GRID_CARD_DURATION = 0.12;
 
 export default function PickClient() {
   const searchParams = useSearchParams();
@@ -41,11 +45,11 @@ export default function PickClient() {
   const handleShuffle = () => {
     setIsShuffling(true);
     setSelected([]);
-    // Simulate shuffle time
+    // Keep a tiny beat so the shuffle state is perceptible, but feel instant.
     setTimeout(() => {
         setShuffled(shuffleCards(TAROT_DECK));
         setIsShuffling(false);
-    }, 5000); // 5 seconds
+    }, SHUFFLE_DELAY_MS);
   };
 
   useEffect(() => {
@@ -131,13 +135,14 @@ export default function PickClient() {
 
       {/* ── Grid Wall ── */}
       <div ref={containerRef} className="flex-1 relative w-full h-full pb-32 overflow-hidden bg-black">
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="sync">
           {isShuffling ? (
             <motion.div 
               key="shuffling"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.08 }}
               className="absolute inset-0 flex items-center justify-center"
             >
               <div className="flex flex-col items-center gap-4">
@@ -148,24 +153,24 @@ export default function PickClient() {
                       className="absolute inset-0 border border-white/20 bg-[#2a2a2a] rounded-lg shadow-xl"
                       initial={{ y: 0, rotate: 0 }}
                       animate={{ 
-                        y: [0, -20, 0, 20, 0],
-                        x: [0, i % 2 === 0 ? 15 : -15, 0, i % 2 === 0 ? -15 : 15, 0],
-                        rotate: [0, i * 5, 0, -i * 5, 0],
+                        y: [0, -12, 0, 12, 0],
+                        x: [0, i % 2 === 0 ? 10 : -10, 0, i % 2 === 0 ? -10 : 10, 0],
+                        rotate: [0, i * 3, 0, -i * 3, 0],
                         zIndex: i
                       }}
                       transition={{ 
-                        duration: 1.5, 
+                        duration: 0.55, 
                         repeat: Infinity, 
                         ease: "easeInOut",
-                        delay: i * 0.1 
+                        delay: i * 0.04 
                       }}
                       style={{ backgroundImage: `url(${CardBackImage})`, backgroundSize: 'cover' }}
                     />
                   ))}
                 </div>
                 <motion.p 
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
+                  animate={{ opacity: [0.65, 1, 0.65] }}
+                  transition={{ duration: 0.6, repeat: Infinity }}
                   className="text-xs font-medium tracking-widest uppercase text-white/70 mt-4"
                 >
                   กำลังสับไพ่...
@@ -177,7 +182,7 @@ export default function PickClient() {
               key="grid"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: GRID_FADE_DURATION }}
               className="w-full h-full grid grid-cols-13 gap-[1px] bg-white/10"
             >
               {shuffled.map((card, idx) => {
@@ -188,7 +193,7 @@ export default function PickClient() {
                       <motion.div 
                           key={card.id}
                           onClick={() => onToggleSelect(card.id)}
-                          initial={{ opacity: 0, scale: 0.3, y: 60 }}
+                          initial={{ opacity: 0, scale: 0.92, y: 10 }}
                           animate={{ 
                             opacity: 1, 
                             scale: 1, 
@@ -196,8 +201,8 @@ export default function PickClient() {
                             filter: isDimmed ? "grayscale(100%) opacity(50%)" : "grayscale(0%) opacity(100%)",
                           }}
                           transition={{ 
-                            duration: 0.5, 
-                            delay: idx * 0.05,
+                            duration: GRID_CARD_DURATION, 
+                            delay: idx * GRID_STAGGER_DELAY,
                             ease: [0.22, 1, 0.36, 1]
                           }}
                           whileHover={!isDimmed ? { scale: 1.1, zIndex: 30, filter: "brightness(1.2)" } : {}}
