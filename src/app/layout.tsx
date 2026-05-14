@@ -7,6 +7,7 @@ import { BottomTabBar } from "@/components/nav/BottomTabBar";
 import { ThemeProvider } from "@/lib/theme/ThemeProvider";
 import { MemphisBackground } from "@/components/effects/MemphisBackground";
 import { StoreHydrator } from "@/store/StoreHydrator";
+import { SITE_URL, SITE_NAME } from "@/lib/site";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -20,8 +21,6 @@ const playfair = Playfair_Display({
   weight: ["400", "500", "600", "700"],
 });
 
-const SITE_URL = "https://www.reffortune.com";
-const SITE_NAME = "REFFORTUNE";
 const DEFAULT_TITLE = "REFFORTUNE — ดูดวงออนไลน์ แม่นยำ ครบวงจร | ไพ่ทาโรต์ โหราศาสตร์ นามมติ เลขศาสตร์";
 const DEFAULT_DESCRIPTION =
   "ดูดวงออนไลน์ครบวงจรที่ REFFORTUNE ไพ่ทาโรต์ โหราศาสตร์ไทย นามมติ เลขศาสตร์ ดวงรายวัน ความรัก การงาน การเงิน ฟรี! พร้อม AI วิเคราะห์เชิงลึกแม่นยำ และวอลเปเปอร์เสริมดวง";
@@ -57,7 +56,7 @@ export const metadata: Metadata = {
     "REFFORTUNE",
     "Reffortune",
   ],
-  authors: [{ name: "REFFORTUNE", url: "https://www.reffortune.com" }],
+  authors: [{ name: SITE_NAME, url: SITE_URL }],
   creator: "REFFORTUNE Team",
   publisher: "REFFORTUNE",
   applicationName: "REFFORTUNE",

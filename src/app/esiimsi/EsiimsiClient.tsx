@@ -11,6 +11,15 @@ export default function EsiimsiClient() {
   const [result, setResult] = useState<number | null>(null);
   const [interpretation, setInterpretation] = useState<any>(null);
   const [isReading, setIsReading] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Cancel any in-flight reading request on unmount so the component
+  // doesn't call setState after it's gone (React warns + leak).
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
 
   const startShake = () => {
     if (phase === "shaking") return;
@@ -37,22 +46,29 @@ export default function EsiimsiClient() {
     setIsReading(true);
     setPhase("reading");
 
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
       const res = await fetch("/api/ai/tarot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          cardsToken: `esiimsi_${result}.upright`, 
-          count: 1, 
-          question: `ทำนายเซียมซีหมายเลข ${result} ในโหมด Sacred Chance` 
+        body: JSON.stringify({
+          cardsToken: `esiimsi_${result}.upright`,
+          count: 1,
+          question: `ทำนายเซียมซีหมายเลข ${result} ในโหมด Sacred Chance`
         }),
+        signal: controller.signal,
       });
       const data = await res.json();
       if (data.ok) setInterpretation(data.ai);
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       console.error("AI Error:", err);
     } finally {
-      setIsReading(false);
+      // Only clear loading state if this request wasn't superseded.
+      if (abortRef.current === controller) setIsReading(false);
     }
   };
 
