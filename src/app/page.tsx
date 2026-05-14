@@ -311,6 +311,26 @@ export default function Home() {
               </div>
             </Link>
           )}
+
+          <Link href="/lucky-numbers" className="col-span-2">
+            <div className={cn(
+              "p-4 rounded-2xl border transition-all flex items-center justify-between",
+              isPastel
+                ? "bg-indigo-500/20 backdrop-blur border-indigo-400/30"
+                : isRainbow
+                  ? "bg-[#1a1a2e]/80 border-[rgba(0,255,255,0.25)]"
+                  : "bg-indigo-50 border-indigo-100"
+            )}>
+              <div>
+                <div className={cn("flex items-center gap-2 mb-1", isPastel ? "text-indigo-100" : isRainbow ? "text-white" : "text-indigo-600")}>
+                  <span className="text-base">🔢</span>
+                  <span className="text-xs font-medium">ไพ่เลขมงคล</span>
+                </div>
+                <p className={cn("text-xs", isPastel ? "text-indigo-200/70" : isRainbow ? "text-white/60" : "text-indigo-500/70")}>หยิบ 2 หรือ 4 ใบจากครึ่งวงกลม</p>
+              </div>
+              <ChevronRight className={cn("w-4 h-4", isPastel ? "text-indigo-200/50" : isRainbow ? "text-white/40" : "text-indigo-300")} />
+            </div>
+          </Link>
         </div>
       </section>
 
