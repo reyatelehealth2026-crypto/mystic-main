@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Sparkles, RefreshCw, Share2, X, Coins, Briefcase, Heart, Clover, Leaf } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "@/lib/theme/ThemeProvider";
@@ -320,16 +321,15 @@ export default function LuckyNumbersPage() {
                 {baseline.cards.map((c) => (
                   <div
                     key={c.index}
-                    className={cn(
-                      "flex h-14 w-12 items-center justify-center rounded-xl border text-xl font-bold",
-                      isRainbow
-                        ? "border-[rgba(0,255,255,0.4)] bg-[#0f0f1a] text-[#00ffff]"
-                        : isPastel
-                        ? "border-white/40 bg-white/30 text-white"
-                        : "border-violet-200 bg-violet-50 text-violet-700",
-                    )}
+                    className="relative h-20 w-14 overflow-hidden rounded-lg border border-white/20 shadow"
                   >
-                    {c.digit}
+                    <Image
+                      src={`/lucky-numbers/${c.digit}.png`}
+                      alt={`ไพ่เลข ${c.digit}`}
+                      fill
+                      sizes="56px"
+                      className="object-cover"
+                    />
                   </div>
                 ))}
               </div>
@@ -458,7 +458,7 @@ export default function LuckyNumbersPage() {
                       const flipped = i < revealedCount;
                       return (
                         <div key={card.index} className="flex flex-col items-center gap-2">
-                          <div className="relative h-32 w-20 [perspective:800px]">
+                          <div className="relative h-40 w-24 [perspective:800px] sm:h-48 sm:w-28">
                             <motion.div
                               className="relative h-full w-full"
                               initial={false}
@@ -467,16 +467,25 @@ export default function LuckyNumbersPage() {
                               style={{ transformStyle: "preserve-3d" }}
                             >
                               {/* Back */}
-                              <div
-                                className="absolute inset-0 flex items-center justify-center rounded-xl border border-white/15 bg-gradient-to-br from-[#1a1a2e] to-[#3b0764] [backface-visibility:hidden]"
-                              >
-                                <Sparkles className="h-6 w-6 text-white/40" />
+                              <div className="absolute inset-0 overflow-hidden rounded-xl border border-white/15 shadow-lg [backface-visibility:hidden]">
+                                <Image
+                                  src="/lucky-numbers/back.png"
+                                  alt="ไพ่หลังลายมงคล"
+                                  fill
+                                  sizes="(min-width: 640px) 112px, 96px"
+                                  className="object-cover"
+                                  priority={i < 3}
+                                />
                               </div>
                               {/* Front */}
-                              <div
-                                className="absolute inset-0 flex items-center justify-center rounded-xl border border-white/30 bg-gradient-to-br from-[#f472b6]/30 to-[#a78bfa]/30 text-4xl font-bold [transform:rotateY(180deg)] [backface-visibility:hidden]"
-                              >
-                                {card.digit}
+                              <div className="absolute inset-0 overflow-hidden rounded-xl border border-white/30 shadow-lg [transform:rotateY(180deg)] [backface-visibility:hidden]">
+                                <Image
+                                  src={`/lucky-numbers/${card.digit}.png`}
+                                  alt={`ไพ่เลข ${card.digit}`}
+                                  fill
+                                  sizes="(min-width: 640px) 112px, 96px"
+                                  className="object-cover"
+                                />
                               </div>
                             </motion.div>
                           </div>
