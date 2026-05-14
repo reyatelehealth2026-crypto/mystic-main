@@ -67,14 +67,25 @@ function buildChineseZodiacPrompt(request: ChineseZodiacAIRequest): string {
 export async function POST(req: Request) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: "missing_gemini_api_key" }, { status: 400 });
-    }
 
     const body = (await req.json()) as ChineseZodiacAIRequest;
 
     if (!body.animal || !body.element || !body.period || !body.baseline) {
       return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+    }
+
+    if (!apiKey) {
+      return NextResponse.json({
+        ok: true,
+        fallback: true,
+        reason: "missing_gemini_api_key",
+        ai: {
+          summary: body.baseline.advice,
+          enhancedFortune: body.baseline.fortune,
+          advice: body.baseline.advice,
+          culturalInsight: "ขออภัย ระบบยังไม่พร้อม สรุปจากความรู้พื้นฐานให้ก่อน",
+        },
+      });
     }
 
     const rag = retrieveRag({

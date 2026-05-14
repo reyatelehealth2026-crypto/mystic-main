@@ -122,15 +122,25 @@ function validateResponse(parsed: unknown): parsed is HoroscopeAIResponse {
 export async function POST(req: Request) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: "missing_gemini_api_key" }, { status: 400 });
-    }
 
     const body = (await req.json()) as HoroscopeAIRequest;
 
     // Validate input
     if (!body.zodiacSign || !body.period || !body.baseline) {
       return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+    }
+
+    if (!apiKey) {
+      return NextResponse.json({
+        ok: true,
+        fallback: true,
+        reason: "missing_gemini_api_key",
+        ai: {
+          summary: body.baseline.advice,
+          enhancedAspects: body.baseline.aspects,
+          advice: body.baseline.advice,
+        },
+      });
     }
 
     // --- RAG (local-file prototype) ---

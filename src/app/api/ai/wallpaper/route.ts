@@ -80,14 +80,22 @@ CRITICAL: The image must be a pure artwork filling the ENTIRE canvas. NO phone f
 export async function POST(req: Request) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: "missing_gemini_api_key" }, { status: 400 });
-    }
 
     const body = (await req.json()) as WallpaperRequest;
 
     if (!body.topic || !body.style || !body.selectedColors?.length) {
       return NextResponse.json({ error: "missing_fields" }, { status: 400 });
+    }
+
+    // Wallpaper has no usable text fallback (the entire product IS the image),
+    // so failures return 200 with `ok: false` instead of 4xx/5xx. The consumer
+    // already checks `!data.ok` and shows a friendly retry message.
+    if (!apiKey) {
+      return NextResponse.json({
+        ok: false,
+        error: "gemini_error",
+        reason: "missing_gemini_api_key",
+      });
     }
 
     const prompt = buildPrompt(body);
@@ -110,20 +118,22 @@ export async function POST(req: Request) {
     if (!resp.ok) {
       const text = await resp.text();
       console.error("Gemini wallpaper error:", text);
-      return NextResponse.json(
-        { error: "gemini_error", detail: text },
-        { status: 502 },
-      );
+      return NextResponse.json({
+        ok: false,
+        error: "gemini_error",
+        detail: text,
+      });
     }
 
     const data = await resp.json();
     const parts = data?.candidates?.[0]?.content?.parts;
 
     if (!parts || !Array.isArray(parts)) {
-      return NextResponse.json(
-        { error: "no_image_generated", detail: "No parts in response" },
-        { status: 500 },
-      );
+      return NextResponse.json({
+        ok: false,
+        error: "no_image_generated",
+        detail: "No parts in response",
+      });
     }
 
     // Find the image part
@@ -139,10 +149,11 @@ export async function POST(req: Request) {
     }
 
     if (!imageData) {
-      return NextResponse.json(
-        { error: "no_image_in_response", detail: "Response contained no image data" },
-        { status: 500 },
-      );
+      return NextResponse.json({
+        ok: false,
+        error: "no_image_in_response",
+        detail: "Response contained no image data",
+      });
     }
 
     return NextResponse.json({

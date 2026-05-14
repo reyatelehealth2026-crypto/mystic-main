@@ -9,10 +9,12 @@ function normalizeMarkdown(value: unknown): string {
   return text;
 }
 
+const FALLBACK_MARKDOWN =
+  "#### ภาพรวมพลังงานของเส้นทางนี้\n\nยังไม่สามารถสร้างคำทำนายเชิงลึกได้ในขณะนี้ ลองอีกครั้งในไม่กี่นาทีนะคะ/ครับ";
+
 export async function POST(req: Request) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return NextResponse.json({ error: "missing_gemini_api_key" }, { status: 400 });
 
     const body = (await req.json()) as {
       zodiacCardName?: string;
@@ -32,6 +34,15 @@ export async function POST(req: Request) {
 
     if (!zodiacCardName || !soulCardName) {
       return NextResponse.json({ error: "missing_cards" }, { status: 400 });
+    }
+
+    if (!apiKey) {
+      return NextResponse.json({
+        ok: true,
+        fallback: true,
+        reason: "missing_gemini_api_key",
+        markdown: FALLBACK_MARKDOWN,
+      });
     }
 
     const basePrompt = buildSpiritPathPrompt({
@@ -69,12 +80,21 @@ export async function POST(req: Request) {
       }
     );
 
-    if (!resp.ok) return NextResponse.json({ error: "gemini_request_failed" }, { status: 502 });
+    if (!resp.ok) {
+      const detail = await resp.text();
+      return NextResponse.json({
+        ok: true,
+        fallback: true,
+        reason: "gemini_unavailable",
+        detail,
+        markdown: FALLBACK_MARKDOWN,
+      });
+    }
     const data = await resp.json();
 
-    const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
     let markdown = "";
-    
+
     try {
       const parsed = JSON.parse(raw);
       markdown = [
@@ -85,12 +105,17 @@ export async function POST(req: Request) {
         `#### แผนปฏิบัติ 7 วัน\n\n${(parsed.highlights?.action_plan || []).map((t: string) => `- ${t}`).join('\n')}`,
         `#### คำถามสะท้อนตัวเอง (Journaling)\n\n${parsed.journal_question || ""}`
       ].join('\n\n');
-    } catch (e) {
+    } catch {
       markdown = normalizeMarkdown(raw);
     }
 
     if (!markdown) {
-      return NextResponse.json({ ok: true, markdown: "#### ภาพรวมพลังงานของเส้นทางนี้\n\nยังไม่สามารถสร้างคำทำนายได้ในขณะนี้ ลองใหม่อีกครั้งนะคะ/ครับ" });
+      return NextResponse.json({
+        ok: true,
+        fallback: true,
+        reason: "empty_answer",
+        markdown: FALLBACK_MARKDOWN,
+      });
     }
 
     return NextResponse.json({ ok: true, markdown });

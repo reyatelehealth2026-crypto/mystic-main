@@ -55,9 +55,21 @@ export function setCacheEntry<T>(key: string, data: T, options: CacheOptions): v
   }
 }
 
+// Matches an ISO-8601 instant produced by Date.prototype.toJSON.
+// Anchored + millisecond-optional + Z-only so it does not falsely match
+// arbitrary user-supplied strings.
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
+
+function dateReviver(_key: string, value: unknown): unknown {
+  if (typeof value === "string" && ISO_DATE_RE.test(value)) {
+    return new Date(value);
+  }
+  return value;
+}
+
 /**
  * Get a cache entry if it exists and is valid
- * 
+ *
  * @param key - Cache key (without prefix)
  * @param keyPrefix - Key prefix to use
  * @returns Cached data or null if not found or expired
@@ -66,23 +78,23 @@ export function getCacheEntry<T>(key: string, keyPrefix: string = ''): T | null 
   try {
     const storageKey = `${CACHE_PREFIX}${keyPrefix}_${key}`;
     const item = localStorage.getItem(storageKey);
-    
+
     if (!item) {
       return null;
     }
-    
-    const entry: CacheEntry<T> = JSON.parse(item);
-    
+
+    const entry: CacheEntry<T> = JSON.parse(item, dateReviver);
+
     // Check if expired
     const now = new Date();
-    const expiresAt = new Date(entry.expiresAt);
-    
+    const expiresAt = entry.expiresAt instanceof Date ? entry.expiresAt : new Date(entry.expiresAt);
+
     if (now > expiresAt) {
       // Remove expired entry
       localStorage.removeItem(storageKey);
       return null;
     }
-    
+
     return entry.data;
   } catch (error) {
     // Return null on any error (corrupted data, etc.)

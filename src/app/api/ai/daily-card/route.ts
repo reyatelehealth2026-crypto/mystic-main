@@ -31,7 +31,6 @@ function formatAsCardStructure(parsed: GeminiDailyResponse): string {
 export async function POST(req: Request) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return NextResponse.json({ error: "missing_gemini_api_key" }, { status: 400 });
 
     const body = (await req.json()) as { cardId?: string; orientation?: "upright" | "reversed"; dayKey?: string };
     const card = TAROT_DECK.find(c => c.id === body.cardId);
@@ -39,6 +38,18 @@ export async function POST(req: Request) {
 
     const orientation = body.orientation;
     const dayKey = body.dayKey || new Date().toISOString().split('T')[0];
+
+    if (!apiKey) {
+      return NextResponse.json({
+        ok: true,
+        fallback: true,
+        reason: "missing_gemini_api_key",
+        ai: {
+          summary: cardMeaning({ card, orientation }),
+          cardStructure: "ขออภัย ระบบยังไม่พร้อม สรุปจากความหมายไพ่พื้นฐานให้ก่อน",
+        },
+      });
+    }
 
     // RAG
     const rag = retrieveRag({

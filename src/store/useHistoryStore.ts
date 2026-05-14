@@ -37,6 +37,11 @@ export const useHistoryStore = create<HistoryState>()(
     }),
     {
       name: 'app-history-storage',
+      // Defer rehydration to a client-side effect (see StoreHydrator) so that
+      // server-rendered HTML and first client render both show the default
+      // empty state. Without this, React 19 reports a hydration mismatch on
+      // every page that reads from this store with persisted data.
+      skipHydration: true,
     }
   )
 );

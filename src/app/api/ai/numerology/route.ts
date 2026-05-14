@@ -33,11 +33,21 @@ function formatAsCardStructure(parsed: GeminiNumerologyResponse): string {
 export async function POST(req: Request) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return NextResponse.json({ error: "missing_gemini_api_key" }, { status: 400 });
 
     const body = (await req.json()) as { phone?: string };
     const result = analyzeThaiPhone(body.phone ?? "");
     if (!result) return NextResponse.json({ error: "invalid_phone" }, { status: 400 });
+
+    const fallbackStructure = `คะแนน ${result.score}/99 (${result.tier}) • เลขรวม ${result.total} • เลขราก ${result.root}`;
+
+    if (!apiKey) {
+      return NextResponse.json({
+        ok: true,
+        fallback: true,
+        reason: "missing_gemini_api_key",
+        ai: { summary: result.themes.work, cardStructure: fallbackStructure },
+      });
+    }
 
     // --- RAG (local-file prototype) ---
     const rag = retrieveRag({
@@ -57,8 +67,6 @@ export async function POST(req: Request) {
     });
     
     const prompt = basePrompt + formatRagContext(rag.chunks);
-
-    const fallbackStructure = `คะแนน ${result.score}/99 (${result.tier}) • เลขรวม ${result.total} • เลขราก ${result.root}`;
 
     const model = process.env.GEMINI_MODEL || "gemini-2.0-flash";
     const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {

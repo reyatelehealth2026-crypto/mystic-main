@@ -136,6 +136,12 @@ export const useConfigStore = create<ConfigState>()(
     }),
     {
       name: 'app-config-storage',
+      // Defer rehydration to a client-side effect (see StoreHydrator) so that
+      // server-rendered HTML and first client render both show the default
+      // toggles/packages. Without this, React 19 reports a hydration mismatch
+      // on every page that reads from this store after the user has changed
+      // any config.
+      skipHydration: true,
     }
   )
 );

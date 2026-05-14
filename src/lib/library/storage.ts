@@ -164,7 +164,13 @@ export function loadLibrary(): LibraryStateV1 {
 
 export function saveLibrary(state: LibraryStateV1): void {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(KEY, JSON.stringify(state));
+  try {
+    window.localStorage.setItem(KEY, JSON.stringify(state));
+  } catch (error) {
+    // localStorage can throw QuotaExceededError, SecurityError (private mode),
+    // or fail in restricted environments. Swallow so callers don't crash.
+    console.error("Failed to persist library:", error);
+  }
 }
 
 /**

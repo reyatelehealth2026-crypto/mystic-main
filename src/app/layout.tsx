@@ -6,6 +6,7 @@ import "./globals.css";
 import { BottomTabBar } from "@/components/nav/BottomTabBar";
 import { ThemeProvider } from "@/lib/theme/ThemeProvider";
 import { MemphisBackground } from "@/components/effects/MemphisBackground";
+import { StoreHydrator } from "@/store/StoreHydrator";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -140,25 +141,17 @@ export default function RootLayout({
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <script
-          // Handle dynamic theme override from localStorage
+          // Pre-hydration: set data-theme from the same key ThemeProvider writes
+          // ("reffortune-theme", plain string). Prevents FOUC of the data-theme
+          // attribute on first paint. CSS variables for non-light themes are
+          // still applied by ThemeProvider after mount.
           dangerouslySetInnerHTML={{
             __html: `(() => {
   try {
-    const LS_LANGUAGE = "mf:language";
-    const LS_THEME = "mf:theme";
-
-    // Set defaults only if not exists
-    if (localStorage.getItem(LS_LANGUAGE) == null) {
-      localStorage.setItem(LS_LANGUAGE, JSON.stringify("th"));
-    }
-    if (localStorage.getItem(LS_THEME) == null) {
-      localStorage.setItem(LS_THEME, JSON.stringify("light"));
-    }
-
-    const theme = JSON.parse(localStorage.getItem(LS_THEME) || '"light"');
-    const el = document.documentElement;
-    if (theme === "system") el.removeAttribute("data-theme");
-    else el.setAttribute("data-theme", theme);
+    var VALID = ["light", "pastel", "rainbow", "soft"];
+    var stored = localStorage.getItem("reffortune-theme");
+    var theme = stored && VALID.indexOf(stored) !== -1 ? stored : "light";
+    document.documentElement.setAttribute("data-theme", theme);
   } catch (e) {}
 })();`,
           }}
@@ -166,6 +159,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-bg pb-20 text-fg`}>
         <ThemeProvider>
+          <StoreHydrator />
           <MemphisBackground />
           {children}
           <SpeedInsights />

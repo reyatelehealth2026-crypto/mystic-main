@@ -9,7 +9,8 @@ import { calculateCompatibility } from "@/lib/compatibility/engine";
 import { generateChineseZodiacReading } from "@/lib/chinese-zodiac/engine";
 import { generateSpecializedReading } from "@/lib/horoscope/specialized";
 import { calculateNameNumerology } from "@/lib/name-numerology/engine";
-import { getCacheEntry } from "./cache";
+import { calculateChineseZodiac } from "@/lib/chinese-zodiac/animals";
+import { generateCacheKey, getCacheEntry } from "./cache";
 
 function makeSessionId(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -33,11 +34,16 @@ export async function processReading(request: ReadingRequest): Promise<ReadingRe
   let data: any;
   let cached = false;
   
-  // Route to appropriate engine based on reading type
+  // Route to appropriate engine based on reading type.
+  // Cache keys MUST go through generateCacheKey() so they match the keys
+  // the engines themselves write — otherwise pipeline lookups never hit.
   switch (type) {
-    case ReadingType.HOROSCOPE:
-      // Check cache before generating
-      const horoscopeKey = `${input.zodiacSign}_${input.period}_${input.date.toISOString().split('T')[0]}`;
+    case ReadingType.HOROSCOPE: {
+      const horoscopeKey = generateCacheKey(ReadingType.HOROSCOPE, {
+        zodiacSign: input.zodiacSign,
+        period: input.period,
+        date: input.date,
+      });
       const cachedHoroscope = getCacheEntry(horoscopeKey, 'horoscope');
       if (cachedHoroscope) {
         data = cachedHoroscope;
@@ -46,14 +52,20 @@ export async function processReading(request: ReadingRequest): Promise<ReadingRe
         data = await generateHoroscope(input);
       }
       break;
-      
+    }
+
     case ReadingType.COMPATIBILITY:
       data = await calculateCompatibility(input);
       break;
-      
-    case ReadingType.CHINESE_ZODIAC:
-      // Check cache before generating
-      const chineseZodiacKey = `${input.birthYear}_${input.period}_${input.date.toISOString().split('T')[0]}`;
+
+    case ReadingType.CHINESE_ZODIAC: {
+      // Engine keys by `animal`, not `birthYear` — derive it the same way.
+      const animal = calculateChineseZodiac(input.birthYear);
+      const chineseZodiacKey = generateCacheKey(ReadingType.CHINESE_ZODIAC, {
+        animal,
+        period: input.period,
+        date: input.date,
+      });
       const cachedChineseZodiac = getCacheEntry(chineseZodiacKey, 'chinese_zodiac');
       if (cachedChineseZodiac) {
         data = cachedChineseZodiac;
@@ -62,10 +74,15 @@ export async function processReading(request: ReadingRequest): Promise<ReadingRe
         data = await generateChineseZodiacReading(input);
       }
       break;
-      
-    case ReadingType.SPECIALIZED:
-      // Check cache before generating
-      const specializedKey = `${input.zodiacSign}_${input.domain}_${input.period}_${input.date.toISOString().split('T')[0]}`;
+    }
+
+    case ReadingType.SPECIALIZED: {
+      const specializedKey = generateCacheKey(ReadingType.SPECIALIZED, {
+        zodiacSign: input.zodiacSign,
+        domain: input.domain,
+        period: input.period,
+        date: input.date,
+      });
       const cachedSpecialized = getCacheEntry(specializedKey, 'specialized');
       if (cachedSpecialized) {
         data = cachedSpecialized;
@@ -74,11 +91,12 @@ export async function processReading(request: ReadingRequest): Promise<ReadingRe
         data = await generateSpecializedReading(input);
       }
       break;
-      
+    }
+
     case ReadingType.NAME_NUMEROLOGY:
       data = await calculateNameNumerology(input);
       break;
-      
+
     default:
       throw new Error(`Unsupported reading type: ${type}`);
   }

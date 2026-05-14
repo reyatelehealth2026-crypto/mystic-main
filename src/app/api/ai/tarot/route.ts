@@ -38,9 +38,6 @@ function formatAsCardStructure(parsed: GeminiTarotResponse): string {
 export async function POST(req: Request) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: "missing_gemini_api_key" }, { status: 400 });
-    }
 
     const body = (await req.json()) as {
       cardsToken?: string;
@@ -49,10 +46,10 @@ export async function POST(req: Request) {
     };
 
     const cards = parseCardTokens(body.cardsToken ?? "");
-    
+
     // Check for Esiimsi fake token
     const isEsiimsi = body.cardsToken?.startsWith("esiimsi_");
-    
+
     if (!cards.length && !isEsiimsi) {
       return NextResponse.json({ error: "invalid_cards" }, { status: 400 });
     }
@@ -62,6 +59,25 @@ export async function POST(req: Request) {
     const spreadType = countMap[body.count ?? cards.length] ?? 3;
 
     const question = body.question;
+
+    const fallbackStructure = cards
+      .map((drawn, i) => {
+        const orient = drawn.orientation === "upright" ? "ตั้งตรง" : "กลับหัว";
+        return `${i + 1}) ${drawn.card.name} (${orient}) — ${cardMeaning(drawn)}`;
+      })
+      .join("\n");
+
+    if (!apiKey) {
+      return NextResponse.json({
+        ok: true,
+        fallback: true,
+        reason: "missing_gemini_api_key",
+        ai: {
+          summary: "ช่วงนี้ระบบอ่านเชิงลึกยังไม่พร้อม จึงสรุปจากโครงไพ่พื้นฐานให้ก่อน",
+          cardStructure: fallbackStructure || "—",
+        },
+      });
+    }
 
     // --- RAG (local-file prototype) ---
     const intent = guessIntentsFromText(question ?? "")[0];
@@ -113,14 +129,6 @@ ${formatRagContext(rag.chunks)}`;
           spreadType,
         }) + formatRagContext(rag.chunks);
     }
-
-
-    const fallbackStructure = cards
-      .map((drawn, i) => {
-        const orient = drawn.orientation === "upright" ? "ตั้งตรง" : "กลับหัว";
-        return `${i + 1}) ${drawn.card.name} (${orient}) — ${cardMeaning(drawn)}`;
-      })
-      .join("\n");
 
     const model = process.env.GEMINI_MODEL || "gemini-2.0-flash";
     const resp = await fetch(
