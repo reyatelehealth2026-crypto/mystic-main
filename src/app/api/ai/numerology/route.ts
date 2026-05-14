@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     // --- RAG (local-file prototype) ---
     const rag = retrieveRag({
       query: `เบอร์โทรศัพท์ ${result.normalizedPhone} เลขรวม ${result.total} เลขราก ${result.root}`,
-      systemId: "numerology",
+      systemId: "numerology_th",
       limit: 6,
     });
 

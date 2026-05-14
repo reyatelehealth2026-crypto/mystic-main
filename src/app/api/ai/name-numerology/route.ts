@@ -83,7 +83,7 @@ export async function POST(req: Request) {
 
     const rag = retrieveRag({
       query: `วิเคราะห์ชื่อ ${body.firstName} ${body.lastName} เลขชะตา ${body.scores.destiny}`,
-      systemId: "numerology",
+      systemId: "numerology_th",
       limit: 6,
     });
 

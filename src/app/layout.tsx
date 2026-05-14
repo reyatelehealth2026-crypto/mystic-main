@@ -116,15 +116,10 @@ export const metadata: Metadata = {
     },
   },
   category: "lifestyle",
-  verification: {
-    google: "your-google-verification-code",
-    yandex: "your-yandex-verification-code",
-    yahoo: "your-yahoo-verification-code",
-  },
-  other: {
-    "facebook-domain-verification": "your-facebook-verification-code",
-    "msvalidate.01": "your-bing-verification-code",
-  },
+  // TODO(seo): re-add `verification` and platform-specific `other` keys once
+  // real values are issued. The placeholder strings (`your-google-...`) were
+  // rendering as live <meta> tags in production, which is worse than
+  // emitting nothing at all.
 };
 
 export default function RootLayout({

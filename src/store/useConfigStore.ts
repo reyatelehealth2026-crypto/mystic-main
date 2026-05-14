@@ -142,6 +142,26 @@ export const useConfigStore = create<ConfigState>()(
       // on every page that reads from this store after the user has changed
       // any config.
       skipHydration: true,
+      version: 1,
+      // Merge any newly-added toggle keys with their defaults so returning
+      // users don't read `undefined` for flags that didn't exist when they
+      // first persisted the store. We deliberately do NOT re-seed `packages`
+      // — those are user customizations and should be preserved across
+      // schema bumps.
+      migrate: (persisted: unknown, _fromVersion: number) => {
+        const defaults: FeatureToggles = {
+          enableTarot: true,
+          enableSpiritCard: true,
+          enableNumerology: true,
+          enableLoveTarot: true,
+          enableDailyAuspicious: true,
+        };
+        const state = (persisted ?? {}) as Partial<ConfigState>;
+        return {
+          ...state,
+          toggles: { ...defaults, ...(state.toggles ?? {}) },
+        } as ConfigState;
+      },
     }
   )
 );

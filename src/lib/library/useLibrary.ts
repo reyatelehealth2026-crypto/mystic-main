@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import type { 
   LibraryStateV1, 
   SavedReading,
@@ -53,6 +53,29 @@ export function useLibrary(): UseLibraryReturn {
     }
     return new Set();
   });
+
+  // Cross-tab sync: when another tab writes to the library or favorites
+  // key, refresh local state so the user doesn't see stale data and the
+  // next write doesn't blow away the other tab's changes.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const LIBRARY_KEY = "reffortune.library.v1";
+    const FAVORITES_KEY = "reffortune.library.favorites";
+    function onStorage(e: StorageEvent) {
+      if (e.key === LIBRARY_KEY) {
+        setState(loadLibrary());
+      } else if (e.key === FAVORITES_KEY) {
+        try {
+          const next = e.newValue ? new Set<string>(JSON.parse(e.newValue)) : new Set<string>();
+          setFavorites(next);
+        } catch {
+          // ignore malformed storage payloads
+        }
+      }
+    }
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   // Convert SavedReading items to LibraryEntry format
   const entries = useMemo(() => {

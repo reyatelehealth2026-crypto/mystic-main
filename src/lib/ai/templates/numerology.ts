@@ -14,16 +14,17 @@ import { PromptBuilder } from './base';
 import { getContextForDivinationType } from '../cultural/thai-context';
 import { NUMEROLOGY_EXAMPLES_BY_SCORE } from '../examples/numerology-examples';
 
-import { retrieveRag, formatRagContext } from "@/lib/rag/retriever";
-
 /**
- * Build a complete numerology reading prompt with score-specific instructions
- * 
+ * Build a complete numerology reading prompt with score-specific instructions.
+ *
+ * RAG knowledge base is intentionally NOT fetched here — the API route owns
+ * RAG retrieval and appends the formatted context after the base prompt.
+ *
  * @param params - Numerology reading parameters (phone, score, tier, total, root, themes)
  * @returns Complete prompt string ready for Gemini API
  */
 export function buildNumerologyPrompt(params: NumerologyPromptParams): string {
-  const { normalizedPhone, score, tier, total, root, themes } = params;
+  const { score } = params;
 
   // Build role definition
   const role = buildNumerologyRole();
@@ -40,18 +41,9 @@ export function buildNumerologyPrompt(params: NumerologyPromptParams): string {
   // Format user data (phone number and analysis)
   const userData = formatNumerologyUserData(params);
 
-  // Retrieve RAG context for numerology
-  const ragResult = retrieveRag({
-    query: `วิเคราะห์เบอร์โทรศัพท์ เลขรวม ${total} เลขราก ${root}`,
-    systemId: "numerology_th",
-    limit: 4
-  });
-  const knowledgeBase = formatRagContext(ragResult.chunks);
-
   // Compose the complete prompt
   return new PromptBuilder()
     .withRole(role)
-    .withKnowledgeBase(knowledgeBase)
     .withCulturalContext(culturalContext)
     .withFewShotExamples(examples)
     .withInstructions(instructions)

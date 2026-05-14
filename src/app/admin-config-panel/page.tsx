@@ -271,8 +271,14 @@ export default function AdminConfigPanel() {
                             <Plus className="w-3 h-3" /> เพิ่ม
                           </button>
                         </div>
+                        {/* Composite key isolates rows across packages so
+                            React can't confuse a row in pkg A with the same
+                            index in pkg B. Within a package, removal still
+                            shifts indices — `features` is `string[]`, so a
+                            truly stable per-row identity would require a
+                            schema change (TODO: `{ id, value }[]`). */}
                         {pkg.features.map((f, fi) => (
-                          <div key={fi} className="flex gap-2">
+                          <div key={`${pkg.id}-${fi}`} className="flex gap-2">
                             <Input
                               value={f}
                               onChange={e => handleFeature(pkg.id, fi, e.target.value)}

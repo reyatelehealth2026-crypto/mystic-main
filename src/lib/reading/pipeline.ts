@@ -76,22 +76,12 @@ export async function processReading(request: ReadingRequest): Promise<ReadingRe
       break;
     }
 
-    case ReadingType.SPECIALIZED: {
-      const specializedKey = generateCacheKey(ReadingType.SPECIALIZED, {
-        zodiacSign: input.zodiacSign,
-        domain: input.domain,
-        period: input.period,
-        date: input.date,
-      });
-      const cachedSpecialized = getCacheEntry(specializedKey, 'specialized');
-      if (cachedSpecialized) {
-        data = cachedSpecialized;
-        cached = true;
-      } else {
-        data = await generateSpecializedReading(input);
-      }
+    case ReadingType.SPECIALIZED:
+      // The specialized engine doesn't call setCacheEntry, so a pipeline-level
+      // cache lookup would always miss. Generate fresh every time until the
+      // engine grows a cache writer.
+      data = await generateSpecializedReading(input);
       break;
-    }
 
     case ReadingType.NAME_NUMEROLOGY:
       data = await calculateNameNumerology(input);
@@ -163,7 +153,10 @@ export function getCreditCost(type: ReadingType, options?: any): number {
 export function runReadingPipeline(input: ReadingInput): ReadingSession | null {
   if (input.kind === "tarot") {
     const cards = parseCardTokens(input.cardsToken);
-    if (cards.length === 0 || (input.count > 0 && cards.length !== input.count)) return null;
+    // Reject empty cards, non-positive counts, or count/cards mismatch.
+    // `count === 0` used to slip past the previous guard and emit a session
+    // tagged `spread-0` with no real reading data.
+    if (cards.length === 0 || input.count <= 0 || cards.length !== input.count) return null;
     const reading = summarizeReading({ cards, count: input.count, question: input.question });
 
     return {
