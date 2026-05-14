@@ -19,8 +19,28 @@ import { cardMeaning } from '@/lib/tarot/engine';
 import { retrieveRag, formatRagContext } from "@/lib/rag/retriever";
 
 /**
+ * Defensive sanitization for client-supplied free text. The prompt format
+ * uses lines like `ผู้ใช้:` / `ผู้ช่วย:` as role markers, so any user-supplied
+ * content containing those tokens or newlines could spoof an assistant turn.
+ * We also length-cap to bound the prompt size.
+ */
+const MAX_CHARS_PER_TURN = 1000;
+const MAX_HISTORY_TURNS = 6;
+const MAX_QUESTION_CHARS = 1500;
+
+function sanitizeUserText(value: string | undefined, max: number): string {
+  if (!value) return '';
+  return value
+    .replace(/[\r\n]+/g, ' ') // collapse line breaks that could spoof a new turn
+    .replace(/ผู้ช่วย\s*:/g, 'ผู้ช่วย ') // neutralize role marker
+    .replace(/ผู้ใช้\s*:/g, 'ผู้ใช้ ')
+    .trim()
+    .slice(0, max);
+}
+
+/**
  * Build a complete chat prompt with conversation history and card context
- * 
+ *
  * @param params - Chat parameters (cards, baseQuestion, followUpQuestion, history)
  * @returns Complete prompt string ready for Gemini API
  */
@@ -42,9 +62,10 @@ export function buildChatPrompt(params: ChatPromptParams): string {
   // Format user data (cards, history, and question)
   const userData = formatChatUserData(params);
 
-  // Retrieve RAG context
+  // Retrieve RAG context — use the sanitized follow-up question so
+  // injection attempts don't taint retrieval either.
   const ragResult = retrieveRag({
-    query: followUpQuestion,
+    query: sanitizeUserText(followUpQuestion, MAX_QUESTION_CHARS),
     limit: 5
   });
   const knowledgeBase = formatRagContext(ragResult.chunks);
@@ -133,12 +154,15 @@ function buildChatInstructions(): string {
 }
 
 /**
- * Format user data (cards, history, and question) for the prompt
+ * Format user data (cards, history, and question) for the prompt.
+ * All client-supplied free-text fields are sanitized to prevent prompt
+ * injection (role-spoofing via newlines/role markers) and length-capped to
+ * keep the prompt size bounded.
  */
 function formatChatUserData(params: ChatPromptParams): string {
   const { cards, baseQuestion, followUpQuestion, history } = params;
 
-  // Format card context
+  // Format card context (engine-derived — trusted)
   const cardContext = cards
     .map((drawn, index) => {
       const orientation = drawn.orientation === 'upright' ? 'ตั้งตรง' : 'กลับหัว';
@@ -147,19 +171,23 @@ function formatChatUserData(params: ChatPromptParams): string {
     })
     .join('\n');
 
-  // Format conversation history (last 6 turns)
+  // Format conversation history. Drop turns with unknown role and sanitize
+  // each turn's content before interpolation.
   const historyContext = history.length > 0
     ? history
-        .slice(-6)
+        .filter((turn) => turn.role === 'user' || turn.role === 'assistant')
+        .slice(-MAX_HISTORY_TURNS)
         .map((turn) => {
           const speaker = turn.role === 'user' ? 'ผู้ใช้' : 'ผู้ช่วย';
-          return `${speaker}: ${turn.content}`;
+          const content = sanitizeUserText(turn.content, MAX_CHARS_PER_TURN);
+          return `${speaker}: ${content}`;
         })
         .join('\n')
     : '(ยังไม่มี)';
 
-  const baseQuestionText = baseQuestion?.trim() || '(ไม่ได้ระบุ)';
-  const followUpText = followUpQuestion.trim();
+  const baseQuestionText =
+    sanitizeUserText(baseQuestion, MAX_QUESTION_CHARS) || '(ไม่ได้ระบุ)';
+  const followUpText = sanitizeUserText(followUpQuestion, MAX_QUESTION_CHARS);
 
   return `## ข้อมูลอ่านไพ่
 

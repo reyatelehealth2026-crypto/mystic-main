@@ -13,7 +13,9 @@ import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/Button";
 
 const STORAGE_KEY = "reffortune_daily_card";
-const BACK_IMAGE = "https://www.reffortune.com/icon/backcard.png";
+// Local asset so the back of the card renders in dev/preview deploys too,
+// not just on the live www.reffortune.com domain.
+const BACK_IMAGE = "/card/backcard.png";
 
 function getTodayKey(): string {
   const d = new Date();

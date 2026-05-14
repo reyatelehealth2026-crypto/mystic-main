@@ -208,8 +208,11 @@ export const ELEMENT_METADATA: Record<ChineseElement, ElementMetadata> = {
  */
 export function calculateChineseZodiac(birthYear: number): ChineseZodiacAnimal {
   // The formula (year - 4) % 12 maps years to animals
-  // Year 4 AD was the year of the Rat (index 0)
-  const animalIndex = (birthYear - 4) % 12;
+  // Year 4 AD was the year of the Rat (index 0).
+  // JS `%` keeps the sign of the dividend, so for years < 4 we'd get a
+  // negative index and `animals[-N]` would be undefined. Use a positive
+  // modulo guard so the engine is well-defined for any integer year.
+  const animalIndex = ((birthYear - 4) % 12 + 12) % 12;
   
   // Map index to animal
   const animals = [
@@ -242,9 +245,10 @@ export function calculateChineseZodiac(birthYear: number): ChineseZodiacAnimal {
  * calculateChineseElement(2025) // Returns ChineseElement.WOOD
  */
 export function calculateChineseElement(birthYear: number): ChineseElement {
-  // The formula floor((year - 4) % 10 / 2) maps years to elements
-  // Each element spans 2 years in the 10-year cycle
-  const elementIndex = Math.floor(((birthYear - 4) % 10) / 2);
+  // The formula floor((year - 4) % 10 / 2) maps years to elements.
+  // Each element spans 2 years in the 10-year cycle.
+  // Positive-modulo guard so years < 4 don't yield a negative index.
+  const elementIndex = Math.floor((((birthYear - 4) % 10) + 10) % 10 / 2);
   
   // Map index to element
   const elements = [

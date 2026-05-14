@@ -245,6 +245,24 @@ export interface LuckyElementsResult {
   yearAnimal: ThaiYearAnimal;
 }
 
+// Deterministic index picker keyed off the birth date. Same input → same
+// output is a product invariant (SYSTEM_LEAP_BLUEPRINT §4A), so we cannot
+// use Math.random() here.
+function pickIndex(birthDate: Date, salt: number, length: number): number {
+  if (length <= 0) return 0;
+  const seed =
+    birthDate.getFullYear() * 10000 +
+    (birthDate.getMonth() + 1) * 100 +
+    birthDate.getDate() +
+    salt * 31;
+  // Mulberry32-style mix, then map to [0, length)
+  let x = seed | 0;
+  x = Math.imul(x ^ (x >>> 16), 2246822507);
+  x = Math.imul(x ^ (x >>> 13), 3266489909);
+  x = (x ^ (x >>> 16)) >>> 0;
+  return x % length;
+}
+
 export function calculateLuckyElements(birthDate: Date): LuckyElementsResult {
   // 1. วันเกิด (ทักษา)
   const thaiDay = getThaiDay(birthDate);
@@ -264,14 +282,14 @@ export function calculateLuckyElements(birthDate: Date): LuckyElementsResult {
   // เลือกจากวันเกิด (2 อย่าง)
   selected.push(dayElements[0], dayElements[1]);
 
-  // เลือกจากราศี (1 อย่าง)
-  const zodiacPick = zodiacElements[Math.floor(Math.random() * zodiacElements.length)];
+  // เลือกจากราศี (1 อย่าง) — deterministic by birthDate
+  const zodiacPick = zodiacElements[pickIndex(birthDate, 1, zodiacElements.length)];
   if (zodiacPick && !selected.some(e => e.id === zodiacPick.id)) {
     selected.push(zodiacPick);
   }
 
-  // เลือกจากนักษัตร (1 อย่าง)
-  const animalPick = animalElements[Math.floor(Math.random() * animalElements.length)];
+  // เลือกจากนักษัตร (1 อย่าง) — deterministic by birthDate
+  const animalPick = animalElements[pickIndex(birthDate, 2, animalElements.length)];
   if (animalPick && !selected.some(e => e.id === animalPick.id)) {
     selected.push(animalPick);
   }

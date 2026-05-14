@@ -47,8 +47,20 @@ export async function POST(req: Request) {
 
     const cards = parseCardTokens(body.cardsToken ?? "");
 
-    // Check for Esiimsi fake token
-    const isEsiimsi = body.cardsToken?.startsWith("esiimsi_");
+    // Esiimsi tokens look like `esiimsi_<1..28>` (optional `.png` suffix).
+    // Validate the number up-front so we never embed `undefined` or
+    // attacker-controlled text into the prompt.
+    const isEsiimsi = body.cardsToken?.startsWith("esiimsi_") ?? false;
+    let esiimsiNum: number | null = null;
+    if (isEsiimsi) {
+      const raw = body.cardsToken!.slice("esiimsi_".length).split(".")[0];
+      const parsed = Number.parseInt(raw, 10);
+      if (Number.isInteger(parsed) && parsed >= 1 && parsed <= 28) {
+        esiimsiNum = parsed;
+      } else {
+        return NextResponse.json({ error: "invalid_esiimsi_token" }, { status: 400 });
+      }
+    }
 
     if (!cards.length && !isEsiimsi) {
       return NextResponse.json({ error: "invalid_cards" }, { status: 400 });
@@ -60,12 +72,14 @@ export async function POST(req: Request) {
 
     const question = body.question;
 
-    const fallbackStructure = cards
-      .map((drawn, i) => {
-        const orient = drawn.orientation === "upright" ? "ตั้งตรง" : "กลับหัว";
-        return `${i + 1}) ${drawn.card.name} (${orient}) — ${cardMeaning(drawn)}`;
-      })
-      .join("\n");
+    const fallbackStructure = isEsiimsi
+      ? `เซียมซีหมายเลข ${esiimsiNum} — กำลังประมวลผลคำทำนาย ลองอีกครั้งในไม่กี่นาทีนะคะ/ครับ`
+      : cards
+          .map((drawn, i) => {
+            const orient = drawn.orientation === "upright" ? "ตั้งตรง" : "กลับหัว";
+            return `${i + 1}) ${drawn.card.name} (${orient}) — ${cardMeaning(drawn)}`;
+          })
+          .join("\n");
 
     if (!apiKey) {
       return NextResponse.json({
@@ -73,7 +87,9 @@ export async function POST(req: Request) {
         fallback: true,
         reason: "missing_gemini_api_key",
         ai: {
-          summary: "ช่วงนี้ระบบอ่านเชิงลึกยังไม่พร้อม จึงสรุปจากโครงไพ่พื้นฐานให้ก่อน",
+          summary: isEsiimsi
+            ? `ตอนนี้ระบบอ่านเซียมซีเชิงลึกยังไม่พร้อม น้อมรับคำทำนายหมายเลข ${esiimsiNum} ไว้ก่อนนะคะ/ครับ`
+            : "ช่วงนี้ระบบอ่านเชิงลึกยังไม่พร้อม จึงสรุปจากโครงไพ่พื้นฐานให้ก่อน",
           cardStructure: fallbackStructure || "—",
         },
       });
@@ -100,10 +116,9 @@ export async function POST(req: Request) {
     // Build prompt using prompt builder + attach retrieved context + examples
     let prompt = "";
     if (isEsiimsi) {
-      const num = body.cardsToken?.split("_")[1]?.split(".")[0];
       prompt = `คุณคือผู้เชี่ยวชาญการถอดรหัสเซียมซีระดับมาสเตอร์ที่ทำงานกับโปรเจกต์ REFFORTUNE
 
-บทบาท: ถอดรหัสคำทำนายจากเซียมซีหมายเลข ${num} โดยอ้างอิงจากฐานข้อมูล Knowledge Base
+บทบาท: ถอดรหัสคำทำนายจากเซียมซีหมายเลข ${esiimsiNum} โดยอ้างอิงจากฐานข้อมูล Knowledge Base
 เงื่อนไขสำคัญ:
 - ห้ามตอบว่า "ไม่มีข้อมูลในชุดข้อมูลตัวอย่าง" หรือ "ไม่พบข้อมูล"
 - ให้ใช้เนื้อหาจากตาราง "ชุดข้อมูลหมายเลขเซียมซีมาตรฐาน" ใน Knowledge Base เป็นหลัก

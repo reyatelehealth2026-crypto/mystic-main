@@ -76,18 +76,14 @@ export const metadata: Metadata = {
     description: DEFAULT_DESCRIPTION,
     locale: "th_TH",
     url: SITE_URL,
+    // TODO(og): ship a dedicated 1200x630 og-image.jpg once design is ready.
+    // The logo is a placeholder so the OG meta tags don't 404.
     images: [
-      {
-        url: "/og-image.jpg",
-        width: 1200,
-        height: 630,
-        alt: "REFFORTUNE — ดูดวงออนไลน์ แม่นยำ ครบวงจร",
-      },
       {
         url: "/logo.png",
         width: 400,
         height: 400,
-        alt: "REFFORTUNE Logo",
+        alt: "REFFORTUNE — ดูดวงออนไลน์ แม่นยำ ครบวงจร",
       },
     ],
   },
@@ -97,7 +93,7 @@ export const metadata: Metadata = {
     description: DEFAULT_DESCRIPTION,
     creator: "@reffortune",
     site: "@reffortune",
-    images: ["/og-image.jpg"],
+    images: ["/logo.png"],
   },
   robots: {
     index: true,
