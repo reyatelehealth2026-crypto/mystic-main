@@ -28,6 +28,7 @@ export { buildSpiritPrompt } from './templates/spirit';
 export { buildSpiritPathPrompt } from './templates/spiritPath';
 export { buildNumerologyPrompt } from './templates/numerology';
 export { buildChatPrompt } from './templates/chat';
+export { buildLuckyNumbersPrompt } from './templates/lucky-numbers';
 
 // Re-export the base PromptBuilder class for advanced usage
 export { PromptBuilder, buildBasePrompt } from './templates/base';
