@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(npx tsc:*)",
-      "Bash(\"/c/Users/Administrator/Desktop/mystic-v2/src/app/api/ai/chinese-zodiac/route.ts\":*)"
+      "Bash(\"/c/Users/Administrator/Desktop/mystic-v2/src/app/api/ai/chinese-zodiac/route.ts\":*)",
+      "mcp__eaa05dec-c1f7-4ef4-96cd-cdc9317da599__resolve-library-id"
     ],
     "additionalDirectories": [
       "C:\\Users\\Administrator\\Desktop\\mystic-v2\\scripts",

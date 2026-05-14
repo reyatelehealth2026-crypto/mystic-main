@@ -388,53 +388,59 @@ function SemicircleDeck({ deck, revealedIndex, onPick, onNext, isAlt, themed, ro
   const ANGLE_RANGE = 150; // degrees
   const START_ANGLE = -ANGLE_RANGE / 2;
   const STEP = ANGLE_RANGE / (deck.length - 1);
-  const RADIUS = 130; // px — outward from arc center
+  const RADIUS = 170; // px — outward from pivot (container bottom-center)
 
   return (
     <div className="relative">
-      <div className="relative mx-auto h-72 w-full max-w-md">
+      <div className="relative mx-auto h-80 w-full max-w-md overflow-hidden">
         {deck.map((digit, idx) => {
           const angle = START_ANGLE + STEP * idx;
           const isRevealed = revealedIndex === idx;
           const isFaded = revealedIndex !== null && !isRevealed;
 
+          // Positioning wrapper (no framer-motion, so its transform isn't overridden)
+          // fans out from the bottom-center of the container.
           return (
-            <motion.button
+            <div
               key={`${roundNumber}-${idx}`}
-              type="button"
-              onClick={() => onPick(idx)}
-              disabled={revealedIndex !== null}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{
-                opacity: isFaded ? 0.25 : 1,
-                y: 0,
-                scale: isRevealed ? 1.12 : 1,
-              }}
-              transition={{ duration: 0.35, delay: idx * 0.04, ease: [0.22, 1, 0.36, 1] }}
-              whileHover={revealedIndex === null ? { y: -8 } : undefined}
-              className="absolute left-1/2 top-full origin-bottom"
+              className="absolute left-1/2 bottom-0"
               style={{
                 transform: `translateX(-50%) rotate(${angle}deg) translateY(-${RADIUS}px) rotate(${-angle}deg)`,
+                transformOrigin: "50% 100%",
               }}
-              aria-label={`ไพ่ใบที่ ${idx + 1}`}
             >
-              <div className="relative h-32 w-20 [perspective:800px] sm:h-36 sm:w-22">
-                <motion.div
-                  className="relative h-full w-full"
-                  initial={false}
-                  animate={{ rotateY: isRevealed ? 180 : 0 }}
-                  transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-                  style={{ transformStyle: "preserve-3d" }}
-                >
-                  <div className="absolute inset-0 overflow-hidden rounded-xl border border-white/15 shadow-lg [backface-visibility:hidden]">
-                    <Image src="/lucky-numbers/back.png" alt="ไพ่หลังลายมงคล" fill sizes="80px" className="object-cover" priority={idx < 5} />
-                  </div>
-                  <div className="absolute inset-0 overflow-hidden rounded-xl border border-white/30 shadow-lg [transform:rotateY(180deg)] [backface-visibility:hidden]">
-                    <Image src={`/lucky-numbers/${digit}.png`} alt={`ไพ่เลข ${digit}`} fill sizes="80px" className="object-cover" />
-                  </div>
-                </motion.div>
-              </div>
-            </motion.button>
+              <motion.button
+                type="button"
+                onClick={() => onPick(idx)}
+                disabled={revealedIndex !== null}
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{
+                  opacity: isFaded ? 0.3 : 1,
+                  scale: isRevealed ? 1.15 : 1,
+                }}
+                transition={{ duration: 0.35, delay: idx * 0.04, ease: [0.22, 1, 0.36, 1] }}
+                whileHover={revealedIndex === null ? { scale: 1.08 } : undefined}
+                aria-label={`ไพ่ใบที่ ${idx + 1}`}
+                className="block"
+              >
+                <div className="relative h-32 w-20 [perspective:800px] sm:h-36 sm:w-22">
+                  <motion.div
+                    className="relative h-full w-full"
+                    initial={false}
+                    animate={{ rotateY: isRevealed ? 180 : 0 }}
+                    transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                    style={{ transformStyle: "preserve-3d" }}
+                  >
+                    <div className="absolute inset-0 overflow-hidden rounded-xl border border-white/15 shadow-lg [backface-visibility:hidden]">
+                      <Image src="/lucky-numbers/back.png" alt="ไพ่หลังลายมงคล" fill sizes="80px" className="object-cover" priority={idx < 5} />
+                    </div>
+                    <div className="absolute inset-0 overflow-hidden rounded-xl border border-white/30 shadow-lg [transform:rotateY(180deg)] [backface-visibility:hidden]">
+                      <Image src={`/lucky-numbers/${digit}.png`} alt={`ไพ่เลข ${digit}`} fill sizes="80px" className="object-cover" />
+                    </div>
+                  </motion.div>
+                </div>
+              </motion.button>
+            </div>
           );
         })}
       </div>
