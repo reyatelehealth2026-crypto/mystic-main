@@ -1,5 +1,4 @@
-import fs from "node:fs";
-import path from "node:path";
+import { RAG_FILES, type RagFile } from "./data.generated";
 
 export type RagDocKind = "kb" | "example" | "glossary" | "schema";
 
@@ -14,33 +13,14 @@ export type RagChunk = {
   source: string;
 };
 
-// Use process.cwd() to resolve docs relative to project root in deployment (Next.js)
-const DOCS_DIR = path.join(process.cwd(), "public/docs");
-
-const FILES = {
-  kb: "mysticg_divination_KB_full_th.md",
-  taxonomy: "mysticg_divination_taxonomy_th.md",
-  glossary: "mysticg_divination_glossary_th.json",
-  examples: "mysticg_examples_pack_th.md",
-  schema: "mysticg_divination_dataset_schema_full_th.json",
-  kb_complete: "mysticflow-knowledge-complete.md",
-  handbook: "mystical-knowledge-handbook.md",
-  summary: "mysticflow_ai_knowledge_summary_th.md",
-  esiimsi: "esiimsi_knowledge_th.md",
-} as const;
-
 // Lightweight, dependency-free retrieval for prototype (lexical scoring).
-// This is intentionally simple so it runs anywhere.
+// File contents are bundled at build time (see scripts/generate-rag-data.mjs)
+// so this runs in edge/worker runtimes without filesystem access.
 
 let cachedChunks: RagChunk[] | null = null;
 
-function readText(fileName: string): string {
-  const fullPath = path.join(DOCS_DIR, fileName);
-  if (!fs.existsSync(fullPath)) {
-    console.warn(`RAG file not found: ${fileName}`);
-    return "";
-  }
-  return fs.readFileSync(fullPath, "utf8");
+function readFile(entry: RagFile): string {
+  return entry.content;
 }
 
 function normalize(s: string): string {
@@ -153,20 +133,15 @@ function chunkExamples(md: string, source: string): RagChunk[] {
 export function loadRagChunks(): RagChunk[] {
   if (cachedChunks) return cachedChunks;
 
-  const kb = readText(FILES.kb);
-  const examples = readText(FILES.examples);
-  const kbComplete = readText(FILES.kb_complete);
-  const handbook = readText(FILES.handbook);
-  const summary = readText(FILES.summary);
-  const esiimsi = readText(FILES.esiimsi);
+  const { kb, examples, kb_complete, handbook, summary, esiimsi } = RAG_FILES;
 
   const chunks = [
-    ...chunkMarkdown(kb, FILES.kb, "kb"),
-    ...chunkMarkdown(kbComplete, FILES.kb_complete, "kb"),
-    ...chunkMarkdown(handbook, FILES.handbook, "kb"),
-    ...chunkMarkdown(summary, FILES.summary, "kb"),
-    ...chunkMarkdown(esiimsi, FILES.esiimsi, "kb"),
-    ...chunkExamples(examples, FILES.examples),
+    ...chunkMarkdown(readFile(kb), kb.file, "kb"),
+    ...chunkMarkdown(readFile(kb_complete), kb_complete.file, "kb"),
+    ...chunkMarkdown(readFile(handbook), handbook.file, "kb"),
+    ...chunkMarkdown(readFile(summary), summary.file, "kb"),
+    ...chunkMarkdown(readFile(esiimsi), esiimsi.file, "kb"),
+    ...chunkExamples(readFile(examples), examples.file),
   ];
 
   cachedChunks = chunks;
