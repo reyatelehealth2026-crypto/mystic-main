@@ -1,34 +1,26 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Sparkles, RefreshCw, Share2, X, Coins, Briefcase, Heart, Clover, Leaf } from "lucide-react";
+import { Sparkles, RefreshCw, Share2, ChevronLeft } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "@/lib/theme/ThemeProvider";
 import { cn } from "@/lib/cn";
 import {
-  computeLuckyNumbers,
-  parseDayKey,
-  topicLabel,
-  type LuckyNumbersResult,
-  type LuckyTopic,
+  analyseLuckyDigits,
+  shuffleDigits,
+  type LuckyDigit,
+  type LuckyDigitAnalysis,
+  type LuckyDigitCount,
 } from "@/lib/lucky-numbers/engine";
 import { trackEvent } from "@/lib/analytics/tracking";
 
 type AiReading = { summary: string; cardStructure: string };
 
-type RitualPhase = "idle" | "intent" | "praying" | "revealing" | "done";
+type Stage = "choose-count" | "picking" | "result";
 
-const TOPIC_OPTIONS: { id: LuckyTopic; emoji: string; Icon: typeof Coins }[] = [
-  { id: "finance", emoji: "💰", Icon: Coins },
-  { id: "career", emoji: "💼", Icon: Briefcase },
-  { id: "love", emoji: "❤️", Icon: Heart },
-  { id: "luck", emoji: "🍀", Icon: Clover },
-  { id: "health", emoji: "🌿", Icon: Leaf },
-];
-
-const REVEAL_STAGGER_MS = 320;
+const PICK_CHOICES: LuckyDigitCount[] = [2, 4];
 
 function normalizeText(value: unknown): string {
   if (typeof value === "string") return value;
@@ -49,77 +41,68 @@ export default function LuckyNumbersPage() {
   const isPastel = theme === "pastel";
   const isRainbow = theme === "rainbow";
 
-  const [dob, setDob] = useState("");
-  const [topic, setTopic] = useState<LuckyTopic>("luck");
-  const [intent, setIntent] = useState("");
-  const [error, setError] = useState("");
+  const [stage, setStage] = useState<Stage>("choose-count");
+  const [count, setCount] = useState<LuckyDigitCount>(2);
+  const [deck, setDeck] = useState<LuckyDigit[]>(() => shuffleDigits());
+  const [picked, setPicked] = useState<LuckyDigit[]>([]);
+  const [revealedIndex, setRevealedIndex] = useState<number | null>(null);
 
-  const [phase, setPhase] = useState<RitualPhase>("idle");
-  const [revealedCount, setRevealedCount] = useState(0);
-
-  const [baseline, setBaseline] = useState<LuckyNumbersResult | null>(null);
+  const [analysis, setAnalysis] = useState<LuckyDigitAnalysis | null>(null);
   const [aiReading, setAiReading] = useState<AiReading | null>(null);
 
   useEffect(() => {
     trackEvent("reading_start", { vertical: "lucky-numbers", step: "form_view" });
   }, []);
 
-  function openRitual(e: FormEvent) {
-    e.preventDefault();
-    if (!dob) {
-      setError("กรุณาเลือกวันเกิดก่อนเปิดไพ่");
-      return;
-    }
-    const next = computeLuckyNumbers({ dob, topic, intent, dayKey: parseDayKey() });
-    if (!next) {
-      setError("กรุณาเลือกวันเกิดให้ถูกต้อง");
-      return;
-    }
-    setError("");
-    setBaseline(next);
+  const startPicking = useCallback((n: LuckyDigitCount) => {
+    setCount(n);
+    setPicked([]);
+    setRevealedIndex(null);
+    setDeck(shuffleDigits());
+    setStage("picking");
+    setAnalysis(null);
     setAiReading(null);
-    setRevealedCount(0);
-    setPhase("intent");
     trackEvent("reading_submitted", {
       vertical: "lucky-numbers",
-      step: `ritual_open:${topic}`,
+      step: `choose_count:${n}`,
     });
-  }
+  }, []);
 
-  function beginPray() {
-    setPhase("praying");
-    trackEvent("reading_submitted", { vertical: "lucky-numbers", step: "praying" });
-    setTimeout(() => setPhase("revealing"), 2400);
-  }
+  const handlePick = useCallback(
+    (idx: number) => {
+      if (revealedIndex !== null) return;
+      setRevealedIndex(idx);
+    },
+    [revealedIndex],
+  );
 
-  // Reveal cards one by one once we enter the revealing phase
-  useEffect(() => {
-    if (phase !== "revealing" || !baseline) return;
-    const total = baseline.cards.length;
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    for (let i = 1; i <= total; i += 1) {
-      timers.push(setTimeout(() => setRevealedCount(i), i * REVEAL_STAGGER_MS));
+  const goNext = useCallback(() => {
+    if (revealedIndex === null) return;
+    const chosen = deck[revealedIndex];
+    const nextPicked = [...picked, chosen];
+
+    if (nextPicked.length >= count) {
+      const result = analyseLuckyDigits(nextPicked);
+      setPicked(nextPicked);
+      setAnalysis(result);
+      setStage("result");
+      trackEvent("reading_result_viewed", { vertical: "lucky-numbers" });
+      return;
     }
-    timers.push(
-      setTimeout(() => {
-        setPhase("done");
-        trackEvent("reading_result_viewed", { vertical: "lucky-numbers" });
-      }, total * REVEAL_STAGGER_MS + 600),
-    );
-    return () => timers.forEach(clearTimeout);
-  }, [phase, baseline]);
 
-  // Fetch AI reading as soon as the ritual opens — runs in background
+    setPicked(nextPicked);
+    setRevealedIndex(null);
+    setDeck(shuffleDigits());
+  }, [count, deck, picked, revealedIndex]);
+
+  // Fetch AI reading when we land on the result stage
   useEffect(() => {
-    if (!baseline) return;
-    if (phase === "idle") return;
+    if (stage !== "result" || !analysis) return;
 
     const controller = new AbortController();
     const fallback: AiReading = {
-      summary: `ชุดเลขมงคล ${baseline.set} สำหรับ${baseline.topicLabelTh} • เลขเส้นทางชีวิต ${baseline.lifePathNumber}`,
-      cardStructure: baseline.cards
-        .map((c, i) => `ไพ่ที่ ${i + 1} (${c.role}) เลข ${c.digit}: ${c.reasonTh}`)
-        .join("\n"),
+      summary: `ชุดเลขมงคล ${analysis.combined} • ผลรวม ${analysis.sum} • เลขราก ${analysis.root}`,
+      cardStructure: analysis.reading,
     };
 
     const fallbackTimer = setTimeout(() => {
@@ -129,12 +112,7 @@ export default function LuckyNumbersPage() {
     fetch("/api/ai/lucky-numbers", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        dob: baseline.dob,
-        topic: baseline.topic,
-        intent: baseline.intent ?? "",
-        dayKey: baseline.dayKey,
-      }),
+      body: JSON.stringify({ digits: analysis.digits }),
       signal: controller.signal,
     })
       .then(async (res) => {
@@ -155,34 +133,29 @@ export default function LuckyNumbersPage() {
       .catch(() => {
         setAiReading((prev) => prev ?? fallback);
       })
-      .finally(() => clearTimeout(fallbackTimer));
+      .finally(() => {
+        clearTimeout(fallbackTimer);
+      });
 
     return () => {
       controller.abort();
       clearTimeout(fallbackTimer);
     };
-  }, [baseline, phase]);
+  }, [stage, analysis]);
 
-  function closeOverlay() {
-    setPhase("idle");
-    setRevealedCount(0);
-  }
-
-  function pickAgain() {
-    setPhase("idle");
-    setBaseline(null);
+  const resetAll = useCallback(() => {
+    setStage("choose-count");
+    setPicked([]);
+    setRevealedIndex(null);
+    setDeck(shuffleDigits());
+    setAnalysis(null);
     setAiReading(null);
-    setRevealedCount(0);
-  }
-
-  const overlayOpen = phase !== "idle";
-  const allRevealed = phase === "done";
+  }, []);
 
   const themed = useMemo(() => {
     const isAlt = isPastel || isRainbow;
     return {
       page: cn("min-h-screen", isPastel ? "bg-transparent" : isRainbow ? "bg-transparent" : "bg-white"),
-      header: cn("text-lg font-semibold", isAlt ? "text-white" : "text-violet-600"),
       title: cn("font-serif text-2xl font-semibold", isAlt ? "text-white" : "text-gray-900"),
       muted: cn("text-sm", isAlt ? "text-white/70" : "text-gray-500"),
       cardBox: cn(
@@ -196,7 +169,7 @@ export default function LuckyNumbersPage() {
       sectionTitle: cn("text-lg font-semibold", isAlt ? "text-white" : "text-gray-900"),
       mutedSm: cn("text-sm", isAlt ? "text-white/70" : "text-gray-600"),
       primaryBtn: cn(
-        "w-full h-12 rounded-xl font-semibold shadow-lg transition-all active:scale-[0.98]",
+        "h-12 rounded-xl font-semibold shadow-lg transition-all active:scale-[0.98]",
         isPastel
           ? "bg-white/30 backdrop-blur text-white border border-white/50 hover:bg-white/50"
           : isRainbow
@@ -204,22 +177,13 @@ export default function LuckyNumbersPage() {
           : "bg-violet-600 text-white shadow-violet-200 hover:bg-violet-700 hover:shadow-xl",
       ),
       ghostBtn: cn(
-        "w-full h-12 rounded-xl font-medium transition-all active:scale-[0.98] flex items-center justify-center gap-2",
+        "h-12 rounded-xl font-medium transition-all active:scale-[0.98] flex items-center justify-center gap-2",
         isPastel
           ? "bg-white/10 border border-white/20 text-white hover:bg-white/20"
           : isRainbow
           ? "bg-[#1a1a2e] border border-[rgba(255,0,255,0.3)] text-white hover:border-[rgba(255,0,255,0.5)]"
           : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300",
       ),
-      input: cn(
-        "w-full rounded-xl border px-4 py-3 text-sm outline-none transition",
-        isPastel
-          ? "bg-white/20 border-white/30 text-white placeholder:text-white/50 focus:border-white/60"
-          : isRainbow
-          ? "bg-[#1a1a2e]/80 border-[rgba(255,0,255,0.3)] text-white placeholder:text-white/40 focus:border-[#ff00ff]"
-          : "border-gray-200 bg-white text-gray-900 focus:border-violet-400 focus:ring-2 focus:ring-violet-100",
-      ),
-      label: cn("text-sm font-medium", isAlt ? "text-white/80" : "text-gray-600"),
     };
   }, [isPastel, isRainbow]);
 
@@ -235,140 +199,156 @@ export default function LuckyNumbersPage() {
         </Link>
       </header>
 
-      <div className="px-5 pb-10 pt-6">
-        <section className="space-y-2">
+      <div className="px-5 pb-10 pt-4">
+        <section className="space-y-1">
           <h1 className={themed.title}>ไพ่เลขมงคล</h1>
-          <p className={themed.muted}>ตั้งจิตอธิษฐาน เปิดไพ่ 6 ใบ รับชุดเลขเสริมดวงเฉพาะของคุณวันนี้</p>
+          <p className={themed.muted}>หยิบไพ่จากครึ่งวงกลม รับชุดเลขเสริมดวงแบบสด ๆ</p>
         </section>
 
-        <form onSubmit={openRitual} className={cn("mt-6 space-y-5", themed.cardBox)}>
-          <div>
-            <h2 className={themed.sectionTitle}>1. เรื่องที่อยากเสริมดวง</h2>
-            <p className={cn("mt-1 text-sm", isPastel || isRainbow ? "text-white/70" : "text-gray-500")}>เลือกหมวดที่ตรงกับใจคุณตอนนี้</p>
-            <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
-              {TOPIC_OPTIONS.map((opt) => {
-                const active = topic === opt.id;
-                return (
-                  <button
-                    type="button"
-                    key={opt.id}
-                    onClick={() => setTopic(opt.id)}
-                    className={cn(
-                      "flex flex-col items-center justify-center gap-1 rounded-2xl border px-2 py-3 text-xs transition",
-                      active
-                        ? isRainbow
-                          ? "border-[#ff00ff] bg-[rgba(255,0,255,0.15)] text-white"
-                          : isPastel
-                          ? "border-white bg-white/30 text-white"
-                          : "border-violet-500 bg-violet-50 text-violet-700"
-                        : isRainbow
-                        ? "border-[rgba(255,0,255,0.2)] bg-transparent text-white/70"
-                        : isPastel
-                        ? "border-white/30 bg-white/10 text-white/80"
-                        : "border-gray-200 bg-white text-gray-600",
-                    )}
-                  >
-                    <span className="text-xl">{opt.emoji}</span>
-                    <span className="font-medium">{topicLabel(opt.id)}</span>
-                  </button>
-                );
-              })}
+        {/* Stage 1: choose count */}
+        {stage === "choose-count" && (
+          <section className={cn("mt-6 space-y-5", themed.cardBox)}>
+            <div>
+              <h2 className={themed.sectionTitle}>เลือกจำนวนหลักก่อนเปิดไพ่</h2>
+              <p className={cn("mt-1", themed.mutedSm)}>
+                ระบบจะให้คุณหยิบไพ่จาก 9 ใบ ทีละใบ ครบจำนวนแล้วเริ่มทำนายให้
+              </p>
             </div>
-          </div>
+            <div className="grid grid-cols-2 gap-3">
+              {PICK_CHOICES.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => startPicking(c)}
+                  className={cn(themed.primaryBtn, "flex flex-col items-center justify-center gap-1 py-6")}
+                >
+                  <span className="text-3xl font-bold">{c}</span>
+                  <span className="text-xs uppercase tracking-widest opacity-80">หลัก</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
 
-          <div>
-            <h2 className={themed.sectionTitle}>2. วันเกิดของคุณ</h2>
-            <label className={cn("mt-2 block", themed.label)}>วันเกิด (ใช้สำหรับเลขเส้นทางชีวิต)</label>
-            <input
-              type="date"
-              value={dob}
-              onChange={(e) => setDob(e.target.value)}
-              required
-              className={cn("mt-2", themed.input)}
+        {/* Stage 2: picking */}
+        {stage === "picking" && (
+          <section className="mt-6 space-y-5">
+            <div className={themed.cardBox}>
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={resetAll}
+                  className={cn("inline-flex items-center gap-1 text-sm", isPastel || isRainbow ? "text-white/80" : "text-violet-600")}
+                >
+                  <ChevronLeft className="h-4 w-4" /> เปลี่ยนจำนวน
+                </button>
+                <p className={cn("text-sm", isPastel || isRainbow ? "text-white/80" : "text-gray-600")}>
+                  หยิบใบที่ {picked.length + 1} / {count}
+                </p>
+              </div>
+
+              {/* Picked-so-far chips */}
+              <div className="mt-4 flex justify-center gap-2">
+                {Array.from({ length: count }).map((_, i) => {
+                  const digit = picked[i];
+                  return (
+                    <div
+                      key={i}
+                      className={cn(
+                        "relative h-16 w-12 overflow-hidden rounded-md border",
+                        digit
+                          ? "border-white/30 shadow"
+                          : isPastel
+                          ? "border-white/30 bg-white/10"
+                          : isRainbow
+                          ? "border-[rgba(255,0,255,0.3)] bg-[#0f0f1a]"
+                          : "border-violet-200 bg-violet-50",
+                      )}
+                    >
+                      {digit ? (
+                        <Image
+                          src={`/lucky-numbers/${digit}.png`}
+                          alt={`ไพ่เลข ${digit}`}
+                          fill
+                          sizes="48px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-xs text-white/40">{i + 1}</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <SemicircleDeck
+              deck={deck}
+              revealedIndex={revealedIndex}
+              onPick={handlePick}
+              onNext={goNext}
+              isAlt={isPastel || isRainbow}
+              themed={themed}
+              roundNumber={picked.length + 1}
+              total={count}
             />
-          </div>
+          </section>
+        )}
 
-          <div>
-            <h2 className={themed.sectionTitle}>3. ตั้งจิตอธิษฐาน (ไม่บังคับ)</h2>
-            <textarea
-              value={intent}
-              onChange={(e) => setIntent(e.target.value)}
-              maxLength={140}
-              rows={2}
-              placeholder="เช่น ขอโชคลาภเรื่องการเงินสัปดาห์นี้"
-              className={cn("mt-2 resize-none", themed.input)}
-            />
-            <p className={cn("mt-1 text-xs", isPastel || isRainbow ? "text-white/50" : "text-gray-400")}>
-              {intent.length}/140
-            </p>
-          </div>
-
-          {error ? <p className="text-sm text-red-500">{error}</p> : null}
-
-          <button type="submit" className={themed.primaryBtn}>
-            พร้อมเปิดไพ่
-          </button>
-        </form>
-
-        {baseline && phase === "idle" && (
+        {/* Stage 3: result */}
+        {stage === "result" && analysis && (
           <section className="mt-6 space-y-4">
             <div className={themed.cardBox}>
-              <h2 className={themed.sectionTitle}>ผลล่าสุดของคุณ</h2>
+              <h2 className={themed.sectionTitle}>ชุดเลขมงคลของคุณ</h2>
               <p className={cn("mt-2", themed.mutedSm)}>
-                หมวด {baseline.topicLabelTh} • เลขเส้นทางชีวิต {baseline.lifePathNumber} • อ่านเมื่อ {baseline.dayKey}
+                ผลรวม {analysis.sum} • เลขราก {analysis.root}
               </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {baseline.cards.map((c) => (
-                  <div
-                    key={c.index}
-                    className="relative h-20 w-14 overflow-hidden rounded-lg border border-white/20 shadow"
-                  >
-                    <Image
-                      src={`/lucky-numbers/${c.digit}.png`}
-                      alt={`ไพ่เลข ${c.digit}`}
-                      fill
-                      sizes="56px"
-                      className="object-cover"
-                    />
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                {analysis.digits.map((d, i) => (
+                  <div key={`${i}-${d}`} className="relative h-28 w-20 overflow-hidden rounded-lg border border-white/20 shadow">
+                    <Image src={`/lucky-numbers/${d}.png`} alt={`ไพ่เลข ${d}`} fill sizes="80px" className="object-cover" />
                   </div>
                 ))}
               </div>
-              <p className={cn("mt-4 text-sm", themed.mutedSm)}>
-                เลขชุดคู่: <span className="font-semibold">{baseline.pair}</span> • เลขชุดสาม:{" "}
-                <span className="font-semibold">{baseline.triple}</span>
+              <p className={cn("mt-4 text-center text-2xl font-semibold", isPastel || isRainbow ? "text-white" : "text-violet-700")}>
+                {analysis.combined}
               </p>
             </div>
 
-            {aiReading && (
-              <div className={themed.cardBox}>
-                <h2 className={themed.sectionTitle}>คำทำนายชุดเลขมงคล</h2>
-                <p className={cn("mt-2 whitespace-pre-line text-sm leading-relaxed", isPastel || isRainbow ? "text-white/80" : "text-gray-600")}>
-                  {aiReading.summary}
-                </p>
-                <div
-                  className={cn(
-                    "mt-4 rounded-xl border p-4",
-                    isPastel
-                      ? "border-white/20 bg-white/10"
-                      : isRainbow
-                      ? "border-[rgba(255,0,255,0.2)] bg-[rgba(255,0,255,0.05)]"
-                      : "border-violet-100 bg-violet-50/50",
-                  )}
-                >
-                  <p className={cn("text-xs font-medium", isPastel || isRainbow ? "text-white" : "text-violet-600")}>รายละเอียด</p>
+            <div className={themed.cardBox}>
+              <h2 className={themed.sectionTitle}>คำทำนาย</h2>
+              {!aiReading ? (
+                <p className={cn("mt-2", themed.mutedSm)}>กำลังสรุปคำทำนาย...</p>
+              ) : (
+                <>
                   <p className={cn("mt-2 whitespace-pre-line text-sm leading-relaxed", isPastel || isRainbow ? "text-white/80" : "text-gray-600")}>
-                    {aiReading.cardStructure}
+                    {aiReading.summary}
                   </p>
-                </div>
-              </div>
-            )}
+                  <div
+                    className={cn(
+                      "mt-4 rounded-xl border p-4",
+                      isPastel
+                        ? "border-white/20 bg-white/10"
+                        : isRainbow
+                        ? "border-[rgba(255,0,255,0.2)] bg-[rgba(255,0,255,0.05)]"
+                        : "border-violet-100 bg-violet-50/50",
+                    )}
+                  >
+                    <p className={cn("text-xs font-medium", isPastel || isRainbow ? "text-white" : "text-violet-600")}>รายละเอียด</p>
+                    <p className={cn("mt-2 whitespace-pre-line text-sm leading-relaxed", isPastel || isRainbow ? "text-white/80" : "text-gray-600")}>
+                      {aiReading.cardStructure}
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <button
                 type="button"
-                className={cn(themed.primaryBtn, "flex items-center justify-center gap-2")}
+                className={cn(themed.primaryBtn, "w-full flex items-center justify-center gap-2")}
                 onClick={() => {
-                  const text = aiReading?.summary ?? `เลขมงคลของฉันวันนี้: ${baseline.set}`;
+                  const text = aiReading?.summary ?? `เลขมงคลของฉัน: ${analysis.combined}`;
                   if (navigator.share) {
                     navigator.share({ title: "ไพ่เลขมงคล", text, url: window.location.href });
                   } else {
@@ -380,147 +360,114 @@ export default function LuckyNumbersPage() {
                 <Share2 className="w-4 h-4" />
                 แชร์ผลลัพธ์
               </button>
-              <button type="button" className={themed.ghostBtn} onClick={pickAgain}>
+              <button type="button" className={cn(themed.ghostBtn, "w-full")} onClick={resetAll}>
                 <RefreshCw className="w-4 h-4" />
-                เปิดไพ่ใหม่
+                เริ่มใหม่
               </button>
             </div>
           </section>
         )}
       </div>
+    </main>
+  );
+}
 
-      {/* Ritual overlay */}
-      <AnimatePresence>
-        {overlayOpen && baseline && (
+interface SemicircleDeckProps {
+  deck: LuckyDigit[];
+  revealedIndex: number | null;
+  onPick: (idx: number) => void;
+  onNext: () => void;
+  isAlt: boolean;
+  themed: { primaryBtn: string };
+  roundNumber: number;
+  total: number;
+}
+
+function SemicircleDeck({ deck, revealedIndex, onPick, onNext, isAlt, themed, roundNumber, total }: SemicircleDeckProps) {
+  // 9 cards arranged on a half-circle (top hemisphere), -75° to +75°
+  const ANGLE_RANGE = 150; // degrees
+  const START_ANGLE = -ANGLE_RANGE / 2;
+  const STEP = ANGLE_RANGE / (deck.length - 1);
+  const RADIUS = 130; // px — outward from arc center
+
+  return (
+    <div className="relative">
+      <div className="relative mx-auto h-72 w-full max-w-md">
+        {deck.map((digit, idx) => {
+          const angle = START_ANGLE + STEP * idx;
+          const isRevealed = revealedIndex === idx;
+          const isFaded = revealedIndex !== null && !isRevealed;
+
+          return (
+            <motion.button
+              key={`${roundNumber}-${idx}`}
+              type="button"
+              onClick={() => onPick(idx)}
+              disabled={revealedIndex !== null}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{
+                opacity: isFaded ? 0.25 : 1,
+                y: 0,
+                scale: isRevealed ? 1.12 : 1,
+              }}
+              transition={{ duration: 0.35, delay: idx * 0.04, ease: [0.22, 1, 0.36, 1] }}
+              whileHover={revealedIndex === null ? { y: -8 } : undefined}
+              className="absolute left-1/2 top-full origin-bottom"
+              style={{
+                transform: `translateX(-50%) rotate(${angle}deg) translateY(-${RADIUS}px) rotate(${-angle}deg)`,
+              }}
+              aria-label={`ไพ่ใบที่ ${idx + 1}`}
+            >
+              <div className="relative h-32 w-20 [perspective:800px] sm:h-36 sm:w-22">
+                <motion.div
+                  className="relative h-full w-full"
+                  initial={false}
+                  animate={{ rotateY: isRevealed ? 180 : 0 }}
+                  transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                  style={{ transformStyle: "preserve-3d" }}
+                >
+                  <div className="absolute inset-0 overflow-hidden rounded-xl border border-white/15 shadow-lg [backface-visibility:hidden]">
+                    <Image src="/lucky-numbers/back.png" alt="ไพ่หลังลายมงคล" fill sizes="80px" className="object-cover" priority={idx < 5} />
+                  </div>
+                  <div className="absolute inset-0 overflow-hidden rounded-xl border border-white/30 shadow-lg [transform:rotateY(180deg)] [backface-visibility:hidden]">
+                    <Image src={`/lucky-numbers/${digit}.png`} alt={`ไพ่เลข ${digit}`} fill sizes="80px" className="object-cover" />
+                  </div>
+                </motion.div>
+              </div>
+            </motion.button>
+          );
+        })}
+      </div>
+
+      <AnimatePresence mode="wait">
+        {revealedIndex !== null ? (
           <motion.div
-            key="lucky-overlay"
+            key="next"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.25 }}
+            className="mt-6 flex flex-col items-center gap-3"
+          >
+            <p className={cn("text-center text-sm", isAlt ? "text-white/80" : "text-gray-600")}>
+              คุณหยิบได้เลข <span className="text-xl font-bold">{deck[revealedIndex]}</span>
+            </p>
+            <button type="button" onClick={onNext} className={cn(themed.primaryBtn, "w-full max-w-xs")}>
+              {roundNumber >= total ? "ดูคำทำนาย" : "ต่อไป"}
+            </button>
+          </motion.div>
+        ) : (
+          <motion.p
+            key="hint"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="fixed inset-0 z-50 flex flex-col bg-[#0a0a1a]/95 text-white backdrop-blur-md"
+            className={cn("mt-6 text-center text-sm", isAlt ? "text-white/60" : "text-gray-500")}
           >
-            <div className="flex items-center justify-between px-5 pt-5">
-              <span className="text-xs uppercase tracking-[0.3em] text-white/60">REFFORTUNE · LUCKY</span>
-              <button
-                type="button"
-                onClick={closeOverlay}
-                className="rounded-full bg-white/10 p-2 transition hover:bg-white/20"
-                aria-label="ปิด"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="flex flex-1 flex-col items-center justify-center px-5 pb-12">
-              {phase === "intent" && (
-                <div className="max-w-md text-center">
-                  <p className="text-xs uppercase tracking-[0.4em] text-white/50">ขั้นตอนที่ 1</p>
-                  <h2 className="mt-3 font-serif text-3xl">ตั้งจิตอธิษฐาน</h2>
-                  <p className="mt-4 text-sm leading-relaxed text-white/70">
-                    หลับตา หายใจเข้าลึก ๆ 3 ครั้ง นึกถึงเรื่อง{baseline.topicLabelTh}ที่อยากเสริมพลัง
-                    เมื่อใจสงบแล้วกดปุ่มเพื่อเปิดไพ่
-                  </p>
-                  {baseline.intent ? (
-                    <p className="mt-4 rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-sm italic text-white/80">
-                      &ldquo;{baseline.intent}&rdquo;
-                    </p>
-                  ) : null}
-                  <button
-                    type="button"
-                    onClick={beginPray}
-                    className="mt-8 w-full max-w-xs rounded-full bg-gradient-to-r from-[#a78bfa] to-[#f472b6] px-8 py-4 text-base font-semibold shadow-lg shadow-violet-500/20 transition hover:scale-[1.02]"
-                  >
-                    พร้อมเปิดไพ่
-                  </button>
-                </div>
-              )}
-
-              {phase === "praying" && (
-                <div className="flex flex-col items-center gap-6 text-center">
-                  <motion.div
-                    initial={{ scale: 0.85, opacity: 0.6 }}
-                    animate={{ scale: [0.85, 1.1, 0.85], opacity: [0.6, 1, 0.6] }}
-                    transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-                    className="h-32 w-32 rounded-full bg-gradient-to-br from-[#a78bfa] to-[#f472b6] blur-[2px]"
-                  />
-                  <p className="text-sm uppercase tracking-[0.5em] text-white/60">กำลังเปิดไพ่...</p>
-                </div>
-              )}
-
-              {(phase === "revealing" || phase === "done") && (
-                <div className="w-full max-w-md">
-                  <p className="text-center text-xs uppercase tracking-[0.4em] text-white/50">ชุดเลขมงคลของคุณ</p>
-                  <h2 className="mt-2 text-center font-serif text-2xl">{baseline.topicLabelTh} · {baseline.dayKey}</h2>
-
-                  <div className="mt-8 grid grid-cols-3 gap-3">
-                    {baseline.cards.map((card, i) => {
-                      const flipped = i < revealedCount;
-                      return (
-                        <div key={card.index} className="flex flex-col items-center gap-2">
-                          <div className="relative h-40 w-24 [perspective:800px] sm:h-48 sm:w-28">
-                            <motion.div
-                              className="relative h-full w-full"
-                              initial={false}
-                              animate={{ rotateY: flipped ? 180 : 0 }}
-                              transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-                              style={{ transformStyle: "preserve-3d" }}
-                            >
-                              {/* Back */}
-                              <div className="absolute inset-0 overflow-hidden rounded-xl border border-white/15 shadow-lg [backface-visibility:hidden]">
-                                <Image
-                                  src="/lucky-numbers/back.png"
-                                  alt="ไพ่หลังลายมงคล"
-                                  fill
-                                  sizes="(min-width: 640px) 112px, 96px"
-                                  className="object-cover"
-                                  priority={i < 3}
-                                />
-                              </div>
-                              {/* Front */}
-                              <div className="absolute inset-0 overflow-hidden rounded-xl border border-white/30 shadow-lg [transform:rotateY(180deg)] [backface-visibility:hidden]">
-                                <Image
-                                  src={`/lucky-numbers/${card.digit}.png`}
-                                  alt={`ไพ่เลข ${card.digit}`}
-                                  fill
-                                  sizes="(min-width: 640px) 112px, 96px"
-                                  className="object-cover"
-                                />
-                              </div>
-                            </motion.div>
-                          </div>
-                          <span className="text-[10px] uppercase tracking-widest text-white/50">{card.role}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {allRevealed && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.1, duration: 0.4 }}
-                      className="mt-8 space-y-3 text-center"
-                    >
-                      <p className="text-sm text-white/70">
-                        เลขชุดคู่ <span className="font-semibold text-white">{baseline.pair}</span> · เลขชุดสาม{" "}
-                        <span className="font-semibold text-white">{baseline.triple}</span>
-                      </p>
-                      <button
-                        type="button"
-                        onClick={closeOverlay}
-                        className="w-full max-w-xs rounded-full bg-white px-8 py-4 text-base font-semibold text-[#1a1a2e] shadow-lg transition hover:scale-[1.02]"
-                      >
-                        ดูคำทำนายเต็ม
-                      </button>
-                    </motion.div>
-                  )}
-                </div>
-              )}
-            </div>
-          </motion.div>
+            แตะใบที่รู้สึก &quot;ใช่&quot; ที่สุด
+          </motion.p>
         )}
       </AnimatePresence>
-    </main>
+    </div>
   );
 }

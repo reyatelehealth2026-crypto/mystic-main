@@ -1,48 +1,30 @@
-// Lucky Numbers Engine — เลขมงคลจากวันเกิด + หมวด + วันที่ปัจจุบัน
-// Same input (dob + topic + dayKey) → same baseline result.
+// Lucky Numbers Engine — ผู้ใช้หยิบไพ่เอง 2 หรือ 4 ใบ
+// ไม่ใช้ DOB/topic แล้ว → analyse digits ที่ user หยิบโดยตรง
 
-import { LUCKY_NUMBERS, type LuckyNumberOption } from "@/lib/tarot/luckyNumbers";
-import type { WallpaperTopic } from "@/lib/tarot/topicPools";
+export type LuckyDigit = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+export type LuckyDigitCount = 2 | 4;
 
-export type LuckyTopic = WallpaperTopic;
-
-export interface LuckyCard {
-  index: number;
-  digit: number;
-  score: number;
+export interface LuckyDigitMeaning {
+  digit: LuckyDigit;
+  keywordTh: string;
   reasonTh: string;
-  role: "พลังหลัก" | "พลังเสริม" | "พลังโชค";
 }
 
-export interface LuckyNumbersResult {
-  dob: string;
-  topic: LuckyTopic;
-  dayKey: string;
-  lifePathNumber: number;
-  cards: LuckyCard[];
-  pair: string;
-  triple: string;
-  set: string;
-  topicLabelTh: string;
-  intent?: string;
-}
-
-const TOPIC_LABEL: Record<LuckyTopic, string> = {
-  finance: "การเงิน",
-  career: "การงาน",
-  love: "ความรัก",
-  luck: "โชคลาภ",
-  health: "สุขภาพ",
+const DIGIT_MEANINGS: Record<LuckyDigit, Omit<LuckyDigitMeaning, "digit">> = {
+  1: { keywordTh: "ผู้นำ / เริ่มต้น", reasonTh: "พลังของการลงมือทำ ความกล้าและการเป็นผู้ริเริ่ม" },
+  2: { keywordTh: "สมดุล / คู่ใจ", reasonTh: "พลังความสัมพันธ์ ความนุ่มนวล การประสานคน" },
+  3: { keywordTh: "สร้างสรรค์ / สื่อสาร", reasonTh: "พลังการแสดงออก ความสนุกสนาน เสน่ห์" },
+  4: { keywordTh: "มั่นคง / รากฐาน", reasonTh: "พลังความขยัน วินัย และความเป็นระบบ" },
+  5: { keywordTh: "เปลี่ยนแปลง / เคลื่อนไหว", reasonTh: "พลังโอกาสใหม่ การผจญภัย และอิสระ" },
+  6: { keywordTh: "ดูแล / ครอบครัว", reasonTh: "พลังความรักความอบอุ่น ความรับผิดชอบ" },
+  7: { keywordTh: "ปัญญา / สมาธิ", reasonTh: "พลังการพินิจ ความลึกซึ้ง และจิตวิญญาณ" },
+  8: { keywordTh: "ความมั่งคั่ง / สำเร็จ", reasonTh: "พลังการเงินไหลเวียน การได้รับการยอมรับ" },
+  9: { keywordTh: "ปิดวงจร / ยิ่งใหญ่", reasonTh: "พลังของการเปลี่ยนผ่าน ความสมบูรณ์ เลขมหามงคล" },
 };
 
-const ROLE_BY_INDEX: LuckyCard["role"][] = [
-  "พลังหลัก",
-  "พลังหลัก",
-  "พลังเสริม",
-  "พลังเสริม",
-  "พลังโชค",
-  "พลังโชค",
-];
+export function digitMeaning(digit: LuckyDigit): LuckyDigitMeaning {
+  return { digit, ...DIGIT_MEANINGS[digit] };
+}
 
 function sumDigits(value: string): number {
   return value
@@ -60,132 +42,48 @@ function reduceToRoot(total: number): number {
   return current;
 }
 
-// Mulberry32 — small deterministic PRNG seeded by integer
-function mulberry32(seed: number): () => number {
-  let a = seed >>> 0;
-  return function rand() {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
+export interface LuckyDigitAnalysis {
+  digits: LuckyDigit[];
+  count: LuckyDigitCount;
+  combined: string;
+  sum: number;
+  root: number;
+  meanings: LuckyDigitMeaning[];
+  reading: string;
 }
 
-function seedFromInputs(dob: string, topic: LuckyTopic, dayKey: string): number {
-  const raw = `${dob}|${topic}|${dayKey}`;
-  let h = 2166136261;
-  for (let i = 0; i < raw.length; i += 1) {
-    h ^= raw.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
+export function analyseLuckyDigits(digits: LuckyDigit[]): LuckyDigitAnalysis | null {
+  if (digits.length !== 2 && digits.length !== 4) return null;
+  if (!digits.every((d) => Number.isInteger(d) && d >= 1 && d <= 9)) return null;
 
-function lifePathFromDob(dob: string): number {
-  const digits = dob.replace(/\D/g, "");
-  if (!digits) return 0;
-  return reduceToRoot(sumDigits(digits));
-}
+  const sum = digits.reduce((acc, n) => acc + n, 0);
+  const root = reduceToRoot(sum);
+  const meanings = digits.map((d) => digitMeaning(d));
+  const combined = digits.join("");
 
-export function parseDayKey(date: Date = new Date()): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-export interface LuckyNumbersInput {
-  dob: string;
-  topic: LuckyTopic;
-  dayKey?: string;
-  intent?: string;
-}
-
-export function computeLuckyNumbers(input: LuckyNumbersInput): LuckyNumbersResult | null {
-  const { dob, topic, intent } = input;
-  if (!dob || !TOPIC_LABEL[topic]) return null;
-
-  const lifePath = lifePathFromDob(dob);
-  if (lifePath === 0) return null;
-
-  const dayKey = input.dayKey ?? parseDayKey();
-  const pool: LuckyNumberOption[] = LUCKY_NUMBERS[topic];
-
-  const seed = seedFromInputs(dob, topic, dayKey);
-  const rand = mulberry32(seed);
-
-  // Weighted selection from the topic pool (scores act as weights),
-  // then fill remaining slots with digits derived from DOB + lifePath
-  // so every result is anchored to the user.
-  const weighted: number[] = [];
-  pool.forEach((opt) => {
-    const weight = Math.max(1, opt.score);
-    for (let i = 0; i < weight; i += 1) weighted.push(opt.num);
+  const lines: string[] = [];
+  meanings.forEach((m, i) => {
+    lines.push(`ไพ่ใบที่ ${i + 1}: เลข ${m.digit} (${m.keywordTh}) — ${m.reasonTh}`);
   });
-
-  const chosen: LuckyCard[] = [];
-  const used = new Set<number>();
-
-  for (let attempt = 0; attempt < 200 && chosen.length < 4; attempt += 1) {
-    const pick = weighted[Math.floor(rand() * weighted.length)];
-    if (used.has(pick)) continue;
-    used.add(pick);
-    const meta = pool.find((p) => p.num === pick);
-    if (!meta) continue;
-    chosen.push({
-      index: chosen.length,
-      digit: pick,
-      score: meta.score,
-      reasonTh: meta.reasonTh,
-      role: ROLE_BY_INDEX[chosen.length],
-    });
-  }
-
-  // Anchor: ensure life-path number appears once (luck/connection to user)
-  if (!used.has(lifePath)) {
-    chosen.push({
-      index: chosen.length,
-      digit: lifePath,
-      score: 7,
-      reasonTh: `เลขเส้นทางชีวิตของคุณ (${lifePath}) ดึงพลังเฉพาะตัว`,
-      role: ROLE_BY_INDEX[chosen.length] ?? "พลังโชค",
-    });
-    used.add(lifePath);
-  }
-
-  // Fill any remaining slot with day-seed digit so we always have 6 cards.
-  while (chosen.length < 6) {
-    const guess = Math.floor(rand() * 10);
-    if (used.has(guess)) continue;
-    used.add(guess);
-    chosen.push({
-      index: chosen.length,
-      digit: guess,
-      score: 5,
-      reasonTh: "ตัวเลขเสริมจากพลังวันนี้",
-      role: ROLE_BY_INDEX[chosen.length] ?? "พลังโชค",
-    });
-  }
-
-  const set = chosen.map((c) => c.digit).join(" · ");
-  const pair = `${chosen[0].digit}${chosen[1].digit}`;
-  const triple = `${chosen[2].digit}${chosen[3].digit}${chosen[4].digit}`;
+  lines.push("");
+  lines.push(`ผลรวม ${sum} • เลขราก ${root} — ${digitMeaning(root as LuckyDigit).reasonTh}`);
 
   return {
-    dob,
-    topic,
-    dayKey,
-    lifePathNumber: lifePath,
-    cards: chosen.slice(0, 6),
-    pair,
-    triple,
-    set,
-    topicLabelTh: TOPIC_LABEL[topic],
-    intent: intent?.trim() || undefined,
+    digits,
+    count: digits.length as LuckyDigitCount,
+    combined,
+    sum,
+    root,
+    meanings,
+    reading: lines.join("\n"),
   };
 }
 
-export function topicLabel(topic: LuckyTopic): string {
-  return TOPIC_LABEL[topic];
+export function shuffleDigits(): LuckyDigit[] {
+  const arr: LuckyDigit[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  for (let i = arr.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
 }
