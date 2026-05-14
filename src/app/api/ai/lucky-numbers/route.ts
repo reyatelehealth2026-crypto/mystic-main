@@ -14,7 +14,7 @@ type GeminiLuckyNumbersResponse = {
 };
 
 function isLuckyDigit(value: unknown): value is LuckyDigit {
-  return typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 9;
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 9;
 }
 
 function formatAsStructure(parsed: GeminiLuckyNumbersResponse): string {
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
     if (!Array.isArray(body.digits) || !body.digits.every(isLuckyDigit)) {
       return NextResponse.json({ error: "invalid_digits" }, { status: 400 });
     }
-    if (body.digits.length !== 2 && body.digits.length !== 4) {
+    if (![2, 3, 4].includes(body.digits.length)) {
       return NextResponse.json({ error: "invalid_count" }, { status: 400 });
     }
 

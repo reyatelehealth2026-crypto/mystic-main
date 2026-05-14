@@ -1,8 +1,7 @@
-// Lucky Numbers Engine — ผู้ใช้หยิบไพ่เอง 2 หรือ 4 ใบ
-// ไม่ใช้ DOB/topic แล้ว → analyse digits ที่ user หยิบโดยตรง
+// Lucky Numbers Engine — ผู้ใช้หยิบไพ่เอง 2, 3 หรือ 4 ใบ จากไพ่ 0-9 (10 ใบ)
 
-export type LuckyDigit = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
-export type LuckyDigitCount = 2 | 4;
+export type LuckyDigit = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+export type LuckyDigitCount = 2 | 3 | 4;
 
 export interface LuckyDigitMeaning {
   digit: LuckyDigit;
@@ -11,6 +10,7 @@ export interface LuckyDigitMeaning {
 }
 
 const DIGIT_MEANINGS: Record<LuckyDigit, Omit<LuckyDigitMeaning, "digit">> = {
+  0: { keywordTh: "ศักยภาพ / จุดเริ่ม", reasonTh: "พลังของความว่าง พร้อมเปิดรับสิ่งใหม่และโอกาส" },
   1: { keywordTh: "ผู้นำ / เริ่มต้น", reasonTh: "พลังของการลงมือทำ ความกล้าและการเป็นผู้ริเริ่ม" },
   2: { keywordTh: "สมดุล / คู่ใจ", reasonTh: "พลังความสัมพันธ์ ความนุ่มนวล การประสานคน" },
   3: { keywordTh: "สร้างสรรค์ / สื่อสาร", reasonTh: "พลังการแสดงออก ความสนุกสนาน เสน่ห์" },
@@ -53,10 +53,10 @@ export interface LuckyDigitAnalysis {
 }
 
 export function analyseLuckyDigits(digits: LuckyDigit[]): LuckyDigitAnalysis | null {
-  if (digits.length !== 2 && digits.length !== 4) return null;
-  if (!digits.every((d) => Number.isInteger(d) && d >= 1 && d <= 9)) return null;
+  if (![2, 3, 4].includes(digits.length)) return null;
+  if (!digits.every((d) => Number.isInteger(d) && d >= 0 && d <= 9)) return null;
 
-  const sum = digits.reduce((acc, n) => acc + n, 0);
+  const sum = digits.reduce<number>((acc, n) => acc + n, 0);
   const root = reduceToRoot(sum);
   const meanings = digits.map((d) => digitMeaning(d));
   const combined = digits.join("");
@@ -80,7 +80,7 @@ export function analyseLuckyDigits(digits: LuckyDigit[]): LuckyDigitAnalysis | n
 }
 
 export function shuffleDigits(): LuckyDigit[] {
-  const arr: LuckyDigit[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  const arr: LuckyDigit[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
   for (let i = arr.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];

@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Sparkles, RefreshCw, Share2, ChevronLeft } from "lucide-react";
+import { Sparkles, RefreshCw, Share2, Download, ChevronLeft, Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { toPng } from "html-to-image";
 import { useTheme } from "@/lib/theme/ThemeProvider";
 import { cn } from "@/lib/cn";
 import {
@@ -16,30 +17,14 @@ import {
 } from "@/lib/lucky-numbers/engine";
 import { trackEvent } from "@/lib/analytics/tracking";
 
-type AiReading = { summary: string; cardStructure: string };
-
 type Stage = "choose-count" | "picking" | "result";
 
-const PICK_CHOICES: LuckyDigitCount[] = [2, 4];
+const PICK_CHOICES: LuckyDigitCount[] = [2, 3, 4];
 
 // Stagger between each card flip during the reveal animation (ms).
-const REVEAL_STAGGER_MS = 900;
+const REVEAL_STAGGER_MS = 850;
 // Pause after a pick before reshuffling the next round (ms).
 const PICK_TRANSITION_MS = 750;
-
-function normalizeText(value: unknown): string {
-  if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
-  if (Array.isArray(value)) return value.map((v) => normalizeText(v)).join("\n");
-  if (value && typeof value === "object") {
-    try {
-      return JSON.stringify(value, null, 2);
-    } catch {
-      return "";
-    }
-  }
-  return "";
-}
 
 export default function LuckyNumbersPage() {
   const { theme } = useTheme();
@@ -53,7 +38,6 @@ export default function LuckyNumbersPage() {
   const [pickingIndex, setPickingIndex] = useState<number | null>(null);
 
   const [analysis, setAnalysis] = useState<LuckyDigitAnalysis | null>(null);
-  const [aiReading, setAiReading] = useState<AiReading | null>(null);
   const [revealCount, setRevealCount] = useState(0);
 
   useEffect(() => {
@@ -67,7 +51,6 @@ export default function LuckyNumbersPage() {
     setDeck(shuffleDigits());
     setStage("picking");
     setAnalysis(null);
-    setAiReading(null);
     setRevealCount(0);
     trackEvent("reading_submitted", {
       vertical: "lucky-numbers",
@@ -75,8 +58,8 @@ export default function LuckyNumbersPage() {
     });
   }, []);
 
-  // When user taps a card: animate the pick (don't reveal the digit yet),
-  // then commit and either reshuffle or transition to result.
+  // When user taps a card: lift + glow, then commit and either reshuffle
+  // or transition to the result stage. We never reveal the digit at pick time.
   const handlePick = useCallback(
     (idx: number) => {
       if (pickingIndex !== null) return;
@@ -104,7 +87,6 @@ export default function LuckyNumbersPage() {
   );
 
   // Auto-reveal cards one-by-one once we land on the result stage.
-  // revealCount is reset to 0 by handlePick/resetAll before this fires.
   useEffect(() => {
     if (stage !== "result" || !analysis) return;
     const timers: ReturnType<typeof setTimeout>[] = [];
@@ -114,61 +96,12 @@ export default function LuckyNumbersPage() {
     return () => timers.forEach(clearTimeout);
   }, [stage, analysis]);
 
-  // Fetch AI reading once on result stage (parallel to the flip animation).
-  useEffect(() => {
-    if (stage !== "result" || !analysis) return;
-
-    const controller = new AbortController();
-    const fallback: AiReading = {
-      summary: `ชุดเลขมงคล ${analysis.combined} • ผลรวม ${analysis.sum} • เลขราก ${analysis.root}`,
-      cardStructure: analysis.reading,
-    };
-
-    const fallbackTimer = setTimeout(() => {
-      setAiReading((prev) => prev ?? fallback);
-    }, 9000);
-
-    fetch("/api/ai/lucky-numbers", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ digits: analysis.digits }),
-      signal: controller.signal,
-    })
-      .then(async (res) => {
-        if (!res.ok) return null;
-        const data = await res.json();
-        return data?.ai ?? null;
-      })
-      .then((ai) => {
-        if (!ai) {
-          setAiReading((prev) => prev ?? fallback);
-          return;
-        }
-        setAiReading({
-          summary: normalizeText(ai.summary) || fallback.summary,
-          cardStructure: normalizeText(ai.cardStructure) || fallback.cardStructure,
-        });
-      })
-      .catch(() => {
-        setAiReading((prev) => prev ?? fallback);
-      })
-      .finally(() => {
-        clearTimeout(fallbackTimer);
-      });
-
-    return () => {
-      controller.abort();
-      clearTimeout(fallbackTimer);
-    };
-  }, [stage, analysis]);
-
   const resetAll = useCallback(() => {
     setStage("choose-count");
     setPicked([]);
     setPickingIndex(null);
     setDeck(shuffleDigits());
     setAnalysis(null);
-    setAiReading(null);
     setRevealCount(0);
   }, []);
 
@@ -237,17 +170,17 @@ export default function LuckyNumbersPage() {
             <div>
               <h2 className={themed.sectionTitle}>เลือกจำนวนหลักก่อนเปิดไพ่</h2>
               <p className={cn("mt-1", themed.mutedSm)}>
-                ระบบจะให้คุณหยิบไพ่จาก 9 ใบ ทีละใบ ครบจำนวนแล้วจึงเปิดเผยผลทำนายพร้อมกัน
+                ระบบจะให้คุณหยิบไพ่จาก 10 ใบ (เลข 0-9) ทีละใบ ครบจำนวนแล้วจึงเปิดเผยผลพร้อมกัน
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               {PICK_CHOICES.map((c) => (
                 <motion.button
                   key={c}
                   type="button"
                   onClick={() => startPicking(c)}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
                   className={cn(themed.primaryBtn, "flex flex-col items-center justify-center gap-1 py-6")}
                 >
                   <span className="text-3xl font-bold">{c}</span>
@@ -349,7 +282,6 @@ export default function LuckyNumbersPage() {
           <ResultView
             analysis={analysis}
             revealCount={revealCount}
-            aiReading={aiReading}
             themed={themed}
             isAlt={isPastel || isRainbow}
             isRainbow={isRainbow}
@@ -389,7 +321,7 @@ function SemicircleDeck({ roundKey, deck, pickingIndex, onPick, isAlt }: Semicir
     return () => ro.disconnect();
   }, []);
 
-  // Half-circle (top), -75° to +75°.
+  // Half-circle (top hemisphere): spread from -75° to +75°.
   const ANGLE_RANGE = 150;
   const START_ANGLE = -ANGLE_RANGE / 2;
   const STEP = ANGLE_RANGE / (deck.length - 1);
@@ -479,26 +411,26 @@ function SemicircleDeck({ roundKey, deck, pickingIndex, onPick, isAlt }: Semicir
 
 function deckLayoutForWidth(width: number) {
   const w = Math.max(280, Math.min(width, 460));
-  // Card width scales with container; clamp so it stays touch-friendly.
-  const cardW = Math.round(Math.max(54, Math.min(78, w / 5.5)));
+  // Card width clamps so 10 cards stay touch-friendly without overlapping.
+  const cardW = Math.round(Math.max(48, Math.min(72, w / 6.2)));
   const cardH = Math.round(cardW * 1.55);
-  // Radius keeps the outermost card inside the container; also leave room for glow.
+  // Keep the outermost card inside the container.
   const safeHalfWidth = w / 2 - cardW * 0.55;
-  const radius = Math.round(Math.max(110, Math.min(safeHalfWidth / Math.sin((75 * Math.PI) / 180), 200)));
-  // Container needs to fit the arc plus the card height.
-  const arcHeight = Math.round(radius * Math.cos((75 * Math.PI) / 180));
-  const height = radius + cardH * 0.4 + arcHeight * 0 + 30; // tuned to comfortably contain the fan
-  return { radius, cardW, cardH, height: Math.max(280, height) };
+  const radius = Math.round(
+    Math.max(110, Math.min(safeHalfWidth / Math.sin((75 * Math.PI) / 180), 210)),
+  );
+  // Container height fits the arc plus card body comfortably.
+  const height = Math.max(290, radius + cardH * 0.45 + 30);
+  return { radius, cardW, cardH, height };
 }
 
 // ────────────────────────────────────────────────────────────────────────
-// Result View — face-down cards flip one by one, summary fades in after
+// Result View — face-down cards flip one by one, share with image
 // ────────────────────────────────────────────────────────────────────────
 
 interface ResultViewProps {
   analysis: LuckyDigitAnalysis;
   revealCount: number;
-  aiReading: AiReading | null;
   themed: {
     cardBox: string;
     sectionTitle: string;
@@ -512,11 +444,70 @@ interface ResultViewProps {
   onReset: () => void;
 }
 
-function ResultView({ analysis, revealCount, aiReading, themed, isAlt, isRainbow, isPastel, onReset }: ResultViewProps) {
+function ResultView({ analysis, revealCount, themed, isAlt, isRainbow, isPastel, onReset }: ResultViewProps) {
   const allRevealed = revealCount >= analysis.digits.length;
+  const shareableRef = useRef<HTMLDivElement>(null);
+  const [busy, setBusy] = useState<null | "share" | "download">(null);
+
+  const generateImage = useCallback(async () => {
+    if (!shareableRef.current) return null;
+    return toPng(shareableRef.current, {
+      quality: 1,
+      pixelRatio: 2,
+      backgroundColor: "#0b0b1a",
+      cacheBust: true,
+    });
+  }, []);
+
+  const handleDownload = useCallback(async () => {
+    setBusy("download");
+    try {
+      const dataUrl = await generateImage();
+      if (!dataUrl) return;
+      const link = document.createElement("a");
+      link.download = `reffortune-lucky-${analysis.combined}.png`;
+      link.href = dataUrl;
+      link.click();
+    } finally {
+      setBusy(null);
+    }
+  }, [analysis.combined, generateImage]);
+
+  const handleShare = useCallback(async () => {
+    setBusy("share");
+    try {
+      const dataUrl = await generateImage();
+      if (!dataUrl) return;
+
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], `reffortune-lucky-${analysis.combined}.png`, { type: "image/png" });
+
+      const navAny = navigator as Navigator & {
+        canShare?: (data: ShareData) => boolean;
+      };
+      if (navAny.share && navAny.canShare?.({ files: [file] })) {
+        await navAny.share({
+          title: "ไพ่เลขมงคลของฉัน — REFFORTUNE",
+          text: `เลขมงคลที่ฉันหยิบได้: ${analysis.combined}`,
+          files: [file],
+        });
+        return;
+      }
+
+      // Fallback: download the image.
+      const link = document.createElement("a");
+      link.download = `reffortune-lucky-${analysis.combined}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch {
+      // Swallow user-cancelled share dialogs.
+    } finally {
+      setBusy(null);
+    }
+  }, [analysis.combined, generateImage]);
 
   return (
-    <section className="mt-6 space-y-4">
+    <section className="mt-6 space-y-5">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -571,7 +562,10 @@ function ResultView({ analysis, revealCount, aiReading, themed, isAlt, isRainbow
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.5 }}
-              className={cn("mt-6 text-center text-3xl font-semibold tracking-[0.3em]", isAlt ? "text-white" : "text-violet-700")}
+              className={cn(
+                "mt-6 text-center text-3xl font-semibold tracking-[0.3em]",
+                isAlt ? "text-white" : "text-violet-700",
+              )}
             >
               {analysis.combined}
             </motion.p>
@@ -582,65 +576,29 @@ function ResultView({ analysis, revealCount, aiReading, themed, isAlt, isRainbow
       <AnimatePresence>
         {allRevealed && (
           <motion.div
-            key="ai-reading"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-            className={themed.cardBox}
-          >
-            <h2 className={themed.sectionTitle}>คำทำนาย</h2>
-            {!aiReading ? (
-              <p className={cn("mt-2", themed.mutedSm)}>กำลังสรุปคำทำนาย...</p>
-            ) : (
-              <>
-                <p className={cn("mt-2 whitespace-pre-line text-sm leading-relaxed", isAlt ? "text-white/80" : "text-gray-600")}>
-                  {aiReading.summary}
-                </p>
-                <div
-                  className={cn(
-                    "mt-4 rounded-xl border p-4",
-                    isPastel
-                      ? "border-white/20 bg-white/10"
-                      : isRainbow
-                      ? "border-[rgba(255,0,255,0.2)] bg-[rgba(255,0,255,0.05)]"
-                      : "border-violet-100 bg-violet-50/50",
-                  )}
-                >
-                  <p className={cn("text-xs font-medium", isAlt ? "text-white" : "text-violet-600")}>รายละเอียด</p>
-                  <p className={cn("mt-2 whitespace-pre-line text-sm leading-relaxed", isAlt ? "text-white/80" : "text-gray-600")}>
-                    {aiReading.cardStructure}
-                  </p>
-                </div>
-              </>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {allRevealed && (
-          <motion.div
             key="actions"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="grid grid-cols-1 gap-3 sm:grid-cols-2"
+            transition={{ delay: 0.4 }}
+            className="grid grid-cols-1 gap-3 sm:grid-cols-3"
           >
             <button
               type="button"
-              className={cn(themed.primaryBtn, "w-full flex items-center justify-center gap-2")}
-              onClick={() => {
-                const text = aiReading?.summary ?? `เลขมงคลของฉัน: ${analysis.combined}`;
-                if (navigator.share) {
-                  navigator.share({ title: "ไพ่เลขมงคล", text, url: window.location.href });
-                } else {
-                  navigator.clipboard.writeText(`${text}\n${window.location.href}`);
-                  alert("คัดลอกลิงก์แล้ว!");
-                }
-              }}
+              disabled={busy !== null}
+              className={cn(themed.primaryBtn, "w-full flex items-center justify-center gap-2 disabled:opacity-60")}
+              onClick={handleShare}
             >
-              <Share2 className="w-4 h-4" />
-              แชร์ผลลัพธ์
+              {busy === "share" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
+              แชร์รูป
+            </button>
+            <button
+              type="button"
+              disabled={busy !== null}
+              className={cn(themed.ghostBtn, "w-full disabled:opacity-60")}
+              onClick={handleDownload}
+            >
+              {busy === "download" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              บันทึกรูป
             </button>
             <button type="button" className={cn(themed.ghostBtn, "w-full")} onClick={onReset}>
               <RefreshCw className="w-4 h-4" />
@@ -649,6 +607,107 @@ function ResultView({ analysis, revealCount, aiReading, themed, isAlt, isRainbow
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Off-screen shareable card — rendered once all flips have happened
+          so html-to-image captures the final state. */}
+      {allRevealed && (
+        <ShareableCardOffscreen
+          ref={shareableRef}
+          analysis={analysis}
+          isPastel={isPastel}
+          isRainbow={isRainbow}
+        />
+      )}
     </section>
   );
 }
+
+// Off-screen card with deterministic styling for html-to-image rendering.
+const ShareableCardOffscreen = function ShareableCardOffscreenInner({
+  ref,
+  analysis,
+}: {
+  ref: React.RefObject<HTMLDivElement | null>;
+  analysis: LuckyDigitAnalysis;
+  isPastel: boolean;
+  isRainbow: boolean;
+}) {
+  return (
+    <div className="pointer-events-none fixed -left-[2000px] top-0 z-[-1]">
+      <div
+        ref={ref}
+        style={{
+          width: 540,
+          padding: 36,
+          borderRadius: 32,
+          background: "linear-gradient(160deg, #1a1a2e 0%, #2a1657 50%, #0b0b1a 100%)",
+          color: "#f5e6c8",
+          fontFamily: "ui-serif, Georgia, serif",
+          boxShadow: "0 30px 80px rgba(0,0,0,0.5)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 22 }}>✨</span>
+            <span style={{ fontSize: 18, letterSpacing: "0.18em", color: "#f1d28a" }}>REFFORTUNE</span>
+          </div>
+          <span style={{ fontSize: 12, color: "#c2a96b", letterSpacing: "0.2em" }}>LUCKY NUMBERS</span>
+        </div>
+
+        <p style={{ textAlign: "center", fontSize: 14, letterSpacing: "0.35em", color: "#d4b97a", marginBottom: 4 }}>
+          เลขมงคลของฉัน
+        </p>
+        <p style={{ textAlign: "center", fontSize: 56, fontWeight: 700, letterSpacing: "0.3em", color: "#fff5d6", marginBottom: 28 }}>
+          {analysis.combined}
+        </p>
+
+        <div style={{ display: "flex", justifyContent: "center", gap: 14, marginBottom: 28 }}>
+          {analysis.digits.map((d, i) => (
+            <img
+              key={i}
+              src={`/lucky-numbers/${d}.png`}
+              alt=""
+              style={{
+                width: 96,
+                height: 148,
+                objectFit: "cover",
+                borderRadius: 12,
+                border: "1px solid rgba(212,185,122,0.45)",
+                boxShadow: "0 0 24px rgba(255,215,140,0.25)",
+              }}
+            />
+          ))}
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-around",
+            padding: "16px 20px",
+            background: "rgba(255, 215, 140, 0.08)",
+            border: "1px solid rgba(212, 185, 122, 0.25)",
+            borderRadius: 16,
+            marginBottom: 24,
+          }}
+        >
+          <div style={{ textAlign: "center" }}>
+            <p style={{ fontSize: 11, letterSpacing: "0.25em", color: "#c2a96b" }}>ผลรวม</p>
+            <p style={{ fontSize: 26, fontWeight: 600, color: "#fff5d6", marginTop: 4 }}>{analysis.sum}</p>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <p style={{ fontSize: 11, letterSpacing: "0.25em", color: "#c2a96b" }}>เลขราก</p>
+            <p style={{ fontSize: 26, fontWeight: 600, color: "#fff5d6", marginTop: 4 }}>{analysis.root}</p>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <p style={{ fontSize: 11, letterSpacing: "0.25em", color: "#c2a96b" }}>จำนวนหลัก</p>
+            <p style={{ fontSize: 26, fontWeight: 600, color: "#fff5d6", marginTop: 4 }}>{analysis.count}</p>
+          </div>
+        </div>
+
+        <p style={{ textAlign: "center", fontSize: 12, color: "#a89368", letterSpacing: "0.18em" }}>
+          ✨ ขอพรขอเลขนำโชค ที่ reffortune.com
+        </p>
+      </div>
+    </div>
+  );
+};
