@@ -34,11 +34,21 @@ function formatAsCardStructure(parsed: GeminiSpiritResponse): string {
 export async function POST(req: Request) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return NextResponse.json({ error: "missing_gemini_api_key" }, { status: 400 });
 
     const body = (await req.json()) as { dob?: string };
     const result = spiritCardFromDob(body.dob ?? "");
     if (!result) return NextResponse.json({ error: "invalid_dob" }, { status: 400 });
+
+    const fallbackStructure = `ไพ่: ${result.card.name} • ทิศทาง: ${result.orientation === "upright" ? "ตั้งตรง" : "กลับหัว"} • เลขเส้นทางชีวิต: ${result.lifePathNumber} • ใจความ: ${cardMeaning(result)}`;
+
+    if (!apiKey) {
+      return NextResponse.json({
+        ok: true,
+        fallback: true,
+        reason: "missing_gemini_api_key",
+        ai: { summary: cardMeaning(result), cardStructure: fallbackStructure },
+      });
+    }
 
     // --- RAG (local-file prototype) ---
     const rag = retrieveRag({
@@ -54,10 +64,8 @@ export async function POST(req: Request) {
       lifePathNumber: result.lifePathNumber,
       dob: body.dob ?? "",
     });
-    
-    const prompt = basePrompt + formatRagContext(rag.chunks);
 
-    const fallbackStructure = `ไพ่: ${result.card.name} • ทิศทาง: ${result.orientation === "upright" ? "ตั้งตรง" : "กลับหัว"} • เลขเส้นทางชีวิต: ${result.lifePathNumber} • ใจความ: ${cardMeaning(result)}`;
+    const prompt = basePrompt + formatRagContext(rag.chunks);
 
     const model = process.env.GEMINI_MODEL || "gemini-2.0-flash";
 

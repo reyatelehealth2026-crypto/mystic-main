@@ -6,6 +6,8 @@ import "./globals.css";
 import { BottomTabBar } from "@/components/nav/BottomTabBar";
 import { ThemeProvider } from "@/lib/theme/ThemeProvider";
 import { MemphisBackground } from "@/components/effects/MemphisBackground";
+import { StoreHydrator } from "@/store/StoreHydrator";
+import { SITE_URL, SITE_NAME } from "@/lib/site";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -19,8 +21,6 @@ const playfair = Playfair_Display({
   weight: ["400", "500", "600", "700"],
 });
 
-const SITE_URL = "https://www.reffortune.com";
-const SITE_NAME = "REFFORTUNE";
 const DEFAULT_TITLE = "REFFORTUNE — ดูดวงออนไลน์ แม่นยำ ครบวงจร | ไพ่ทาโรต์ โหราศาสตร์ นามมติ เลขศาสตร์";
 const DEFAULT_DESCRIPTION =
   "ดูดวงออนไลน์ครบวงจรที่ REFFORTUNE ไพ่ทาโรต์ โหราศาสตร์ไทย นามมติ เลขศาสตร์ ดวงรายวัน ความรัก การงาน การเงิน ฟรี! พร้อม AI วิเคราะห์เชิงลึกแม่นยำ และวอลเปเปอร์เสริมดวง";
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
     "REFFORTUNE",
     "Reffortune",
   ],
-  authors: [{ name: "REFFORTUNE", url: "https://www.reffortune.com" }],
+  authors: [{ name: SITE_NAME, url: SITE_URL }],
   creator: "REFFORTUNE Team",
   publisher: "REFFORTUNE",
   applicationName: "REFFORTUNE",
@@ -75,18 +75,14 @@ export const metadata: Metadata = {
     description: DEFAULT_DESCRIPTION,
     locale: "th_TH",
     url: SITE_URL,
+    // TODO(og): ship a dedicated 1200x630 og-image.jpg once design is ready.
+    // The logo is a placeholder so the OG meta tags don't 404.
     images: [
-      {
-        url: "/og-image.jpg",
-        width: 1200,
-        height: 630,
-        alt: "REFFORTUNE — ดูดวงออนไลน์ แม่นยำ ครบวงจร",
-      },
       {
         url: "/logo.png",
         width: 400,
         height: 400,
-        alt: "REFFORTUNE Logo",
+        alt: "REFFORTUNE — ดูดวงออนไลน์ แม่นยำ ครบวงจร",
       },
     ],
   },
@@ -96,7 +92,7 @@ export const metadata: Metadata = {
     description: DEFAULT_DESCRIPTION,
     creator: "@reffortune",
     site: "@reffortune",
-    images: ["/og-image.jpg"],
+    images: ["/logo.png"],
   },
   robots: {
     index: true,
@@ -119,15 +115,10 @@ export const metadata: Metadata = {
     },
   },
   category: "lifestyle",
-  verification: {
-    google: "your-google-verification-code",
-    yandex: "your-yandex-verification-code",
-    yahoo: "your-yahoo-verification-code",
-  },
-  other: {
-    "facebook-domain-verification": "your-facebook-verification-code",
-    "msvalidate.01": "your-bing-verification-code",
-  },
+  // TODO(seo): re-add `verification` and platform-specific `other` keys once
+  // real values are issued. The placeholder strings (`your-google-...`) were
+  // rendering as live <meta> tags in production, which is worse than
+  // emitting nothing at all.
 };
 
 export default function RootLayout({
@@ -140,25 +131,17 @@ export default function RootLayout({
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <script
-          // Handle dynamic theme override from localStorage
+          // Pre-hydration: set data-theme from the same key ThemeProvider writes
+          // ("reffortune-theme", plain string). Prevents FOUC of the data-theme
+          // attribute on first paint. CSS variables for non-light themes are
+          // still applied by ThemeProvider after mount.
           dangerouslySetInnerHTML={{
             __html: `(() => {
   try {
-    const LS_LANGUAGE = "mf:language";
-    const LS_THEME = "mf:theme";
-
-    // Set defaults only if not exists
-    if (localStorage.getItem(LS_LANGUAGE) == null) {
-      localStorage.setItem(LS_LANGUAGE, JSON.stringify("th"));
-    }
-    if (localStorage.getItem(LS_THEME) == null) {
-      localStorage.setItem(LS_THEME, JSON.stringify("light"));
-    }
-
-    const theme = JSON.parse(localStorage.getItem(LS_THEME) || '"light"');
-    const el = document.documentElement;
-    if (theme === "system") el.removeAttribute("data-theme");
-    else el.setAttribute("data-theme", theme);
+    var VALID = ["light", "pastel", "rainbow", "soft"];
+    var stored = localStorage.getItem("reffortune-theme");
+    var theme = stored && VALID.indexOf(stored) !== -1 ? stored : "light";
+    document.documentElement.setAttribute("data-theme", theme);
   } catch (e) {}
 })();`,
           }}
@@ -166,6 +149,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-bg pb-20 text-fg`}>
         <ThemeProvider>
+          <StoreHydrator />
           <MemphisBackground />
           {children}
           <SpeedInsights />

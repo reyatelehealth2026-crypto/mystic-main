@@ -120,37 +120,36 @@ export function toLibraryEntry(
 }
 
 /**
- * Enforce 50-entry limit with oldest-first eviction (preserve favorites)
+ * Enforce MAX_ENTRIES limit with oldest-first eviction (preserve favorites).
+ * Preserves newest-first ordering — callers (and the UI) treat index 0 as
+ * the most recent reading, so the returned array must keep that invariant.
  */
 function enforceEntryLimit(items: SavedReading[], favorites: Set<string> = new Set()): SavedReading[] {
   if (items.length <= MAX_ENTRIES) {
     return items;
   }
-  
-  // Separate favorites and non-favorites
+
   const favoriteItems = items.filter(item => favorites.has(item.id));
   const nonFavoriteItems = items.filter(item => !favorites.has(item.id));
-  
-  // If favorites alone exceed limit, keep all favorites (edge case)
+
+  // Edge case: favorites alone exceed the limit — keep them all.
   if (favoriteItems.length >= MAX_ENTRIES) {
     return favoriteItems;
   }
-  
-  // Sort non-favorites by createdAt (oldest first)
-  const sortedNonFavorites = nonFavoriteItems.sort((a, b) => {
-    const dateA = new Date(a.createdAt).getTime();
-    const dateB = new Date(b.createdAt).getTime();
-    return dateA - dateB;
-  });
-  
-  // Calculate how many non-favorites we can keep
+
+  // Decide how many non-favorites to keep, then drop the oldest.
   const slotsForNonFavorites = MAX_ENTRIES - favoriteItems.length;
-  
-  // Keep newest non-favorites to fill remaining slots
-  const keptNonFavorites = sortedNonFavorites.slice(-slotsForNonFavorites);
-  
-  // Combine favorites and kept non-favorites
-  return [...favoriteItems, ...keptNonFavorites];
+  // Copy before sorting so the caller's array isn't mutated in place.
+  const sortedNewestFirst = [...nonFavoriteItems].sort((a, b) => {
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+  const keptNonFavorites = sortedNewestFirst.slice(0, slotsForNonFavorites);
+
+  // Final list: merge favorites + kept, then sort newest-first so the
+  // result matches the order the UI expects.
+  return [...favoriteItems, ...keptNonFavorites].sort((a, b) => {
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
 }
 
 export function loadLibrary(): LibraryStateV1 {
@@ -164,7 +163,13 @@ export function loadLibrary(): LibraryStateV1 {
 
 export function saveLibrary(state: LibraryStateV1): void {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(KEY, JSON.stringify(state));
+  try {
+    window.localStorage.setItem(KEY, JSON.stringify(state));
+  } catch (error) {
+    // localStorage can throw QuotaExceededError, SecurityError (private mode),
+    // or fail in restricted environments. Swallow so callers don't crash.
+    console.error("Failed to persist library:", error);
+  }
 }
 
 /**

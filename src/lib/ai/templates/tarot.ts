@@ -14,16 +14,20 @@ import { PromptBuilder } from './base';
 import { getContextForDivinationType } from '../cultural/thai-context';
 import { TAROT_EXAMPLES_BY_SPREAD } from '../examples/tarot-examples';
 import { cardMeaning } from '@/lib/tarot/engine';
-import { retrieveRag, formatRagContext } from "@/lib/rag/retriever";
 
 /**
- * Build a complete tarot reading prompt with spread-specific instructions
- * 
+ * Build a complete tarot reading prompt with spread-specific instructions.
+ *
+ * RAG knowledge base is intentionally NOT fetched here — the API route owns
+ * RAG retrieval (it has access to richer query inputs like intent and
+ * systemId overrides) and appends the formatted context after the base
+ * prompt. Doing both would double the KB context in the final prompt.
+ *
  * @param params - Tarot reading parameters (cards, count, question, spreadType)
  * @returns Complete prompt string ready for Gemini API
  */
 export function buildTarotPrompt(params: TarotPromptParams): string {
-  const { cards, count, question, spreadType } = params;
+  const { spreadType } = params;
 
   // Build role definition
   const role = buildTarotRole();
@@ -40,17 +44,9 @@ export function buildTarotPrompt(params: TarotPromptParams): string {
   // Format user data (cards and question)
   const userData = formatTarotUserData(params);
 
-  // Retrieve RAG context
-  const ragResult = retrieveRag({
-    query: question || "ดูดวงทั่วไป",
-    limit: 5
-  });
-  const knowledgeBase = formatRagContext(ragResult.chunks);
-
   // Compose the complete prompt
   return new PromptBuilder()
     .withRole(role)
-    .withKnowledgeBase(knowledgeBase)
     .withCulturalContext(culturalContext)
     .withFewShotExamples(examples)
     .withInstructions(instructions)

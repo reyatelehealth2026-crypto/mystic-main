@@ -62,7 +62,9 @@ export function PrivacyNotice({ featureType, featureName, onDismiss }: PrivacyNo
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 p-4">
+      {/* z-[10000] keeps the modal above BottomTabBar (z-[9999]) so the
+          "เข้าใจแล้ว" button stays tappable on small screens. */}
       <Card className="max-w-md w-full p-6 space-y-4">
         <div className="space-y-2">
           <h2 className="text-lg font-semibold text-fg">

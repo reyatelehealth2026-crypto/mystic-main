@@ -29,9 +29,12 @@ export function ShareableCard({ data, onShare, className }: ShareableCardProps) 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
 
-  const generateImage = useCallback(async () => {
-    if (!cardRef.current) return;
-    
+  // Returns the data URL so callers don't have to wait for the next render
+  // to read it from state — `generatedImage` would still be null after
+  // `await generateImage()` because React batches state updates.
+  const generateImage = useCallback(async (): Promise<string | null> => {
+    if (!cardRef.current) return null;
+
     setIsGenerating(true);
     try {
       const dataUrl = await toPng(cardRef.current, {
@@ -40,40 +43,39 @@ export function ShareableCard({ data, onShare, className }: ShareableCardProps) 
         backgroundColor: "#faf5ff",
       });
       setGeneratedImage(dataUrl);
-      
+
       // Auto download
       const link = document.createElement("a");
       link.download = `reffortune-${data.cardName.toLowerCase().replace(/\s+/g, "-")}.png`;
       link.href = dataUrl;
       link.click();
-      
+
       onShare?.();
+      return dataUrl;
     } catch (error) {
       console.error("Failed to generate image:", error);
+      return null;
     } finally {
       setIsGenerating(false);
     }
   }, [data.cardName, onShare]);
 
   const handleNativeShare = useCallback(async () => {
-    if (!generatedImage) {
-      await generateImage();
-    }
-    
-    if (navigator.share && generatedImage) {
-      try {
-        const response = await fetch(generatedImage);
-        const blob = await response.blob();
-        const file = new File([blob], "reffortune-reading.png", { type: "image/png" });
-        
-        await navigator.share({
-          title: "ผลคำทำนายจาก REFFORTUNE",
-          text: `${data.cardNameTh || data.cardName} — ${data.meaning}`,
-          files: [file],
-        });
-      } catch (err) {
-        console.log("Share cancelled:", err);
-      }
+    const dataUrl = generatedImage ?? (await generateImage());
+    if (!dataUrl || !navigator.share) return;
+
+    try {
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      const file = new File([blob], "reffortune-reading.png", { type: "image/png" });
+
+      await navigator.share({
+        title: "ผลคำทำนายจาก REFFORTUNE",
+        text: `${data.cardNameTh || data.cardName} — ${data.meaning}`,
+        files: [file],
+      });
+    } catch (err) {
+      console.log("Share cancelled:", err);
     }
   }, [generatedImage, generateImage, data]);
 

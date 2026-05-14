@@ -54,9 +54,6 @@ function buildNameNumerologyPrompt(request: NameNumerologyAIRequest): string {
 export async function POST(req: Request) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: "missing_gemini_api_key" }, { status: 400 });
-    }
 
     const body = (await req.json()) as NameNumerologyAIRequest;
 
@@ -64,9 +61,29 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "invalid_request" }, { status: 400 });
     }
 
+    if (!apiKey) {
+      return NextResponse.json({
+        ok: true,
+        fallback: true,
+        reason: "missing_gemini_api_key",
+        ai: {
+          summary: body.baseline.advice,
+          enhancedInterpretation: {
+            personality: body.baseline.interpretation.personality,
+            lifePath: body.baseline.interpretation.lifePath,
+            career: body.baseline.interpretation.career,
+            relationships: body.baseline.interpretation.relationships,
+          },
+          personalizedAdvice: body.baseline.advice,
+          strengthsInsight: body.baseline.interpretation.strengths.join(" "),
+          growthGuidance: body.baseline.interpretation.weaknesses.join(" "),
+        },
+      });
+    }
+
     const rag = retrieveRag({
       query: `วิเคราะห์ชื่อ ${body.firstName} ${body.lastName} เลขชะตา ${body.scores.destiny}`,
-      systemId: "numerology",
+      systemId: "numerology_th",
       limit: 6,
     });
 

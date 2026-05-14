@@ -368,10 +368,12 @@ function generateSeed(zodiacSign: ZodiacSign, date: Date): number {
 }
 
 /**
- * Seeded random number generator for deterministic results
+ * Seeded random number generator for deterministic results.
+ * (`seed` is pass-by-value; the previous `seed++` had no visible effect
+ * and only made the intent harder to read.)
  */
 function seededRandom(seed: number): number {
-  const x = Math.sin(seed++) * 10000;
+  const x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
 }
 
@@ -384,20 +386,23 @@ function selectFromArray<T>(array: T[], seed: number): T {
 }
 
 /**
- * Generate lucky numbers based on seed
- * Returns 3-5 numbers in range 1-99
+ * Generate lucky numbers based on seed.
+ * Returns 3-5 unique numbers in range 1-99 — keeps probing successive seed
+ * offsets until the target count is reached so we never return short on
+ * collisions. A safety cap prevents an infinite loop on a pathological seed.
  */
 function generateLuckyNumbers(seed: number): number[] {
   const count = 3 + Math.floor(seededRandom(seed) * 3); // 3-5 numbers
   const numbers: number[] = [];
-  
-  for (let i = 0; i < count; i++) {
-    const num = 1 + Math.floor(seededRandom(seed + i + 1) * 99);
+  const MAX_PROBES = count * 10;
+
+  for (let i = 1; numbers.length < count && i <= MAX_PROBES; i++) {
+    const num = 1 + Math.floor(seededRandom(seed + i) * 99);
     if (!numbers.includes(num)) {
       numbers.push(num);
     }
   }
-  
+
   return numbers.sort((a, b) => a - b);
 }
 

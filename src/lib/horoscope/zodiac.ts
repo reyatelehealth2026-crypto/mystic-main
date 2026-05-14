@@ -176,11 +176,12 @@ export function calculateZodiacSign(birthDate: Date): ZodiacSign {
         return metadata.sign;
       }
     } else {
-      // Normal case: sign within same year
+      // Normal case: each sign spans exactly two consecutive months, so the
+      // "fully inside" clause `month > start.month && month < end.month`
+      // can never fire (no integer is strictly between N and N+1).
       if (
         (month === start.month && day >= start.day) ||
-        (month === end.month && day <= end.day) ||
-        (month > start.month && month < end.month)
+        (month === end.month && day <= end.day)
       ) {
         return metadata.sign;
       }

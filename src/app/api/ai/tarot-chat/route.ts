@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
-import { cardMeaning, parseCardTokens } from "@/lib/tarot/engine";
+import { parseCardTokens } from "@/lib/tarot/engine";
 import { buildChatPrompt } from "@/lib/ai/prompts";
 import type { ChatTurn } from "@/lib/ai/types";
 
 type ChatTurnLegacy = { role: "user" | "assistant"; text: string };
 
+const FALLBACK_ANSWER =
+  "ขออภัย ตอนนี้ระบบอ่านเชิงลึกหนาแน่น ลองพิมพ์คำถามอีกครั้งในไม่กี่นาที หรือทบทวนภาพรวมไพ่ที่ออกพร้อมคำแนะนำเดิมก่อนก็ได้นะคะ";
+
 export async function POST(req: Request) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: "missing_gemini_api_key" }, { status: 400 });
-    }
 
     const body = (await req.json()) as {
       cardsToken?: string;
@@ -28,6 +28,15 @@ export async function POST(req: Request) {
     const cards = parseCardTokens(body.cardsToken ?? "");
     if (!cards.length) {
       return NextResponse.json({ error: "invalid_cards" }, { status: 400 });
+    }
+
+    if (!apiKey) {
+      return NextResponse.json({
+        ok: true,
+        fallback: true,
+        reason: "missing_gemini_api_key",
+        answer: FALLBACK_ANSWER,
+      });
     }
 
     // Convert legacy chat history format to new format
@@ -61,14 +70,25 @@ export async function POST(req: Request) {
 
     if (!resp.ok) {
       const text = await resp.text();
-      return NextResponse.json({ error: "gemini_request_failed", detail: text }, { status: 502 });
+      return NextResponse.json({
+        ok: true,
+        fallback: true,
+        reason: "gemini_unavailable",
+        detail: text,
+        answer: FALLBACK_ANSWER,
+      });
     }
 
     const data = await resp.json();
     const answer = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
 
     if (!answer) {
-      return NextResponse.json({ error: "empty_answer" }, { status: 502 });
+      return NextResponse.json({
+        ok: true,
+        fallback: true,
+        reason: "empty_answer",
+        answer: FALLBACK_ANSWER,
+      });
     }
 
     return NextResponse.json({ ok: true, answer });

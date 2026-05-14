@@ -14,16 +14,17 @@ import { PromptBuilder } from './base';
 import { getContextForDivinationType } from '../cultural/thai-context';
 import { SPIRIT_EXAMPLES_BY_ORIENTATION } from '../examples/spirit-examples';
 
-import { retrieveRag, formatRagContext } from "@/lib/rag/retriever";
-
 /**
- * Build a complete spirit card reading prompt with orientation-specific instructions
- * 
+ * Build a complete spirit card reading prompt with orientation-specific instructions.
+ *
+ * RAG knowledge base is intentionally NOT fetched here — the API route owns
+ * RAG retrieval and appends the formatted context after the base prompt.
+ *
  * @param params - Spirit card reading parameters (card, orientation, lifePathNumber, dob)
  * @returns Complete prompt string ready for Gemini API
  */
 export function buildSpiritPrompt(params: SpiritPromptParams): string {
-  const { card, orientation, lifePathNumber, dob } = params;
+  const { orientation } = params;
 
   // Build role definition
   const role = buildSpiritRole();
@@ -40,18 +41,9 @@ export function buildSpiritPrompt(params: SpiritPromptParams): string {
   // Format user data (card, orientation, life path number, DOB)
   const userData = formatSpiritUserData(params);
 
-  // Retrieve RAG context for spirit card/life path
-  const ragResult = retrieveRag({
-    query: `ไพ่ประจำตัว ${card.name} เลขเส้นทางชีวิต ${lifePathNumber}`,
-    systemId: "tarot_th",
-    limit: 4
-  });
-  const knowledgeBase = formatRagContext(ragResult.chunks);
-
   // Compose the complete prompt
   return new PromptBuilder()
     .withRole(role)
-    .withKnowledgeBase(knowledgeBase)
     .withCulturalContext(culturalContext)
     .withFewShotExamples(examples)
     .withInstructions(instructions)

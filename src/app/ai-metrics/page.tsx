@@ -48,19 +48,21 @@ export default function AIMetricsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchMetrics = async () => {
+  const fetchMetrics = async (signal?: AbortSignal) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch('/api/ai/metrics');
+      const response = await fetch('/api/ai/metrics', { signal });
       const data = await response.json();
-      
+
       if (data.success) {
         setMetrics(data);
       } else {
         setError(data.message || 'Failed to fetch metrics');
       }
     } catch (err) {
+      // Ignore aborts triggered by unmount/effect-cleanup.
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
@@ -68,7 +70,9 @@ export default function AIMetricsPage() {
   };
 
   useEffect(() => {
-    fetchMetrics();
+    const controller = new AbortController();
+    fetchMetrics(controller.signal);
+    return () => controller.abort();
   }, []);
 
   if (loading) {
@@ -91,7 +95,7 @@ export default function AIMetricsPage() {
           <h1 className="text-4xl font-bold text-white mb-8">AI Metrics Dashboard</h1>
           <Card className="p-8 text-center">
             <p className="text-red-400 mb-4">เกิดข้อผิดพลาด: {error}</p>
-            <Button onClick={fetchMetrics}>ลองอีกครั้ง</Button>
+            <Button onClick={() => fetchMetrics()}>ลองอีกครั้ง</Button>
           </Card>
         </div>
       </div>
@@ -123,7 +127,7 @@ export default function AIMetricsPage() {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold text-white">AI Metrics Dashboard</h1>
-          <Button onClick={fetchMetrics}>รีเฟรช</Button>
+          <Button onClick={() => fetchMetrics()}>รีเฟรช</Button>
         </div>
 
         {/* Enhanced Prompts Status */}

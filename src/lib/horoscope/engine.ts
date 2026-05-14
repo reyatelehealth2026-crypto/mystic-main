@@ -48,23 +48,28 @@ export function calculateDateRange(
       end.setHours(23, 59, 59, 999);
       break;
 
-    case TimePeriod.WEEKLY:
+    case TimePeriod.WEEKLY: {
       // Weekly: Monday to Sunday
       // Get day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
       const dayOfWeek = start.getDay();
-      
+
       // Calculate days to subtract to get to Monday
       // If Sunday (0), go back 6 days; if Monday (1), go back 0 days, etc.
       const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-      
+
       // Set start to Monday of current week
       start.setDate(start.getDate() - daysToMonday);
       start.setHours(0, 0, 0, 0);
-      
-      // Set end to Sunday of current week (6 days after Monday)
-      end.setDate(start.getDate() + 6);
+
+      // Set end to Sunday by advancing six full days from `start`'s timestamp.
+      // Using `start.getDate() + 6` is wrong: when Monday lands in the
+      // previous month, `end.setDate()` writes a same-month value (e.g.
+      // ref Sun Mar 1 → Monday Feb 24, but end would become Mar 30 instead
+      // of Mar 2). Adding a millisecond delta is timezone-safe.
+      end.setTime(start.getTime() + 6 * 24 * 60 * 60 * 1000);
       end.setHours(23, 59, 59, 999);
       break;
+    }
 
     case TimePeriod.MONTHLY:
       // Monthly: First to last day of the month

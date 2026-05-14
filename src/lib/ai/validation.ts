@@ -41,8 +41,11 @@ const metrics: ValidationMetrics = {
 };
 
 /**
- * Error log storage (in-memory for now, can be extended to external logging service)
+ * Error log storage (in-memory for now, can be extended to external logging service).
+ * Bounded ring buffer — `logError` drops the oldest entry once the cap is
+ * reached so long-running processes don't leak memory.
  */
+const MAX_ERROR_LOGS = 500;
 const errorLogs: ErrorLog[] = [];
 
 /**
@@ -259,6 +262,9 @@ function trackError(errorType: string, divinationType: DivinationType): void {
  */
 export function logError(log: ErrorLog): void {
   errorLogs.push(log);
+  if (errorLogs.length > MAX_ERROR_LOGS) {
+    errorLogs.splice(0, errorLogs.length - MAX_ERROR_LOGS);
+  }
   
   // Log to console with structured format
   console.error('[AI Error Log]', {

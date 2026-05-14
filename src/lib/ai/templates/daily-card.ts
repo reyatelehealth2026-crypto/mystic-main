@@ -3,7 +3,8 @@ import { getContextForDivinationType } from "../cultural/thai-context";
 import { cardMeaning } from "@/lib/tarot/engine";
 import type { DailyCardPromptParams } from "../types";
 
-import { retrieveRag, formatRagContext } from "@/lib/rag/retriever";
+// RAG knowledge base is fetched by the API route and appended after the
+// built prompt; building it here too would double the KB context.
 
 export function buildDailyCardPrompt(params: DailyCardPromptParams): string {
   const { card, orientation, dayKey } = params;
@@ -42,18 +43,8 @@ export function buildDailyCardPrompt(params: DailyCardPromptParams): string {
 ไพ่ที่ได้: ${card.name} (${orientation === "upright" ? "ตั้งตรง" : "กลับหัว"})
 ความหมายพื้นฐาน: ${cardMeaning({ card, orientation })}`;
 
-  // Retrieve RAG context for daily card
-  const ragResult = retrieveRag({
-    query: `ทำนายไพ่รายวัน ไพ่ ${card.name}`,
-    systemId: "tarot_th",
-    intent: "timing",
-    limit: 3
-  });
-  const knowledgeBase = formatRagContext(ragResult.chunks);
-
   return new PromptBuilder()
     .withRole(role)
-    .withKnowledgeBase(knowledgeBase)
     .withCulturalContext(culturalContext)
     .withInstructions(instructions)
     .withUserData(userData)

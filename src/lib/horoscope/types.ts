@@ -30,11 +30,15 @@ export enum TimePeriod {
 
 /**
  * Domain-specific reading areas (used by specialized readings)
+ *
+ * Canonical definition lives in `./specialized.ts` as a const-object plus
+ * type alias. Re-exported here so existing imports from `horoscope/types`
+ * keep working without two separate identifiers existing at the same time.
+ * The old `enum ReadingDomain` was structurally identical and `===` to the
+ * const-object values, but TypeScript treated them as distinct types,
+ * causing silent mismatches at boundaries.
  */
-export enum ReadingDomain {
-  FINANCE_CAREER = 'finance_career',
-  LOVE_RELATIONSHIPS = 'love_relationships'
-}
+export { ReadingDomain } from './specialized';
 
 /**
  * Input for horoscope generation

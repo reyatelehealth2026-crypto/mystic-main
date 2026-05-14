@@ -214,6 +214,12 @@ export default function ResultClient() {
       <main className="mx-auto w-full max-w-lg px-5 py-8">
         <div className="rounded-2xl border border-danger/30 bg-danger/10 p-4">
           <p className="text-sm text-danger">ไม่พบข้อมูลไพ่ที่สมบูรณ์ กรุณากลับไปเปิดไพ่ใหม่อีกครั้ง</p>
+          <Link
+            href="/tarot"
+            className="mt-3 inline-flex items-center justify-center rounded-xl bg-gold px-4 py-2 text-sm font-semibold text-bg hover:opacity-90"
+          >
+            กลับไปเลือกไพ่
+          </Link>
         </div>
       </main>
     );

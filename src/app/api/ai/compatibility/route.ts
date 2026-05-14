@@ -62,14 +62,30 @@ function buildCompatibilityPrompt(request: CompatibilityAIRequest): string {
 export async function POST(req: Request) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: "missing_gemini_api_key" }, { status: 400 });
-    }
 
     const body = (await req.json()) as CompatibilityAIRequest;
 
     if (!body.person1 || !body.person2 || !body.baseline) {
       return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+    }
+
+    if (!apiKey) {
+      return NextResponse.json({
+        ok: true,
+        fallback: true,
+        reason: "missing_gemini_api_key",
+        ai: {
+          summary: body.baseline.advice,
+          detailedAnalysis: {
+            communication: "ปกติ",
+            emotional: "ปกติ",
+            longTerm: "ปกติ",
+          },
+          personalizedAdvice: body.baseline.advice,
+          strengthsInsight: body.baseline.strengths.join(". "),
+          challengesGuidance: body.baseline.challenges.join(". "),
+        },
+      });
     }
 
     const rag = retrieveRag({
