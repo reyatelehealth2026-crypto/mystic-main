@@ -8,7 +8,7 @@ export type FunnelEventName =
   | "share_card_generated";
 
 export interface FunnelEventPayload {
-  vertical?: "tarot" | "spirit-card" | "numerology" | "daily-card";
+  vertical?: "tarot" | "spirit-card" | "numerology" | "daily-card" | "lucky-numbers";
   step?: string;
   count?: number;
   hasQuestion?: boolean;
