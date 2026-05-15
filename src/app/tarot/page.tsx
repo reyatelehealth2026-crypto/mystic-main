@@ -87,23 +87,22 @@ export default function TarotHomePage() {
                   ? "bg-white/20 backdrop-blur border border-white/30 hover:bg-white/30 hover:shadow-[0_8px_32px_rgba(199,125,255,0.3)]"
                   : isRainbow
                     ? "bg-[#1a1a2e]/80 backdrop-blur border border-[rgba(255,0,255,0.15)] hover:border-[rgba(255,0,255,0.4)] hover:shadow-[0_8px_32px_rgba(255,0,255,0.2)]"
-                    : "bg-white border border-gray-200 hover:border-violet-300 hover:shadow-[0_8px_32px_rgba(124,58,237,0.12)]"
+                    : "ds-card hover:[border-color:var(--border-mystical)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,1),0_1px_2px_rgba(46,16,101,0.05),0_12px_28px_-8px_rgba(124,58,237,0.18)]"
               )}>
                 <div className="flex items-start gap-4">
                   <div className={cn(
-                    "flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl",
-                    isPastel ? "bg-white/20 text-white" : isRainbow ? "bg-[rgba(255,0,255,0.15)] text-white" : "bg-violet-50 text-violet-600"
+                    "flex h-12 w-12 flex-shrink-0 items-center justify-center",
+                    isPastel ? "bg-white/20 text-white rounded-2xl" : isRainbow ? "bg-[rgba(255,0,255,0.15)] text-white rounded-2xl" : "ds-bubble",
                   )}>
                     <spread.icon className="w-6 h-6" />
                   </div>
                   <div className="flex-1">
-                    <h3 className={cn("text-base font-semibold", isPastel || isRainbow ? "text-white" : "text-gray-900")}>{spread.title}</h3>
-                    <div className={cn("mt-1 text-sm", isPastel || isRainbow ? "text-white/70" : "text-gray-500")}>
+                    <h3 className={cn("text-base font-semibold", isPastel || isRainbow ? "text-white" : "text-[var(--text)]")}>{spread.title}</h3>
+                    <div className={cn("mt-1 text-sm", isPastel || isRainbow ? "text-white/70" : "text-[var(--text-muted)]")}>
                       {spread.description}
                     </div>
                   </div>
                 </div>
-                {/* Now showing description instead of time */}
               </div>
             </Link>
           ))}

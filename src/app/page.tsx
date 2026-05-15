@@ -241,77 +241,74 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Quick Stats */}
+        {/* Quick Stats — uses .ds-stat tone recipes from the design kit */}
         <div className="mt-4 grid grid-cols-2 gap-3">
           {toggles.enableDailyAuspicious && (
             <Link href="/daily-card">
               <div className={cn(
-                "p-4 rounded-2xl border transition-all",
                 isPastel
-                  ? "bg-white/20 backdrop-blur border-white/30"
+                  ? "p-4 rounded-2xl border bg-white/20 backdrop-blur border-white/30 transition-all"
                   : isRainbow
-                    ? "bg-[#1a1a2e]/80 border-[rgba(0,255,255,0.2)]"
-                    : "bg-violet-50 border-violet-100"
+                    ? "p-4 rounded-2xl border bg-[#1a1a2e]/80 border-[rgba(0,255,255,0.2)] transition-all"
+                    : "ds-stat ds-stat--violet",
               )}>
-                <div className={cn("flex items-center gap-2 mb-1", isPastel || isRainbow ? "text-white" : "text-violet-600")}>
+                <div className={cn("flex items-center gap-2 mb-1", isPastel || isRainbow ? "text-white" : "text-[var(--accent)]")}>
                   <Star className="w-4 h-4" />
                   <span className="text-xs font-medium">ไพ่ประจำวัน</span>
                 </div>
-                <p className={cn("text-xs", isPastel || isRainbow ? "text-white/70" : "text-gray-500")}>{todayDate()}</p>
+                <p className={cn("text-[11px]", isPastel || isRainbow ? "text-white/70" : "text-[var(--text-subtle)]")}>{todayDate()}</p>
               </div>
             </Link>
           )}
 
           <Link href="/library/saved">
             <div className={cn(
-              "p-4 rounded-2xl border transition-all",
               isPastel
-                ? "bg-white/20 backdrop-blur border-white/30"
+                ? "p-4 rounded-2xl border bg-white/20 backdrop-blur border-white/30 transition-all"
                 : isRainbow
-                  ? "bg-[#1a1a2e]/80 border-[rgba(255,0,255,0.15)]"
-                  : "bg-gray-50 border-gray-100"
+                  ? "p-4 rounded-2xl border bg-[#1a1a2e]/80 border-[rgba(255,0,255,0.15)] transition-all"
+                  : "ds-stat ds-stat--neutral",
             )}>
-              <div className={cn("flex items-center gap-2 mb-1", isPastel || isRainbow ? "text-white" : "text-gray-600")}>
+              <div className={cn("flex items-center gap-2 mb-1", isPastel || isRainbow ? "text-white" : "text-[var(--text)]")}>
                 <Sparkles className="w-4 h-4" />
                 <span className="text-xs font-medium">การอ่านของฉัน</span>
               </div>
-              <p className={cn("text-xs", isPastel || isRainbow ? "text-white/70" : "text-gray-500")}>ดูย้อนหลัง</p>
+              <p className={cn("text-[11px]", isPastel || isRainbow ? "text-white/70" : "text-[var(--text-subtle)]")}>ดูย้อนหลัง</p>
             </div>
           </Link>
 
           <Link href="/wallpaper">
             <div className={cn(
-              "p-4 rounded-2xl border transition-all",
               isPastel
-                ? "bg-amber-500/20 backdrop-blur border-amber-400/30"
+                ? "p-4 rounded-2xl border bg-amber-500/20 backdrop-blur border-amber-400/30 transition-all"
                 : isRainbow
-                  ? "bg-[#1a1a2e]/80 border-[rgba(255,215,0,0.2)]"
-                  : "bg-amber-50 border-amber-100"
+                  ? "p-4 rounded-2xl border bg-[#1a1a2e]/80 border-[rgba(255,215,0,0.2)] transition-all"
+                  : "ds-stat ds-stat--amber",
             )}>
-              <div className={cn("flex items-center gap-2 mb-1", isPastel ? "text-amber-100" : isRainbow ? "text-white" : "text-amber-600")}>
+              <div className={cn("flex items-center gap-2 mb-1", isPastel ? "text-amber-100" : isRainbow ? "text-white" : "text-[var(--gold)]")}>
                 <ImageIcon className="w-4 h-4" />
                 <span className="text-xs font-medium">วอลเปเปอร์เสริมดวง</span>
               </div>
-              <p className={cn("text-xs", isPastel ? "text-amber-200/70" : isRainbow ? "text-white/60" : "text-amber-500/70")}>AI สร้างให้ วันละ 1 ครั้ง</p>
+              <p className={cn("text-[11px]", isPastel ? "text-amber-200/70" : isRainbow ? "text-white/60" : "text-amber-700/70")}>AI สร้างให้ วันละ 1 ครั้ง</p>
             </div>
           </Link>
 
           {toggles.enableLoveTarot && (
             <Link href="/love-tarot" className="col-span-2">
               <div className={cn(
-                "p-4 rounded-2xl border transition-all flex items-center justify-between",
+                "flex items-center justify-between",
                 isPastel
-                  ? "bg-pink-500/20 backdrop-blur border-pink-400/30"
+                  ? "p-4 rounded-2xl border bg-pink-500/20 backdrop-blur border-pink-400/30 transition-all"
                   : isRainbow
-                    ? "bg-[#1a1a2e]/80 border-[rgba(255,0,255,0.2)]"
-                    : "bg-pink-50 border-pink-100"
+                    ? "p-4 rounded-2xl border bg-[#1a1a2e]/80 border-[rgba(255,0,255,0.2)] transition-all"
+                    : "ds-stat ds-stat--pink",
               )}>
                 <div>
-                  <div className={cn("flex items-center gap-2 mb-1", isPastel ? "text-pink-100" : isRainbow ? "text-white" : "text-pink-600")}>
+                  <div className={cn("flex items-center gap-2 mb-1", isPastel ? "text-pink-100" : isRainbow ? "text-white" : "text-[#be185d]")}>
                     <span className="text-base">❤️</span>
                     <span className="text-xs font-medium">ดูดวงความรัก</span>
                   </div>
-                  <p className={cn("text-xs", isPastel ? "text-pink-200/70" : isRainbow ? "text-white/60" : "text-pink-500/70")}>เจาะลึกเรื่องหัวใจ</p>
+                  <p className={cn("text-[11px]", isPastel ? "text-pink-200/70" : isRainbow ? "text-white/60" : "text-pink-600/70")}>เจาะลึกเรื่องหัวใจ</p>
                 </div>
                 <ChevronRight className={cn("w-4 h-4", isPastel ? "text-pink-200/50" : isRainbow ? "text-white/40" : "text-pink-300")} />
               </div>
@@ -320,21 +317,21 @@ export default function Home() {
 
           <Link href="/lucky-numbers" className="col-span-2">
             <div className={cn(
-              "p-4 rounded-2xl border transition-all flex items-center justify-between",
+              "flex items-center justify-between",
               isPastel
-                ? "bg-indigo-500/20 backdrop-blur border-indigo-400/30"
+                ? "p-4 rounded-2xl border bg-indigo-500/20 backdrop-blur border-indigo-400/30 transition-all"
                 : isRainbow
-                  ? "bg-[#1a1a2e]/80 border-[rgba(0,255,255,0.25)]"
-                  : "bg-indigo-50 border-indigo-100"
+                  ? "p-4 rounded-2xl border bg-[#1a1a2e]/80 border-[rgba(0,255,255,0.25)] transition-all"
+                  : "ds-stat ds-stat--violet",
             )}>
               <div>
-                <div className={cn("flex items-center gap-2 mb-1", isPastel ? "text-indigo-100" : isRainbow ? "text-white" : "text-indigo-600")}>
+                <div className={cn("flex items-center gap-2 mb-1", isPastel ? "text-indigo-100" : isRainbow ? "text-white" : "text-[var(--accent)]")}>
                   <span className="text-base">🔢</span>
                   <span className="text-xs font-medium">ไพ่เลขมงคล</span>
                 </div>
-                <p className={cn("text-xs", isPastel ? "text-indigo-200/70" : isRainbow ? "text-white/60" : "text-indigo-500/70")}>หยิบ 2 หรือ 4 ใบจากครึ่งวงกลม</p>
+                <p className={cn("text-[11px]", isPastel ? "text-indigo-200/70" : isRainbow ? "text-white/60" : "text-[var(--text-subtle)]")}>หยิบ 2 หรือ 4 ใบจากครึ่งวงกลม</p>
               </div>
-              <ChevronRight className={cn("w-4 h-4", isPastel ? "text-indigo-200/50" : isRainbow ? "text-white/40" : "text-indigo-300")} />
+              <ChevronRight className={cn("w-4 h-4", isPastel ? "text-indigo-200/50" : isRainbow ? "text-white/40" : "text-[var(--accent-light)]")} />
             </div>
           </Link>
         </div>
