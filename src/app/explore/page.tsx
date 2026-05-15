@@ -1,18 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { 
-  Sparkles, 
-  Calendar, 
-  Ghost, 
-  Hash, 
-  Star, 
-  Heart, 
-  CircleDot, 
-  Compass, 
+import {
+  Sparkles,
+  Calendar,
+  Ghost,
+  Hash,
+  Star,
+  Heart,
+  CircleDot,
+  Compass,
   FileText,
   Search,
-  ImageIcon
+  ImageIcon,
+  Grid3X3
 } from "lucide-react";
 import { useTheme } from "@/lib/theme/ThemeProvider";
 import { cn } from "@/lib/cn";
@@ -47,6 +48,12 @@ const categories = [
     description: "ดูดวงรายวัน รายสัปดาห์ รายเดือน",
     href: "/horoscope",
     icon: Star,
+  },
+  {
+    title: "ผูกดวงพิชัยสงคราม",
+    description: "ดวงไทยจากวัน-เวลา-สถานที่เกิด ไม่ใช้ AI",
+    href: "/birth-chart",
+    icon: Grid3X3,
   },
   {
     title: "ความเข้ากัน",
