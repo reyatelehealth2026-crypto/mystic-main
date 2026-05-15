@@ -161,13 +161,13 @@ export default function Home() {
           <div className="relative">
             {/* Glow effect */}
             <div className={cn("absolute inset-0 blur-3xl rounded-full scale-150", isPastel ? "bg-white/30" : isRainbow ? "bg-[rgba(255,0,255,0.2)]" : "bg-violet-400/20")} />
-            {/* Logo image */}
-            <Image 
-              src="/logo.png" 
-              alt="REFFORTUNE" 
-              width={280} 
-              height={100} 
-              className="relative h-20 w-auto object-contain drop-shadow-lg"
+            {/* Logo image — orb + wordmark + tagline (transparent PNG) */}
+            <Image
+              src="/logo-home.png"
+              alt="REFFORTUNE"
+              width={767}
+              height={649}
+              className="relative h-24 w-auto object-contain drop-shadow-[0_8px_24px_rgba(124,58,237,0.35)]"
               priority
             />
           </div>
