@@ -183,36 +183,42 @@ export default function Home() {
       {/* Hero Section */}
       <section className="px-5 pt-4">
         <div className={cn(
-          "relative overflow-hidden rounded-[28px] p-6 text-white shadow-xl",
-          isPastel 
-            ? "bg-white/20 backdrop-blur-xl border border-white/30 shadow-[0_8px_32px_rgba(199,125,255,0.3)]"
+          "relative p-6 text-white",
+          // Design-system "orb" hero: triple inset/outset shadow + bokeh
+          // corners are baked into .ds-hero. For non-light themes we keep the
+          // theme-specific surfaces (pastel glass / rainbow dark).
+          isPastel
+            ? "overflow-hidden rounded-[28px] bg-white/20 backdrop-blur-xl border border-white/30 shadow-[0_8px_32px_rgba(199,125,255,0.3)]"
             : isRainbow
-              ? "bg-[#1a1a2e]/90 backdrop-blur-xl border border-[rgba(255,0,255,0.3)] shadow-[0_8px_32px_rgba(255,0,255,0.2)]"
-              : "bg-gradient-to-br from-violet-600 via-violet-500 to-purple-500 shadow-violet-200"
+              ? "overflow-hidden rounded-[28px] bg-[#1a1a2e]/90 backdrop-blur-xl border border-[rgba(255,0,255,0.3)] shadow-[0_8px_32px_rgba(255,0,255,0.2)]"
+              : "ds-hero",
         )}>
-          {/* Decorative elements */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
-          
+          {(isPastel || isRainbow) && (
+            <>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
+            </>
+          )}
+
           <div className="relative z-10">
             <p className={cn("text-sm mb-1", isPastel || isRainbow ? "text-white/80" : "text-violet-100")}>{greeting()}</p>
-            <h1 className="font-serif text-2xl font-semibold leading-tight">
+            <h1 className="font-serif text-[28px] sm:text-[32px] font-semibold leading-[1.15] tracking-[-0.01em]">
               ค้นหาคำตอบที่คุณตามหา
             </h1>
             <p className={cn("mt-2 text-sm leading-relaxed", isPastel || isRainbow ? "text-white/70" : "text-violet-100")}>
-              ไพ่ทาโรต์ • ดวงชะตา • ความรัก • เลขศาสตร์
+              ไพ่ทาโรต์ · ดวงชะตา · ความรัก · เลขศาสตร์
             </p>
 
             <div className="mt-5 flex gap-3">
               {toggles.enableTarot ? (
                 <Link href="/tarot" className="flex-1">
                   <button className={cn(
-                    "w-full h-12 rounded-xl font-semibold shadow-lg transition-all active:scale-[0.98]",
-                    isPastel 
-                      ? "bg-white/30 backdrop-blur text-white border border-white/50 hover:bg-white/50"
+                    "w-full h-[50px] rounded-[14px] font-bold text-[14.5px] tracking-[0.01em] transition-all active:scale-[0.98]",
+                    isPastel
+                      ? "bg-white/30 backdrop-blur text-white border border-white/50 hover:bg-white/50 shadow-lg"
                       : isRainbow
-                        ? "bg-gradient-to-r from-[#ff00ff] to-[#00ffff] text-white hover:opacity-90"
-                        : "bg-white text-violet-600 hover:bg-violet-50"
+                        ? "bg-gradient-to-r from-[#ff00ff] to-[#00ffff] text-white hover:opacity-90 shadow-lg"
+                        : "ds-hero__cta",
                   )}>
                     เริ่มดูดวง
                   </button>
@@ -220,12 +226,12 @@ export default function Home() {
               ) : (
                 <div className="flex-1">
                   <button disabled className={cn(
-                    "w-full h-12 rounded-xl font-semibold shadow-lg opacity-50 cursor-not-allowed",
-                    isPastel 
+                    "w-full h-[50px] rounded-[14px] font-bold text-[14.5px] opacity-50 cursor-not-allowed shadow-lg",
+                    isPastel
                       ? "bg-white/10 backdrop-blur text-white/50 border border-white/20"
                       : isRainbow
                         ? "bg-[#1a1a2e] text-white/40 border border-[rgba(255,0,255,0.1)]"
-                        : "bg-gray-100 text-gray-400"
+                        : "bg-gray-100 text-gray-400",
                   )}>
                     ปิดปรับปรุงชั่วคราว
                   </button>
