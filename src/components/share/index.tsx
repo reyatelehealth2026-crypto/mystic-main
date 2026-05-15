@@ -18,7 +18,7 @@ interface UniversalShareableCardProps {
 export function UniversalShareableCard({ data, onShare, className }: UniversalShareableCardProps) {
   switch (data.vertical) {
     case "tarot":
-      return <TarotShareableCard data={data} onShare={onShare} className={className} />;
+      return <TarotShareableCard data={data} onShare={onShare ? () => onShare() : undefined} className={className} />;
     case "spirit":
       return <SpiritShareableCard data={data} onShare={onShare} className={className} />;
     case "numerology":
