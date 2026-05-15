@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Sparkles, Layers, Grid3X3, LayoutGrid } from "lucide-react";
+import { Layers, Grid3X3, LayoutGrid } from "lucide-react";
 import { useTheme } from "@/lib/theme/ThemeProvider";
 import { cn } from "@/lib/cn";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 const spreads = [
   {
@@ -59,8 +60,7 @@ export default function TarotHomePage() {
     <main className={cn("min-h-screen", isPastel ? "bg-transparent" : isRainbow ? "bg-transparent" : "bg-white")}>
       <header className="flex items-center justify-between px-5 pt-4 pb-2">
         <Link href="/" className="flex items-center gap-2">
-          <Sparkles className={cn("w-5 h-5", isPastel || isRainbow ? "text-white" : "text-violet-600")} />
-          <span className={cn("font-serif text-lg font-semibold", isPastel || isRainbow ? "text-white" : "text-violet-600")}>REFFORTUNE</span>
+          <BrandLogo size={24} inverted={isPastel || isRainbow} />
         </Link>
       </header>
 

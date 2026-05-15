@@ -2,13 +2,14 @@
 
 import { FormEvent, useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
-import { Sparkles, Heart } from "lucide-react";
+import { Heart } from "lucide-react";
 import { useLibrary } from "@/lib/library/useLibrary";
 import { buildSavedSpiritCardReading } from "@/lib/library/storage";
 import { trackEvent } from "@/lib/analytics/tracking";
 import { evaluatePaywall, recordFreeReading } from "@/lib/monetization/paywall";
 import { runReadingPipeline } from "@/lib/reading/pipeline";
 import { spiritCardFromDob } from "@/lib/tarot/spirit";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 function normalizeText(value: unknown): string {
   if (typeof value === "string") return value;
@@ -201,8 +202,7 @@ export default function SpiritCardPage() {
       {/* Header */}
       <header className="flex items-center justify-between px-5 pt-4 pb-2">
         <Link href="/" className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-violet-600" />
-          <span className="font-serif text-lg font-semibold text-violet-600">REFFORTUNE</span>
+          <BrandLogo size={24} />
         </Link>
       </header>
 

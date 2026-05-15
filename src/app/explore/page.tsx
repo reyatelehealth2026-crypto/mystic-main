@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "@/lib/theme/ThemeProvider";
 import { cn } from "@/lib/cn";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 const categories = [
   {
@@ -100,8 +101,7 @@ export default function ExplorePage() {
       )}>
         <div className="flex items-center gap-3 px-5 py-4">
           <Link href="/" className="flex items-center gap-2">
-            <Sparkles className={cn("w-5 h-5", isPastel || isRainbow ? "text-white" : "text-violet-600")} />
-            <span className={cn("font-serif text-lg font-semibold", isPastel || isRainbow ? "text-white" : "text-violet-600")}>REFFORTUNE</span>
+            <BrandLogo size={24} inverted={isPastel || isRainbow} />
           </Link>
         </div>
         

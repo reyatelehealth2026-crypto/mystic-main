@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Sparkles, RefreshCw, Share2, Download, ChevronLeft, Loader2 } from "lucide-react";
+import { RefreshCw, Share2, Download, ChevronLeft, Loader2 } from "lucide-react";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { AnimatePresence, motion } from "framer-motion";
 import { toPng } from "html-to-image";
 import { useTheme } from "@/lib/theme/ThemeProvider";
@@ -147,10 +148,7 @@ export default function LuckyNumbersPage() {
     <main className={themed.page}>
       <header className="flex items-center justify-between px-5 pt-4 pb-2">
         <Link href="/" className="flex items-center gap-2">
-          <Sparkles className={cn("w-5 h-5", isPastel || isRainbow ? "text-white" : "text-violet-600")} />
-          <span className={cn("font-serif text-lg font-semibold", isPastel || isRainbow ? "text-white" : "text-violet-600")}>
-            REFFORTUNE
-          </span>
+          <BrandLogo size={24} inverted={isPastel || isRainbow} />
         </Link>
       </header>
 
@@ -646,11 +644,14 @@ const ShareableCardOffscreen = function ShareableCardOffscreenInner({
           boxShadow: "0 30px 80px rgba(0,0,0,0.5)",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 22 }}>✨</span>
-            <span style={{ fontSize: 18, letterSpacing: "0.18em", color: "#f1d28a" }}>REFFORTUNE</span>
-          </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+          {/* Brand mark from public/logo.png — survives html-to-image because
+              the file is on the same origin and rendered via a raw <img>. */}
+          <img
+            src="/logo.png"
+            alt="REFFORTUNE"
+            style={{ height: 56, width: "auto", objectFit: "contain", filter: "drop-shadow(0 4px 18px rgba(255,215,140,0.35))" }}
+          />
           <span style={{ fontSize: 12, color: "#c2a96b", letterSpacing: "0.2em" }}>LUCKY NUMBERS</span>
         </div>
 
