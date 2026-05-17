@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "@/lib/theme/ThemeProvider";
 import { cn } from "@/lib/cn";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 const categories = [
   {
@@ -107,8 +108,7 @@ export default function ExplorePage() {
       )}>
         <div className="flex items-center gap-3 px-5 py-4">
           <Link href="/" className="flex items-center gap-2">
-            <Sparkles className={cn("w-5 h-5", isPastel || isRainbow ? "text-white" : "text-violet-600")} />
-            <span className={cn("font-serif text-lg font-semibold", isPastel || isRainbow ? "text-white" : "text-violet-600")}>REFFORTUNE</span>
+            <BrandLogo size={24} inverted={isPastel || isRainbow} />
           </Link>
         </div>
         
@@ -145,22 +145,22 @@ export default function ExplorePage() {
                 key={cat.title}
                 href={cat.href}
                 className={cn(
-                  "group p-4 rounded-2xl transition-all hover:-translate-y-0.5",
+                  "group p-4 transition-all hover:-translate-y-0.5",
                   isPastel
-                    ? "bg-white/20 backdrop-blur border border-white/30 hover:bg-white/30 hover:shadow-[0_8px_32px_rgba(199,125,255,0.3)]"
+                    ? "rounded-2xl bg-white/20 backdrop-blur border border-white/30 hover:bg-white/30 hover:shadow-[0_8px_32px_rgba(199,125,255,0.3)]"
                     : isRainbow
-                      ? "bg-[#1a1a2e]/80 backdrop-blur border border-[rgba(255,0,255,0.15)] hover:border-[rgba(255,0,255,0.4)] hover:shadow-[0_8px_32px_rgba(255,0,255,0.2)]"
-                      : "bg-white border border-gray-200 hover:border-violet-300 hover:shadow-[0_8px_32px_rgba(124,58,237,0.12)]"
+                      ? "rounded-2xl bg-[#1a1a2e]/80 backdrop-blur border border-[rgba(255,0,255,0.15)] hover:border-[rgba(255,0,255,0.4)] hover:shadow-[0_8px_32px_rgba(255,0,255,0.2)]"
+                      : "ds-card rounded-2xl hover:[border-color:var(--border-mystical)]",
                 )}
               >
                 <div className={cn(
-                  "w-12 h-12 rounded-2xl flex items-center justify-center mb-3",
-                  isPastel ? "bg-white/20 text-white" : isRainbow ? "bg-[rgba(255,0,255,0.15)] text-white" : "bg-violet-50 text-violet-600"
+                  "w-12 h-12 flex items-center justify-center mb-3",
+                  isPastel ? "bg-white/20 text-white rounded-2xl" : isRainbow ? "bg-[rgba(255,0,255,0.15)] text-white rounded-2xl" : "ds-bubble",
                 )}>
                   <Icon className="w-6 h-6" />
                 </div>
-                <h3 className={cn("font-semibold text-sm mb-1", isPastel || isRainbow ? "text-white" : "text-gray-900")}>{cat.title}</h3>
-                <p className={cn("text-xs line-clamp-2", isPastel || isRainbow ? "text-white/70" : "text-gray-500")}>{cat.description}</p>
+                <h3 className={cn("font-semibold text-sm mb-1", isPastel || isRainbow ? "text-white" : "text-[var(--text)]")}>{cat.title}</h3>
+                <p className={cn("text-xs line-clamp-2", isPastel || isRainbow ? "text-white/70" : "text-[var(--text-muted)]")}>{cat.description}</p>
               </Link>
             );
           })}

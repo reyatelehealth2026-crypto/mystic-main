@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
 const nextConfig: NextConfig = {
   // Avoid dev CORS warnings when accessing Next dev server via localhost tooling.
@@ -13,5 +14,9 @@ const nextConfig: NextConfig = {
     ],
   },
 };
+
+// Bind Cloudflare local resources (R2/KV/etc) during `next dev` when available.
+// Safe no-op outside the Cloudflare adapter context.
+initOpenNextCloudflareForDev();
 
 export default nextConfig;

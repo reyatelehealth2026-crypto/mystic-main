@@ -161,13 +161,13 @@ export default function Home() {
           <div className="relative">
             {/* Glow effect */}
             <div className={cn("absolute inset-0 blur-3xl rounded-full scale-150", isPastel ? "bg-white/30" : isRainbow ? "bg-[rgba(255,0,255,0.2)]" : "bg-violet-400/20")} />
-            {/* Logo image */}
-            <Image 
-              src="/logo.png" 
-              alt="REFFORTUNE" 
-              width={280} 
-              height={100} 
-              className="relative h-20 w-auto object-contain drop-shadow-lg"
+            {/* Logo image — orb + wordmark + tagline (transparent PNG) */}
+            <Image
+              src="/logo-home.png"
+              alt="REFFORTUNE"
+              width={767}
+              height={649}
+              className="relative h-24 w-auto object-contain drop-shadow-[0_8px_24px_rgba(124,58,237,0.35)]"
               priority
             />
           </div>
@@ -183,36 +183,42 @@ export default function Home() {
       {/* Hero Section */}
       <section className="px-5 pt-4">
         <div className={cn(
-          "relative overflow-hidden rounded-[28px] p-6 text-white shadow-xl",
-          isPastel 
-            ? "bg-white/20 backdrop-blur-xl border border-white/30 shadow-[0_8px_32px_rgba(199,125,255,0.3)]"
+          "relative p-6 text-white",
+          // Design-system "orb" hero: triple inset/outset shadow + bokeh
+          // corners are baked into .ds-hero. For non-light themes we keep the
+          // theme-specific surfaces (pastel glass / rainbow dark).
+          isPastel
+            ? "overflow-hidden rounded-[28px] bg-white/20 backdrop-blur-xl border border-white/30 shadow-[0_8px_32px_rgba(199,125,255,0.3)]"
             : isRainbow
-              ? "bg-[#1a1a2e]/90 backdrop-blur-xl border border-[rgba(255,0,255,0.3)] shadow-[0_8px_32px_rgba(255,0,255,0.2)]"
-              : "bg-gradient-to-br from-violet-600 via-violet-500 to-purple-500 shadow-violet-200"
+              ? "overflow-hidden rounded-[28px] bg-[#1a1a2e]/90 backdrop-blur-xl border border-[rgba(255,0,255,0.3)] shadow-[0_8px_32px_rgba(255,0,255,0.2)]"
+              : "ds-hero",
         )}>
-          {/* Decorative elements */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
-          
+          {(isPastel || isRainbow) && (
+            <>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
+            </>
+          )}
+
           <div className="relative z-10">
             <p className={cn("text-sm mb-1", isPastel || isRainbow ? "text-white/80" : "text-violet-100")}>{greeting()}</p>
-            <h1 className="font-serif text-2xl font-semibold leading-tight">
+            <h1 className="font-serif text-[28px] sm:text-[32px] font-semibold leading-[1.15] tracking-[-0.01em]">
               ค้นหาคำตอบที่คุณตามหา
             </h1>
             <p className={cn("mt-2 text-sm leading-relaxed", isPastel || isRainbow ? "text-white/70" : "text-violet-100")}>
-              ไพ่ทาโรต์ • ดวงชะตา • ความรัก • เลขศาสตร์
+              ไพ่ทาโรต์ · ดวงชะตา · ความรัก · เลขศาสตร์
             </p>
 
             <div className="mt-5 flex gap-3">
               {toggles.enableTarot ? (
                 <Link href="/tarot" className="flex-1">
                   <button className={cn(
-                    "w-full h-12 rounded-xl font-semibold shadow-lg transition-all active:scale-[0.98]",
-                    isPastel 
-                      ? "bg-white/30 backdrop-blur text-white border border-white/50 hover:bg-white/50"
+                    "w-full h-[50px] rounded-[14px] font-bold text-[14.5px] tracking-[0.01em] transition-all active:scale-[0.98]",
+                    isPastel
+                      ? "bg-white/30 backdrop-blur text-white border border-white/50 hover:bg-white/50 shadow-lg"
                       : isRainbow
-                        ? "bg-gradient-to-r from-[#ff00ff] to-[#00ffff] text-white hover:opacity-90"
-                        : "bg-white text-violet-600 hover:bg-violet-50"
+                        ? "bg-gradient-to-r from-[#ff00ff] to-[#00ffff] text-white hover:opacity-90 shadow-lg"
+                        : "ds-hero__cta",
                   )}>
                     เริ่มดูดวง
                   </button>
@@ -220,12 +226,12 @@ export default function Home() {
               ) : (
                 <div className="flex-1">
                   <button disabled className={cn(
-                    "w-full h-12 rounded-xl font-semibold shadow-lg opacity-50 cursor-not-allowed",
-                    isPastel 
+                    "w-full h-[50px] rounded-[14px] font-bold text-[14.5px] opacity-50 cursor-not-allowed shadow-lg",
+                    isPastel
                       ? "bg-white/10 backdrop-blur text-white/50 border border-white/20"
                       : isRainbow
                         ? "bg-[#1a1a2e] text-white/40 border border-[rgba(255,0,255,0.1)]"
-                        : "bg-gray-100 text-gray-400"
+                        : "bg-gray-100 text-gray-400",
                   )}>
                     ปิดปรับปรุงชั่วคราว
                   </button>
@@ -235,82 +241,99 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Quick Stats */}
+        {/* Quick Stats — uses .ds-stat tone recipes from the design kit */}
         <div className="mt-4 grid grid-cols-2 gap-3">
           {toggles.enableDailyAuspicious && (
             <Link href="/daily-card">
               <div className={cn(
-                "p-4 rounded-2xl border transition-all",
                 isPastel
-                  ? "bg-white/20 backdrop-blur border-white/30"
+                  ? "p-4 rounded-2xl border bg-white/20 backdrop-blur border-white/30 transition-all"
                   : isRainbow
-                    ? "bg-[#1a1a2e]/80 border-[rgba(0,255,255,0.2)]"
-                    : "bg-violet-50 border-violet-100"
+                    ? "p-4 rounded-2xl border bg-[#1a1a2e]/80 border-[rgba(0,255,255,0.2)] transition-all"
+                    : "ds-stat ds-stat--violet",
               )}>
-                <div className={cn("flex items-center gap-2 mb-1", isPastel || isRainbow ? "text-white" : "text-violet-600")}>
+                <div className={cn("flex items-center gap-2 mb-1", isPastel || isRainbow ? "text-white" : "text-[var(--accent)]")}>
                   <Star className="w-4 h-4" />
                   <span className="text-xs font-medium">ไพ่ประจำวัน</span>
                 </div>
-                <p className={cn("text-xs", isPastel || isRainbow ? "text-white/70" : "text-gray-500")}>{todayDate()}</p>
+                <p className={cn("text-[11px]", isPastel || isRainbow ? "text-white/70" : "text-[var(--text-subtle)]")}>{todayDate()}</p>
               </div>
             </Link>
           )}
 
           <Link href="/library/saved">
             <div className={cn(
-              "p-4 rounded-2xl border transition-all",
               isPastel
-                ? "bg-white/20 backdrop-blur border-white/30"
+                ? "p-4 rounded-2xl border bg-white/20 backdrop-blur border-white/30 transition-all"
                 : isRainbow
-                  ? "bg-[#1a1a2e]/80 border-[rgba(255,0,255,0.15)]"
-                  : "bg-gray-50 border-gray-100"
+                  ? "p-4 rounded-2xl border bg-[#1a1a2e]/80 border-[rgba(255,0,255,0.15)] transition-all"
+                  : "ds-stat ds-stat--neutral",
             )}>
-              <div className={cn("flex items-center gap-2 mb-1", isPastel || isRainbow ? "text-white" : "text-gray-600")}>
+              <div className={cn("flex items-center gap-2 mb-1", isPastel || isRainbow ? "text-white" : "text-[var(--text)]")}>
                 <Sparkles className="w-4 h-4" />
                 <span className="text-xs font-medium">การอ่านของฉัน</span>
               </div>
-              <p className={cn("text-xs", isPastel || isRainbow ? "text-white/70" : "text-gray-500")}>ดูย้อนหลัง</p>
+              <p className={cn("text-[11px]", isPastel || isRainbow ? "text-white/70" : "text-[var(--text-subtle)]")}>ดูย้อนหลัง</p>
             </div>
           </Link>
 
           <Link href="/wallpaper">
             <div className={cn(
-              "p-4 rounded-2xl border transition-all",
               isPastel
-                ? "bg-amber-500/20 backdrop-blur border-amber-400/30"
+                ? "p-4 rounded-2xl border bg-amber-500/20 backdrop-blur border-amber-400/30 transition-all"
                 : isRainbow
-                  ? "bg-[#1a1a2e]/80 border-[rgba(255,215,0,0.2)]"
-                  : "bg-amber-50 border-amber-100"
+                  ? "p-4 rounded-2xl border bg-[#1a1a2e]/80 border-[rgba(255,215,0,0.2)] transition-all"
+                  : "ds-stat ds-stat--amber",
             )}>
-              <div className={cn("flex items-center gap-2 mb-1", isPastel ? "text-amber-100" : isRainbow ? "text-white" : "text-amber-600")}>
+              <div className={cn("flex items-center gap-2 mb-1", isPastel ? "text-amber-100" : isRainbow ? "text-white" : "text-[var(--gold)]")}>
                 <ImageIcon className="w-4 h-4" />
                 <span className="text-xs font-medium">วอลเปเปอร์เสริมดวง</span>
               </div>
-              <p className={cn("text-xs", isPastel ? "text-amber-200/70" : isRainbow ? "text-white/60" : "text-amber-500/70")}>AI สร้างให้ วันละ 1 ครั้ง</p>
+              <p className={cn("text-[11px]", isPastel ? "text-amber-200/70" : isRainbow ? "text-white/60" : "text-amber-700/70")}>AI สร้างให้ วันละ 1 ครั้ง</p>
             </div>
           </Link>
 
           {toggles.enableLoveTarot && (
             <Link href="/love-tarot" className="col-span-2">
               <div className={cn(
-                "p-4 rounded-2xl border transition-all flex items-center justify-between",
+                "flex items-center justify-between",
                 isPastel
-                  ? "bg-pink-500/20 backdrop-blur border-pink-400/30"
+                  ? "p-4 rounded-2xl border bg-pink-500/20 backdrop-blur border-pink-400/30 transition-all"
                   : isRainbow
-                    ? "bg-[#1a1a2e]/80 border-[rgba(255,0,255,0.2)]"
-                    : "bg-pink-50 border-pink-100"
+                    ? "p-4 rounded-2xl border bg-[#1a1a2e]/80 border-[rgba(255,0,255,0.2)] transition-all"
+                    : "ds-stat ds-stat--pink",
               )}>
                 <div>
-                  <div className={cn("flex items-center gap-2 mb-1", isPastel ? "text-pink-100" : isRainbow ? "text-white" : "text-pink-600")}>
+                  <div className={cn("flex items-center gap-2 mb-1", isPastel ? "text-pink-100" : isRainbow ? "text-white" : "text-[#be185d]")}>
                     <span className="text-base">❤️</span>
                     <span className="text-xs font-medium">ดูดวงความรัก</span>
                   </div>
-                  <p className={cn("text-xs", isPastel ? "text-pink-200/70" : isRainbow ? "text-white/60" : "text-pink-500/70")}>เจาะลึกเรื่องหัวใจ</p>
+                  <p className={cn("text-[11px]", isPastel ? "text-pink-200/70" : isRainbow ? "text-white/60" : "text-pink-600/70")}>เจาะลึกเรื่องหัวใจ</p>
                 </div>
                 <ChevronRight className={cn("w-4 h-4", isPastel ? "text-pink-200/50" : isRainbow ? "text-white/40" : "text-pink-300")} />
               </div>
             </Link>
           )}
+
+          <Link href="/lucky-numbers" className="col-span-2">
+            <div className={cn(
+              "flex items-center justify-between",
+              isPastel
+                ? "p-4 rounded-2xl border bg-indigo-500/20 backdrop-blur border-indigo-400/30 transition-all"
+                : isRainbow
+                  ? "p-4 rounded-2xl border bg-[#1a1a2e]/80 border-[rgba(0,255,255,0.25)] transition-all"
+                  : "ds-stat ds-stat--violet",
+            )}>
+              <div>
+                <div className={cn("flex items-center gap-2 mb-1", isPastel ? "text-indigo-100" : isRainbow ? "text-white" : "text-[var(--accent)]")}>
+                  <span className="text-base">🔢</span>
+                  <span className="text-xs font-medium">ไพ่เลขมงคล</span>
+                </div>
+                <p className={cn("text-[11px]", isPastel ? "text-indigo-200/70" : isRainbow ? "text-white/60" : "text-[var(--text-subtle)]")}>หยิบ 2 หรือ 4 ใบจากครึ่งวงกลม</p>
+              </div>
+              <ChevronRight className={cn("w-4 h-4", isPastel ? "text-indigo-200/50" : isRainbow ? "text-white/40" : "text-[var(--accent-light)]")} />
+            </div>
+          </Link>
         </div>
       </section>
 

@@ -2,12 +2,13 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Sparkles, Share2, RefreshCw } from "lucide-react";
+import { Share2, RefreshCw } from "lucide-react";
 import { analyzeThaiPhone } from "@/lib/numerology/engine";
 import { runReadingPipeline } from "@/lib/reading/pipeline";
 import { removeReading } from "@/lib/library/storage";
 import { useTheme } from "@/lib/theme/ThemeProvider";
 import { cn } from "@/lib/cn";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 function normalizeText(value: unknown): string {
   if (typeof value === "string") return value;
@@ -134,8 +135,7 @@ export default function NumerologyPage() {
       {/* Header */}
       <header className="flex items-center justify-between px-5 pt-4 pb-2">
         <Link href="/" className="flex items-center gap-2">
-          <Sparkles className={cn("w-5 h-5", isPastel || isRainbow ? "text-white" : "text-violet-600")} />
-          <span className={cn("font-serif text-lg font-semibold", isPastel || isRainbow ? "text-white" : "text-violet-600")}>REFFORTUNE</span>
+          <BrandLogo size={24} inverted={isPastel || isRainbow} />
         </Link>
       </header>
 

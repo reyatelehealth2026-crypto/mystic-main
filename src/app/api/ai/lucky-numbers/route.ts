@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { computeLuckyNumbers, type LuckyTopic } from "@/lib/lucky-numbers/engine";
+import { analyseLuckyDigits, type LuckyDigit } from "@/lib/lucky-numbers/engine";
 import { buildLuckyNumbersPrompt } from "@/lib/ai/prompts";
 import { retrieveRag, formatRagContext } from "@/lib/rag/retriever";
 
@@ -13,7 +13,9 @@ type GeminiLuckyNumbersResponse = {
   disclaimer?: string;
 };
 
-const VALID_TOPICS: LuckyTopic[] = ["finance", "career", "love", "luck", "health"];
+function isLuckyDigit(value: unknown): value is LuckyDigit {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 9;
+}
 
 function formatAsStructure(parsed: GeminiLuckyNumbersResponse): string {
   const parts: string[] = [];
@@ -38,56 +40,43 @@ function formatAsStructure(parsed: GeminiLuckyNumbersResponse): string {
 export async function POST(req: Request) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
-    const body = (await req.json()) as {
-      dob?: string;
-      topic?: string;
-      intent?: string;
-      dayKey?: string;
-    };
+    const body = (await req.json()) as { digits?: unknown };
 
-    if (!body.dob || !body.topic || !VALID_TOPICS.includes(body.topic as LuckyTopic)) {
-      return NextResponse.json({ error: "invalid_input" }, { status: 400 });
+    if (!Array.isArray(body.digits) || !body.digits.every(isLuckyDigit)) {
+      return NextResponse.json({ error: "invalid_digits" }, { status: 400 });
+    }
+    if (![2, 3, 4].includes(body.digits.length)) {
+      return NextResponse.json({ error: "invalid_count" }, { status: 400 });
     }
 
-    const result = computeLuckyNumbers({
-      dob: body.dob,
-      topic: body.topic as LuckyTopic,
-      intent: body.intent,
-      dayKey: body.dayKey,
-    });
-    if (!result) return NextResponse.json({ error: "invalid_dob" }, { status: 400 });
+    const analysis = analyseLuckyDigits(body.digits);
+    if (!analysis) return NextResponse.json({ error: "invalid_digits" }, { status: 400 });
 
-    const fallbackSummary = `ชุดเลขมงคล ${result.set} สำหรับ${result.topicLabelTh} • เลขเส้นทางชีวิต ${result.lifePathNumber}`;
-    const fallbackStructure = result.cards
-      .map((c, i) => `ไพ่ที่ ${i + 1} (${c.role}) เลข ${c.digit}: ${c.reasonTh}`)
-      .join("\n");
+    const fallbackSummary = `ชุดเลขมงคล ${analysis.combined} • ผลรวม ${analysis.sum} • เลขราก ${analysis.root}`;
+    const fallbackStructure = analysis.reading;
 
     if (!apiKey) {
       return NextResponse.json({
         ok: true,
         fallback: true,
         reason: "missing_gemini_api_key",
-        baseline: result,
+        baseline: analysis,
         ai: { summary: fallbackSummary, cardStructure: fallbackStructure },
       });
     }
 
     const rag = retrieveRag({
-      query: `เลขมงคล ${result.set} หมวด ${result.topicLabelTh} เลขเส้นทางชีวิต ${result.lifePathNumber}`,
+      query: `เลขมงคล ${analysis.combined} ผลรวม ${analysis.sum} เลขราก ${analysis.root}`,
       systemId: "numerology_th",
       limit: 6,
     });
 
     const basePrompt = buildLuckyNumbersPrompt({
-      dob: result.dob,
-      topic: result.topic,
-      topicLabelTh: result.topicLabelTh,
-      lifePathNumber: result.lifePathNumber,
-      dayKey: result.dayKey,
-      cards: result.cards,
-      pair: result.pair,
-      triple: result.triple,
-      intent: result.intent,
+      digits: analysis.digits,
+      combined: analysis.combined,
+      sum: analysis.sum,
+      root: analysis.root,
+      meanings: analysis.meanings,
     });
 
     const prompt = basePrompt + formatRagContext(rag.chunks);
@@ -109,7 +98,7 @@ export async function POST(req: Request) {
       return NextResponse.json({
         ok: true,
         fallback: true,
-        baseline: result,
+        baseline: analysis,
         ai: { summary: fallbackSummary, cardStructure: fallbackStructure },
       });
     }
@@ -128,7 +117,7 @@ export async function POST(req: Request) {
       ai = { summary: fallbackSummary, cardStructure: fallbackStructure };
     }
 
-    return NextResponse.json({ ok: true, baseline: result, ai });
+    return NextResponse.json({ ok: true, baseline: analysis, ai });
   } catch (e) {
     return NextResponse.json(
       { error: "unexpected_error", detail: e instanceof Error ? e.message : String(e) },
