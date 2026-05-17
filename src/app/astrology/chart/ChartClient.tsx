@@ -64,7 +64,17 @@ export function ChartClient() {
 
       <Card className="p-4 bg-bg space-y-4">
         <DateStepper value={transitDate} onChange={setTransitDate} />
-        <ResultDisplay charts={charts} view={view} />
+        <ResultDisplay
+          charts={charts}
+          view={view}
+          asOf={new Date(
+            transitDate.year,
+            transitDate.month - 1,
+            transitDate.day,
+            transitDate.hour,
+            transitDate.minute
+          )}
+        />
       </Card>
 
       <Card className="p-4 bg-bg">
@@ -132,9 +142,11 @@ function Tabs({ view, onChange }: { view: View; onChange: (v: View) => void }) {
 function ResultDisplay({
   charts,
   view,
+  asOf,
 }: {
   charts: { natal: NatalChart; transit: NatalChart };
   view: View;
+  asOf: Date;
 }) {
-  return <ChartResult natal={charts.natal} transit={charts.transit} view={view} />;
+  return <ChartResult natal={charts.natal} transit={charts.transit} view={view} asOf={asOf} />;
 }

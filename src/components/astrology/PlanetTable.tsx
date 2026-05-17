@@ -4,19 +4,12 @@ import * as React from "react";
 import { cn } from "@/lib/cn";
 import { NAKSHATRAS, ZODIAC_SIGNS } from "@/lib/astrology/zodiac";
 import type { NatalChart } from "@/lib/astrology/types";
+import { HOUSE_INFO } from "@/lib/astrology/reference";
 
 /**
- * Planet-position table mirroring the layout from
- *   myhora.com/astrology/thai.aspx
- *
- * Columns:
- *   ดาว/ปัจจัย  - planet / factor
- *   ราศี        - sign (Thai short label)
- *   °           - degrees within sign
- *   '           - arc-minutes
- *   นวางค์      - navamsha (sign at 1/9-th of a sign, 0..107)
- *   นักษัตร     - lunar mansion
- *   บาท         - pada (1..4)
+ * Planet-position table mirroring the myhora.com columns. The "เกณฑ์มาตรฐาน"
+ * column is the slash-joined list of named dignities; "พิษ" shows the
+ * ตรียางค์พิษ classification with a "(หนัก)" tag for the 2nd-navamsha core.
  */
 
 export interface PlanetTableProps {
@@ -24,39 +17,43 @@ export interface PlanetTableProps {
   className?: string;
 }
 
-function navamshaSign(longitudeDeg: number): string {
-  const navamsaSpan = 360 / 108;
-  const idx = Math.floor(((longitudeDeg % 360) + 360) % 360 / navamsaSpan) % 12;
-  return ZODIAC_SIGNS[idx].thaiShort;
-}
-
 const PADA_THAI = ["ปฐม", "ทุติย", "ตติย", "จตุตถ"];
 
 export function PlanetTable({ chart, className }: PlanetTableProps) {
   return (
     <div className={cn("overflow-x-auto", className)}>
-      <table className="w-full text-xs md:text-sm border-collapse">
+      <table className="w-full text-[11px] md:text-xs border-collapse">
         <thead>
           <tr className="border-b border-border text-fg-muted">
-            <th className="text-left py-2 px-2 font-medium underline">ดาว/ปัจจัย</th>
-            <th className="text-left py-2 px-2 font-medium underline">ราศี</th>
-            <th className="text-right py-2 px-2 font-medium underline">°</th>
-            <th className="text-right py-2 px-2 font-medium underline">&apos;</th>
-            <th className="text-left py-2 px-2 font-medium underline">นวางค์</th>
-            <th className="text-left py-2 px-2 font-medium underline">นักษัตร</th>
-            <th className="text-left py-2 px-2 font-medium underline">บาท</th>
+            <Th>ดาว</Th>
+            <Th>ราศี</Th>
+            <Th right>°</Th>
+            <Th right>&apos;</Th>
+            <Th>ตรียางค์</Th>
+            <Th>นวางค์</Th>
+            <Th>ภพ</Th>
+            <Th>นักษัตร</Th>
+            <Th>บาท</Th>
+            <Th>ฤกษ์</Th>
+            <Th>พิษ</Th>
+            <Th>เกณฑ์มาตรฐาน</Th>
           </tr>
         </thead>
         <tbody>
           {chart.planets.map((p) => {
             const sign = ZODIAC_SIGNS[p.zodiac.sign];
             const nak = NAKSHATRAS[p.nakshatra.index];
+            const decSign = ZODIAC_SIGNS[p.decanateSign];
+            const navSign = ZODIAC_SIGNS[p.navamshaSign];
+            const houseLabel = HOUSE_INFO[p.house - 1]?.thai ?? "";
+            const dignityText =
+              p.dignities.length > 0 ? p.dignities.join(" / ") : "—";
             return (
               <tr
                 key={p.id}
-                className="border-b border-border/40 last:border-0"
+                className="border-b border-border/40 last:border-0 hover:bg-surface/40"
               >
-                <td className="py-2 px-2 whitespace-nowrap">
+                <Td>
                   <span className="font-mono text-fg-muted mr-1">
                     {p.thaiNumeral}
                   </span>
@@ -66,30 +63,102 @@ export function PlanetTable({ chart, className }: PlanetTableProps) {
                       พ.
                     </span>
                   )}
-                </td>
-                <td className="py-2 px-2 whitespace-nowrap text-fg">
-                  {sign.thaiShort}
-                </td>
-                <td className="py-2 px-2 text-right tabular-nums text-fg">
+                </Td>
+                <Td>{sign.thaiShort}</Td>
+                <Td right>
                   {String(p.zodiac.degree).padStart(2, "0")}
-                </td>
-                <td className="py-2 px-2 text-right tabular-nums text-fg">
+                </Td>
+                <Td right>
                   {String(p.zodiac.minute).padStart(2, "0")}
-                </td>
-                <td className="py-2 px-2 whitespace-nowrap text-fg-muted">
-                  {navamshaSign(p.zodiac.longitude)}
-                </td>
-                <td className="py-2 px-2 whitespace-nowrap text-fg-muted">
-                  {nak.thaiName}
-                </td>
-                <td className="py-2 px-2 whitespace-nowrap text-fg-muted">
-                  {PADA_THAI[p.nakshatra.pada - 1]}
-                </td>
+                </Td>
+                <Td muted>{decSign.thaiShort}</Td>
+                <Td muted>{navSign.thaiShort}</Td>
+                <Td muted>
+                  <span className="font-mono">{p.house}</span>
+                  <span className="ml-1 text-fg-subtle">{houseLabel}</span>
+                </Td>
+                <Td muted>{nak.thaiName}</Td>
+                <Td muted>{PADA_THAI[p.nakshatra.pada - 1]}</Td>
+                <Td muted>
+                  <span className="text-[10px]">{roekShort(p.roekGroupId)}</span>
+                </Td>
+                <Td>
+                  {p.poison.kind ? (
+                    <span
+                      className={cn(
+                        "text-[10px] font-medium",
+                        p.poison.severity === "heavy"
+                          ? "text-rose-600"
+                          : "text-amber-600"
+                      )}
+                    >
+                      {p.poison.label}
+                    </span>
+                  ) : (
+                    <span className="text-fg-subtle">—</span>
+                  )}
+                </Td>
+                <Td>
+                  <span className="text-[10px] text-violet-700 font-medium">
+                    {dignityText}
+                  </span>
+                </Td>
               </tr>
             );
           })}
         </tbody>
       </table>
     </div>
+  );
+}
+
+const ROEK_SHORT = [
+  "ทลิทโท",
+  "มหัทธโน",
+  "โจโร",
+  "ภูมิปาโล",
+  "เทศาตรี",
+  "เทวี",
+  "เพชฌฆาต",
+  "ราชา",
+  "สมโณ",
+];
+
+function roekShort(id: number): string {
+  return ROEK_SHORT[id - 1] ?? "—";
+}
+
+function Th({ children, right }: { children: React.ReactNode; right?: boolean }) {
+  return (
+    <th
+      className={cn(
+        "py-2 px-1.5 font-medium underline",
+        right ? "text-right" : "text-left"
+      )}
+    >
+      {children}
+    </th>
+  );
+}
+
+function Td({
+  children,
+  right,
+  muted,
+}: {
+  children: React.ReactNode;
+  right?: boolean;
+  muted?: boolean;
+}) {
+  return (
+    <td
+      className={cn(
+        "py-2 px-1.5 whitespace-nowrap",
+        right ? "text-right tabular-nums" : "",
+        muted ? "text-fg-muted" : "text-fg"
+      )}
+    >
+      {children}
+    </td>
   );
 }

@@ -2,16 +2,23 @@
 
 import * as React from "react";
 import { cn } from "@/lib/cn";
-import { ZODIAC_SIGNS } from "@/lib/astrology/zodiac";
+import { NAKSHATRAS, ZODIAC_SIGNS } from "@/lib/astrology/zodiac";
+import { HOUSE_INFO } from "@/lib/astrology/reference";
 import type { NatalChart, PlanetPosition } from "@/lib/astrology/types";
 
 /**
- * จักรราศีวิภาค — circular natal-chart wheel.
+ * จักรราศีวิภาค — three-ring circular natal wheel.
  *
- * The wheel is drawn from the lagna sign at the *9 o'clock* position
- * (myhora.com convention), with the 12 houses running anti-clockwise.
- * Each sign cell is an annular sector. Planets inside the same sign
- * stack vertically; the column splits when the cell gets crowded.
+ *   Ring 0 (outermost): 27 นักษัตร × 13°20' segments with name labels.
+ *   Ring 1: 12 ราศี × 30° segments with Thai sign abbreviation.
+ *   Ring 2: 12 ภพ × 30° segments rotated so house 1 starts at the lagna
+ *           (drawn at the 9 o'clock position, myhora convention).
+ *   Centre: planet glyphs placed at their actual longitude inside each
+ *           ราศี (with offsets per-sign to avoid overlap), plus the
+ *           ลัคน์ marker.
+ *
+ * A second `transit` chart may be passed; its planets render in rose
+ * on a thin inner band.
  */
 
 export interface ChartWheelProps {
@@ -21,10 +28,17 @@ export interface ChartWheelProps {
   className?: string;
 }
 
-const SIGN_RING_OUTER = 0.96;
-const SIGN_RING_INNER = 0.78;
-const HOUSE_RING_OUTER = SIGN_RING_INNER;
-const HOUSE_RING_INNER = 0.32;
+const RING = {
+  nakshatraOuter: 0.985,
+  nakshatraInner: 0.86,
+  rashiOuter: 0.86,
+  rashiInner: 0.73,
+  bhavaOuter: 0.73,
+  bhavaInner: 0.6,
+  planetOuter: 0.6,
+  planetInner: 0.32,
+  centreInner: 0.18,
+};
 
 function polar(cx: number, cy: number, r: number, deg: number) {
   const rad = ((deg - 90) * Math.PI) / 180;
@@ -53,23 +67,56 @@ function annularSector(
   ].join(" ");
 }
 
-export function ChartWheel({ chart, transit, size = 360, className }: ChartWheelProps) {
+const SIGN_BG = ["#fef3c7", "#fde2e2", "#e0f2fe", "#dcfce7"];
+
+export function ChartWheel({ chart, transit, size = 480, className }: ChartWheelProps) {
   const cx = size / 2;
   const cy = size / 2;
   const r = size / 2;
 
   const lagnaSign = chart.planets[0].zodiac.sign;
+  const lagnaLon = chart.planets[0].longitude;
 
-  function signCenterDeg(signIdx: number): number {
-    const offset = ((signIdx - lagnaSign + 12) % 12) * 30;
-    return (270 - offset - 15 + 360) % 360;
+  // Helper: world-longitude → SVG-angle (deg, 0=top, clockwise).
+  // Place 0° เมษ at the 9 o'clock position so the lagna sign reads from
+  // the same orientation as myhora's traditional Thai engravings.
+  //   svgAngle = 270 - (lon - lagnaLon)  (modulo 360)
+  function lonToSvg(lon: number): number {
+    return (270 - (lon - lagnaLon) + 360 * 4) % 360;
   }
 
-  function signBoundariesDeg(signIdx: number): [number, number] {
-    const center = signCenterDeg(signIdx);
-    return [(center - 15 + 360) % 360, (center + 15) % 360];
+  function signSpanSvg(signIdx: number): [number, number] {
+    const startLon = signIdx * 30;
+    const endLon = startLon + 30;
+    const s = lonToSvg(endLon);
+    const e = lonToSvg(startLon);
+    return [s, e];
   }
 
+  function bhavaSpanSvg(houseIdx: number): [number, number] {
+    const startLon = ((lagnaSign + houseIdx) % 12) * 30;
+    const endLon = startLon + 30;
+    const s = lonToSvg(endLon);
+    const e = lonToSvg(startLon);
+    return [s, e];
+  }
+
+  function nakSpanSvg(nakIdx: number): [number, number] {
+    const startLon = nakIdx * (360 / 27);
+    const endLon = startLon + 360 / 27;
+    const s = lonToSvg(endLon);
+    const e = lonToSvg(startLon);
+    return [s, e];
+  }
+
+  function normSpan(start: number, end: number): [number, number] {
+    const s = start;
+    let e = end;
+    while (e < s) e += 360;
+    return [s, e];
+  }
+
+  // Group natal planets by sign for placement
   const planetsBySign = new Map<number, PlanetPosition[]>();
   for (const p of chart.planets) {
     const list = planetsBySign.get(p.zodiac.sign) ?? [];
@@ -86,41 +133,92 @@ export function ChartWheel({ chart, transit, size = 360, className }: ChartWheel
       height={size}
       className={cn("max-w-full", className)}
     >
+      {/* Ring background */}
       <circle
         cx={cx}
         cy={cy}
-        r={r * SIGN_RING_OUTER}
+        r={r * RING.nakshatraOuter}
         fill="white"
         stroke="currentColor"
         strokeWidth="1"
         className="text-fg-subtle"
       />
 
-      {ZODIAC_SIGNS.map((sign) => {
-        const [start, end] = signBoundariesDeg(sign.index);
-        const startN = end < start ? start - 360 : start;
+      {/* 27 nakshatra cells */}
+      {NAKSHATRAS.map((nak) => {
+        const [s, e] = normSpan(...nakSpanSvg(nak.index));
         return (
           <path
-            key={`sign-bg-${sign.index}`}
+            key={`nak-${nak.index}`}
             d={annularSector(
               cx,
               cy,
-              r * SIGN_RING_OUTER,
-              r * SIGN_RING_INNER,
-              startN,
-              end
+              r * RING.nakshatraOuter,
+              r * RING.nakshatraInner,
+              s,
+              e
             )}
-            fill={sign.index % 2 === 0 ? "#fafaf9" : "#f3f4f6"}
+            fill={nak.index % 2 === 0 ? "#fafafa" : "#f3f4f6"}
             stroke="currentColor"
-            strokeWidth="0.75"
+            strokeWidth="0.4"
+            className="text-fg-subtle/60"
+          />
+        );
+      })}
+
+      {/* Nakshatra labels */}
+      {NAKSHATRAS.map((nak) => {
+        const startLon = nak.index * (360 / 27);
+        const centreLon = startLon + 360 / 54;
+        const a = lonToSvg(centreLon);
+        const rText = r * ((RING.nakshatraOuter + RING.nakshatraInner) / 2);
+        // place text along the ring, tangentially
+        const [x, y] = polar(cx, cy, rText, a);
+        // rotation: keep upright on top half, flip on bottom
+        let rot = a - 90;
+        const upright = a >= 90 && a <= 270;
+        if (upright) rot += 180;
+        return (
+          <text
+            key={`nak-label-${nak.index}`}
+            transform={`translate(${x},${y}) rotate(${rot})`}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontSize={size * 0.018}
+            className="fill-fg-muted"
+          >
+            {nak.thaiName}
+          </text>
+        );
+      })}
+
+      {/* 12 ราศี cells */}
+      {ZODIAC_SIGNS.map((sign) => {
+        const [s, e] = normSpan(...signSpanSvg(sign.index));
+        return (
+          <path
+            key={`sign-${sign.index}`}
+            d={annularSector(
+              cx,
+              cy,
+              r * RING.rashiOuter,
+              r * RING.rashiInner,
+              s,
+              e
+            )}
+            fill={SIGN_BG[sign.index % SIGN_BG.length]}
+            stroke="currentColor"
+            strokeWidth="0.6"
             className="text-fg-subtle"
           />
         );
       })}
 
+      {/* ราศี labels */}
       {ZODIAC_SIGNS.map((sign) => {
-        const center = signCenterDeg(sign.index);
-        const [x, y] = polar(cx, cy, r * ((SIGN_RING_OUTER + SIGN_RING_INNER) / 2), center);
+        const centreLon = sign.index * 30 + 15;
+        const a = lonToSvg(centreLon);
+        const [x, y] = polar(cx, cy, r * ((RING.rashiOuter + RING.rashiInner) / 2), a);
         return (
           <text
             key={`sign-label-${sign.index}`}
@@ -128,7 +226,7 @@ export function ChartWheel({ chart, transit, size = 360, className }: ChartWheel
             y={y}
             textAnchor="middle"
             dominantBaseline="central"
-            fontSize={size * 0.04}
+            fontSize={size * 0.028}
             className="fill-fg font-medium"
           >
             {sign.thaiName}
@@ -136,125 +234,157 @@ export function ChartWheel({ chart, transit, size = 360, className }: ChartWheel
         );
       })}
 
-      <circle
-        cx={cx}
-        cy={cy}
-        r={r * HOUSE_RING_OUTER}
-        fill="white"
-        stroke="currentColor"
-        strokeWidth="1"
-        className="text-fg-subtle"
-      />
-
-      {ZODIAC_SIGNS.map((sign) => {
-        const [start, end] = signBoundariesDeg(sign.index);
-        const startN = end < start ? start - 360 : start;
-        const [x1, y1] = polar(cx, cy, r * HOUSE_RING_OUTER, startN);
-        const [x2, y2] = polar(cx, cy, r * HOUSE_RING_INNER, startN);
+      {/* 12 ภพ cells */}
+      {Array.from({ length: 12 }).map((_, h) => {
+        const [s, e] = normSpan(...bhavaSpanSvg(h));
         return (
-          <line
-            key={`house-line-${sign.index}`}
-            x1={x1}
-            y1={y1}
-            x2={x2}
-            y2={y2}
+          <path
+            key={`bhava-${h}`}
+            d={annularSector(
+              cx,
+              cy,
+              r * RING.bhavaOuter,
+              r * RING.bhavaInner,
+              s,
+              e
+            )}
+            fill={h === 0 ? "#ede9fe" : "white"}
             stroke="currentColor"
-            strokeWidth="0.75"
+            strokeWidth="0.5"
             className="text-fg-subtle"
           />
         );
       })}
 
-      {ZODIAC_SIGNS.map((sign) => {
-        const planets = planetsBySign.get(sign.index) ?? [];
-        if (planets.length === 0) return null;
-        const center = signCenterDeg(sign.index);
-        const rMid = transit
-          ? r * (HOUSE_RING_OUTER - 0.05)
-          : r * ((HOUSE_RING_OUTER + HOUSE_RING_INNER) / 2);
-        const [cxLabel, cyLabel] = polar(cx, cy, rMid, center);
-        const lineHeight = size * 0.035;
+      {/* ภพ labels */}
+      {HOUSE_INFO.map((house, h) => {
+        const centreLon = (((lagnaSign + h) % 12) * 30 + 15);
+        const a = lonToSvg(centreLon);
+        const [x, y] = polar(cx, cy, r * ((RING.bhavaOuter + RING.bhavaInner) / 2), a);
         return (
-          <g key={`planets-${sign.index}`}>
-            {planets.map((p, idx) => (
-              <text
-                key={p.id}
-                x={cxLabel}
-                y={cyLabel + (idx - (planets.length - 1) / 2) * lineHeight}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fontSize={size * 0.034}
-                className={cn(
-                  "fill-fg font-semibold",
-                  p.id === "lagna" && "fill-violet-700"
-                )}
-              >
-                {p.thaiNumeral}
-              </text>
-            ))}
+          <g key={`bhava-label-${h}`}>
+            <text
+              x={x}
+              y={y - size * 0.012}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize={size * 0.024}
+              className="fill-violet-700 font-semibold"
+            >
+              {house.number}
+            </text>
+            <text
+              x={x}
+              y={y + size * 0.014}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize={size * 0.018}
+              className="fill-fg-muted"
+            >
+              {house.thai}
+            </text>
           </g>
         );
       })}
 
-      {transit && (() => {
-        const transitBySign = new Map<number, PlanetPosition[]>();
-        for (const p of transit.planets) {
-          if (p.id === "lagna") continue;
-          const list = transitBySign.get(p.zodiac.sign) ?? [];
-          list.push(p);
-          transitBySign.set(p.zodiac.sign, list);
-        }
-        return Array.from(transitBySign.entries()).map(([signIdx, planets]) => {
-          const center = signCenterDeg(signIdx);
-          const rMid = r * (HOUSE_RING_INNER + 0.07);
-          const [tx, ty] = polar(cx, cy, rMid, center);
-          const lh = size * 0.028;
+      {/* Planets at their longitude */}
+      {Array.from(planetsBySign.entries()).map(([signIdx, planets]) => {
+        const sortedByLon = [...planets].sort((a, b) => a.longitude - b.longitude);
+        return sortedByLon.map((p, idx) => {
+          const a = lonToSvg(p.longitude);
+          const rBase = r * ((RING.planetOuter + RING.planetInner) / 2);
+          const offset = (idx - (sortedByLon.length - 1) / 2) * size * 0.022;
+          const rEff = rBase + offset;
+          const [x, y] = polar(cx, cy, rEff, a);
           return (
-            <g key={`transit-${signIdx}`}>
-              {planets.map((p, idx) => (
+            <g key={`planet-${p.id}-${signIdx}`}>
+              <circle
+                cx={x}
+                cy={y}
+                r={size * 0.018}
+                fill="white"
+                stroke="currentColor"
+                strokeWidth="0.6"
+                className={cn(
+                  p.id === "lagna" ? "text-violet-600" : "text-fg"
+                )}
+              />
+              <text
+                x={x}
+                y={y}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={size * 0.026}
+                className={cn(
+                  "font-semibold",
+                  p.id === "lagna" ? "fill-violet-700" : "fill-fg"
+                )}
+              >
+                {p.thaiNumeral}
+              </text>
+            </g>
+          );
+        });
+      })}
+
+      {/* Transit planets (optional) */}
+      {transit &&
+        transit.planets
+          .filter((p) => p.id !== "lagna")
+          .map((p) => {
+            const a = lonToSvg(p.longitude);
+            const rTransit = r * (RING.planetInner + 0.04);
+            const [x, y] = polar(cx, cy, rTransit, a);
+            return (
+              <g key={`transit-${p.id}`}>
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={size * 0.014}
+                  fill="white"
+                  stroke="#dc2626"
+                  strokeWidth="0.6"
+                />
                 <text
-                  key={`t-${p.id}`}
-                  x={tx}
-                  y={ty + (idx - (planets.length - 1) / 2) * lh}
+                  x={x}
+                  y={y}
                   textAnchor="middle"
                   dominantBaseline="central"
-                  fontSize={size * 0.028}
+                  fontSize={size * 0.02}
                   className="fill-rose-600 font-semibold"
                 >
                   {p.thaiNumeral}
                 </text>
-              ))}
-            </g>
-          );
-        });
-      })()}
+              </g>
+            );
+          })}
 
+      {/* Centre disc */}
       <circle
         cx={cx}
         cy={cy}
-        r={r * HOUSE_RING_INNER}
+        r={r * RING.centreInner}
         fill="white"
         stroke="currentColor"
-        strokeWidth="1"
+        strokeWidth="0.8"
         className="text-fg-subtle"
       />
-
       <text
         x={cx}
-        y={cy - size * 0.025}
+        y={cy - size * 0.018}
         textAnchor="middle"
         dominantBaseline="central"
-        fontSize={size * 0.045}
+        fontSize={size * 0.034}
         className="fill-fg font-serif font-semibold"
       >
         จักรราศี
       </text>
       <text
         x={cx}
-        y={cy + size * 0.025}
+        y={cy + size * 0.018}
         textAnchor="middle"
         dominantBaseline="central"
-        fontSize={size * 0.035}
+        fontSize={size * 0.026}
         className="fill-fg-muted"
       >
         วิภาค

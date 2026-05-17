@@ -1,14 +1,13 @@
 /**
  * Thai natal chart (จักรราศีวิภาค) — shared types.
  *
- * Supports two longitude systems for the same chart input:
- *   - "suriyayatra"  — โหราศาสตร์ไทย สุริยยาตร์
+ * Supports two longitude systems:
+ *   - "suriyayatra"  — โหราศาสตร์ไทย สุริยยาตร์ (Lahiri + 48.5')
  *   - "lahiri"       — นิรายนะวิธี (Chitrapaksha / Lahiri ayanamsa)
- *
- * Longitudes are stored in fractional sidereal degrees in [0, 360).
- * A separate `ZodiacPosition` carries the human-readable
- * ราศี / องศา / ลิปดา breakdown used by the UI.
  */
+
+import type { DignityLabel } from "./dignities";
+import type { PoisonKind, PoisonSeverity } from "./poison";
 
 export type ChartSystem = "suriyayatra" | "lahiri";
 
@@ -37,6 +36,12 @@ export interface NakshatraPosition {
   pada: number;
 }
 
+export interface PoisonInfo {
+  kind: PoisonKind | null;
+  severity: PoisonSeverity;
+  label: string;
+}
+
 export interface PlanetPosition {
   id: PlanetId;
   thaiName: string;
@@ -45,6 +50,12 @@ export interface PlanetPosition {
   zodiac: ZodiacPosition;
   nakshatra: NakshatraPosition;
   retrograde: boolean;
+  house: number;
+  decanateSign: number;
+  navamshaSign: number;
+  roekGroupId: number;
+  poison: PoisonInfo;
+  dignities: DignityLabel[];
 }
 
 export interface BirthInput {
@@ -58,6 +69,15 @@ export interface BirthInput {
   longitude: number;
 }
 
+export interface SunriseHeader {
+  hourLocal: number;
+  minuteLocal: number;
+  sunSign: number;
+  sunDegree: number;
+  sunMinute: number;
+  longitudeSidereal: number;
+}
+
 export interface NatalChart {
   system: ChartSystem;
   ayanamsa: number;
@@ -65,4 +85,6 @@ export interface NatalChart {
   julianDayUT: number;
   localSiderealTime: number;
   planets: PlanetPosition[];
+  weekday: PlanetId;
+  sunrise: SunriseHeader | null;
 }
