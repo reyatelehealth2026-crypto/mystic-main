@@ -41,6 +41,12 @@ const features = [
     desc: "ดูดวงตามราศี",
   },
   {
+    href: "/astrology",
+    label: "โหราศาสตร์ไทย",
+    icon: "🌙",
+    desc: "ดูฤกษ์ ปฏิทิน ลัคนา ทักษา",
+  },
+  {
     href: "/compatibility",
     label: "ดูดวงความรัก",
     icon: "💕",
