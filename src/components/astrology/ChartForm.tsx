@@ -3,24 +3,20 @@
 import * as React from "react";
 import { cn } from "@/lib/cn";
 import type { BirthInput, ChartSystem } from "@/lib/astrology/types";
+import {
+  PROVINCES_BY_REGION,
+  REGION_NAMES,
+  findProvince,
+  type ThaiRegion,
+} from "@/lib/astrology/thai-provinces";
 
-interface ThaiCity {
-  id: string;
-  name: string;
-  latitude: number;
-  longitude: number;
-}
-
-const CITIES: ThaiCity[] = [
-  { id: "bangkok", name: "กรุงเทพมหานคร", latitude: 13.7563, longitude: 100.5018 },
-  { id: "chiangmai", name: "เชียงใหม่", latitude: 18.7883, longitude: 98.9853 },
-  { id: "chiangrai", name: "เชียงราย", latitude: 19.9105, longitude: 99.8406 },
-  { id: "khonkaen", name: "ขอนแก่น", latitude: 16.4419, longitude: 102.8359 },
-  { id: "korat", name: "นครราชสีมา", latitude: 14.9799, longitude: 102.0978 },
-  { id: "phuket", name: "ภูเก็ต", latitude: 7.8804, longitude: 98.3923 },
-  { id: "hatyai", name: "หาดใหญ่", latitude: 7.0086, longitude: 100.4747 },
-  { id: "udonthani", name: "อุดรธานี", latitude: 17.4138, longitude: 102.7872 },
-  { id: "pattaya", name: "พัทยา", latitude: 12.9236, longitude: 100.8825 },
+const REGION_ORDER: ThaiRegion[] = [
+  "central",
+  "east",
+  "north",
+  "northeast",
+  "south",
+  "west",
 ];
 
 export interface ChartFormProps {
@@ -42,12 +38,13 @@ export function ChartForm({ initial, initialSystem = "suriyayatra", onSubmit, cl
   const [day, setDay] = React.useState(initial?.day ?? today.day);
   const [hour, setHour] = React.useState(initial?.hour ?? 6);
   const [minute, setMinute] = React.useState(initial?.minute ?? 20);
-  const [cityId, setCityId] = React.useState("bangkok");
+  const [provinceId, setProvinceId] = React.useState("bangkok");
   const [system, setSystem] = React.useState<ChartSystem>(initialSystem);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const city = CITIES.find((c) => c.id === cityId) ?? CITIES[0];
+    const province = findProvince(provinceId);
+    if (!province) return;
     onSubmit(
       {
         year,
@@ -56,8 +53,8 @@ export function ChartForm({ initial, initialSystem = "suriyayatra", onSubmit, cl
         hour,
         minute,
         timezoneHours: 7,
-        latitude: city.latitude,
-        longitude: city.longitude,
+        latitude: province.latitude,
+        longitude: province.longitude,
       },
       system
     );
@@ -169,21 +166,25 @@ export function ChartForm({ initial, initialSystem = "suriyayatra", onSubmit, cl
 
       <div>
         <label className="block text-xs font-medium text-fg-muted mb-1">
-          สถานที่เกิด
+          จังหวัดที่เกิด
         </label>
         <select
-          value={cityId}
-          onChange={(e) => setCityId(e.target.value)}
+          value={provinceId}
+          onChange={(e) => setProvinceId(e.target.value)}
           className={inputClass}
         >
-          {CITIES.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
+          {REGION_ORDER.map((region) => (
+            <optgroup key={region} label={REGION_NAMES[region]}>
+              {PROVINCES_BY_REGION[region].map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
         <p className="mt-1 text-[11px] text-fg-subtle">
-          เวลามาตรฐาน ICT (UTC+7)
+          77 จังหวัด · ใช้พิกัดของอำเภอเมือง · เวลามาตรฐาน ICT (UTC+7)
         </p>
       </div>
 
