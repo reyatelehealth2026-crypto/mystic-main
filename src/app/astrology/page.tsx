@@ -141,11 +141,16 @@ const sections: AstrologySection[] = [
     subheading: "วางลัคนา คำนวณทักษา และวิเคราะห์ดาวประจำตัว",
     items: [
       {
+        title: "จักรราศีวิภาค",
+        description: "ผังดวงชะตาแบบไทย สุริยยาตร์ / นิรายนะ",
+        icon: "🪐",
+        href: "/astrology/chart",
+      },
+      {
         title: "ลัคนา",
         description: "คำนวณลัคนาราศีจากวันเวลาเกิด",
         icon: "♈",
-        href: "/astrology/lagna",
-        comingSoon: true,
+        href: "/astrology/chart",
       },
       {
         title: "ทักษา",
