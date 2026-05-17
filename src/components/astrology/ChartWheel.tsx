@@ -16,6 +16,7 @@ import type { NatalChart, PlanetPosition } from "@/lib/astrology/types";
 
 export interface ChartWheelProps {
   chart: NatalChart;
+  transit?: NatalChart;
   size?: number;
   className?: string;
 }
@@ -52,7 +53,7 @@ function annularSector(
   ].join(" ");
 }
 
-export function ChartWheel({ chart, size = 360, className }: ChartWheelProps) {
+export function ChartWheel({ chart, transit, size = 360, className }: ChartWheelProps) {
   const cx = size / 2;
   const cy = size / 2;
   const r = size / 2;
@@ -168,7 +169,9 @@ export function ChartWheel({ chart, size = 360, className }: ChartWheelProps) {
         const planets = planetsBySign.get(sign.index) ?? [];
         if (planets.length === 0) return null;
         const center = signCenterDeg(sign.index);
-        const rMid = r * ((HOUSE_RING_OUTER + HOUSE_RING_INNER) / 2);
+        const rMid = transit
+          ? r * (HOUSE_RING_OUTER - 0.05)
+          : r * ((HOUSE_RING_OUTER + HOUSE_RING_INNER) / 2);
         const [cxLabel, cyLabel] = polar(cx, cy, rMid, center);
         const lineHeight = size * 0.035;
         return (
@@ -192,6 +195,39 @@ export function ChartWheel({ chart, size = 360, className }: ChartWheelProps) {
           </g>
         );
       })}
+
+      {transit && (() => {
+        const transitBySign = new Map<number, PlanetPosition[]>();
+        for (const p of transit.planets) {
+          if (p.id === "lagna") continue;
+          const list = transitBySign.get(p.zodiac.sign) ?? [];
+          list.push(p);
+          transitBySign.set(p.zodiac.sign, list);
+        }
+        return Array.from(transitBySign.entries()).map(([signIdx, planets]) => {
+          const center = signCenterDeg(signIdx);
+          const rMid = r * (HOUSE_RING_INNER + 0.07);
+          const [tx, ty] = polar(cx, cy, rMid, center);
+          const lh = size * 0.028;
+          return (
+            <g key={`transit-${signIdx}`}>
+              {planets.map((p, idx) => (
+                <text
+                  key={`t-${p.id}`}
+                  x={tx}
+                  y={ty + (idx - (planets.length - 1) / 2) * lh}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fontSize={size * 0.028}
+                  className="fill-rose-600 font-semibold"
+                >
+                  {p.thaiNumeral}
+                </text>
+              ))}
+            </g>
+          );
+        });
+      })()}
 
       <circle
         cx={cx}
