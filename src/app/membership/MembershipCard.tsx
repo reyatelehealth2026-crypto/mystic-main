@@ -15,6 +15,7 @@ interface Membership {
   lifetime: number;
   toNext: number;
   progressPct: number;
+  subscription: { planName: string; quota: number; remaining: number; periodEnd: string } | null;
 }
 
 function formatMemberNo(no: number | null): string {
@@ -116,6 +117,22 @@ export function MembershipCard() {
           )}
         </div>
       </div>
+
+      {/* subscription quota */}
+      {m?.subscription ? (
+        <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+          <p className="text-xs font-semibold text-emerald-700">{m.subscription.planName}</p>
+          <p className="mt-1 text-sm text-emerald-900">
+            เหลือ <span className="text-lg font-bold">{m.subscription.remaining}</span> / {m.subscription.quota} ครั้งเดือนนี้
+          </p>
+        </div>
+      ) : (
+        <Link href="/packages" className="mt-3 block">
+          <div className="rounded-2xl border border-dashed border-emerald-300 bg-emerald-50/50 p-4 text-center text-sm text-emerald-700">
+            ✨ สมัครแพ็กรายเดือน ดูดวงได้คุ้มกว่า →
+          </div>
+        </Link>
+      )}
 
       {/* actions */}
       <div className="mt-4 flex gap-3">

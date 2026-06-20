@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { requireUser, UnauthorizedError } from "@/lib/auth/getCurrentUser";
 import { getLifetimeCredits } from "@/lib/supabase/membership";
 import { computeTier } from "@/lib/membership/tier";
+import { getActiveSubscription } from "@/lib/supabase/subscriptions";
+import { subscriptionRemaining } from "@/lib/subscription/quota";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +13,8 @@ export async function GET() {
     const user = await requireUser();
     const lifetime = await getLifetimeCredits(user.id);
     const tier = computeTier(lifetime);
+    const sub = await getActiveSubscription(user.id);
+    const remaining = subscriptionRemaining(sub, new Date().toISOString());
     return NextResponse.json({
       ok: true,
       memberNo: user.member_no,
@@ -18,6 +22,9 @@ export async function GET() {
       pictureUrl: user.picture_url,
       credits: user.credits,
       ...tier,
+      subscription: sub
+        ? { planName: sub.plan_name, quota: sub.monthly_quota, remaining, periodEnd: sub.period_end }
+        : null,
     });
   } catch (err) {
     if (err instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });

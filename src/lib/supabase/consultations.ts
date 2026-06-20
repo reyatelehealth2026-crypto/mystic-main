@@ -17,13 +17,16 @@ export async function getOpenConsultationForUser(userId: string): Promise<Consul
 
 export async function openConsultation(userId: string, cost: number): Promise<ConsultationRow> {
   const db = getServiceClient();
-  // Atomic deduct first; raises 'insufficient_credits' if balance would go negative.
-  const { error: rpcError } = await db.rpc("apply_credit_delta", {
-    p_user_id: userId,
-    p_delta: -cost,
-    p_reason: "consultation_spend",
-  });
-  if (rpcError) throw rpcError;
+  // Deduct credits only when there is a cost. cost === 0 means the round is
+  // covered by a subscription quota (no ledger movement).
+  if (cost > 0) {
+    const { error: rpcError } = await db.rpc("apply_credit_delta", {
+      p_user_id: userId,
+      p_delta: -cost,
+      p_reason: "consultation_spend",
+    });
+    if (rpcError) throw rpcError;
+  }
 
   const { data, error } = await db
     .from("consultations")

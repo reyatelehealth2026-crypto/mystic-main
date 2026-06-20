@@ -49,7 +49,13 @@ export interface CreditTransactionRow {
   id: string;
   user_id: string;
   delta: number;
-  reason: "purchase" | "reading_spend" | "signup_bonus" | "admin_adjust" | "consultation_spend";
+  reason:
+    | "purchase"
+    | "reading_spend"
+    | "signup_bonus"
+    | "admin_adjust"
+    | "consultation_spend"
+    | "reward_redeem";
   reading_type: string | null;
   order_id: string | null;
   balance_after: number;

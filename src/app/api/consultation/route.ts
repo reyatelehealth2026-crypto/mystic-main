@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireUser, UnauthorizedError } from "@/lib/auth/getCurrentUser";
 import { decideConsultationStart } from "@/lib/consultation/policy";
 import { getOpenConsultationForUser, openConsultation } from "@/lib/supabase/consultations";
+import { consumeSubscriptionQuota } from "@/lib/supabase/subscriptions";
 
 export const dynamic = "force-dynamic";
 
@@ -25,14 +26,17 @@ export async function POST() {
   try {
     const user = await requireUser();
     const existing = await getOpenConsultationForUser(user.id);
-    const decision = decideConsultationStart({
-      hasOpenRound: existing !== null,
-      currentCredits: user.credits,
-    });
-
-    if (decision.action === "reuse") {
+    if (existing) {
       return NextResponse.json({ ok: true, reused: true, consultation: existing });
     }
+
+    // Subscription quota covers the round for free when available.
+    if (await consumeSubscriptionQuota(user.id)) {
+      const consultation = await openConsultation(user.id, 0);
+      return NextResponse.json({ ok: true, reused: false, viaSubscription: true, consultation });
+    }
+
+    const decision = decideConsultationStart({ hasOpenRound: false, currentCredits: user.credits });
     if (decision.action === "insufficient") {
       return NextResponse.json(
         {
@@ -43,8 +47,9 @@ export async function POST() {
         { status: 402 },
       );
     }
-    const consultation = await openConsultation(user.id, decision.cost);
-    return NextResponse.json({ ok: true, reused: false, consultation });
+    const cost = decision.action === "charge" ? decision.cost : 0;
+    const consultation = await openConsultation(user.id, cost);
+    return NextResponse.json({ ok: true, reused: false, viaSubscription: false, consultation });
   } catch (err) {
     if (err instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     return NextResponse.json(
