@@ -18,7 +18,9 @@ const COST_KEY: Record<string, string> = {
   "name-numerology": "name_numerology",
 };
 
-const CHARGED_STORE = "rf:charged-views";
+// v2: invalidate pre-gate entries that were marked "charged" without an actual
+// payment (older versions recorded even when the charge was skipped).
+const CHARGED_STORE = "rf:charged-views-v2";
 
 function alreadyCharged(key?: string): boolean {
   if (!key || typeof window === "undefined") return false;
