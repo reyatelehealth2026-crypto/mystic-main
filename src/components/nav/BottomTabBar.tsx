@@ -4,13 +4,13 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
-import { Home, Compass, Sparkles, Settings, Bookmark } from "lucide-react";
+import { Home, Sparkles, Gem, Bookmark, Settings } from "lucide-react";
 import { useTheme } from "@/lib/theme/ThemeProvider";
 
 const bottomTabs = [
   { label: "หน้าแรก", href: "/", icon: Home },
-  { label: "สำรวจ", href: "/explore", icon: Compass },
   { label: "ดูดวง", href: "/tarot", icon: Sparkles },
+  { label: "สมาชิก", href: "/membership", icon: Gem },
   { label: "บันทึก", href: "/library/saved", icon: Bookmark },
   { label: "ตั้งค่า", href: "/settings", icon: Settings },
 ] as const;

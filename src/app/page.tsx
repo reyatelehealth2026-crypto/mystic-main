@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
-import { Sparkles, Star, ChevronRight, Crown, Settings, ImageIcon } from "lucide-react";
+import { Sparkles, Star, ChevronRight, Crown, Settings, ImageIcon, Gem, MessageCircle, CalendarClock, Gift } from "lucide-react";
 import { useTheme } from "@/lib/theme/ThemeProvider";
 import { SocialFooter } from "@/components/ui/SocialFooter";
 import { cn } from "@/lib/cn";
@@ -334,6 +334,27 @@ export default function Home() {
               <ChevronRight className={cn("w-4 h-4", isPastel ? "text-indigo-200/50" : isRainbow ? "text-white/40" : "text-[var(--accent-light)]")} />
             </div>
           </Link>
+        </div>
+      </section>
+
+      {/* Membership Services */}
+      <section className="px-5 pt-8">
+        <h2 className={cn("font-serif text-xl font-semibold mb-4", isPastel || isRainbow ? "text-white" : "text-gray-900")}>บริการสมาชิก</h2>
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { href: "/membership", label: "บัตรสมาชิก", desc: "แต้ม · ระดับ", Icon: Gem, grad: "from-emerald-500 to-teal-600" },
+            { href: "/consult", label: "ปรึกษาหมอดูสด", desc: "คุยกับหมอดูจริง", Icon: MessageCircle, grad: "from-violet-500 to-purple-600" },
+            { href: "/packages", label: "แพ็กรายเดือน", desc: "ดูคุ้มทุกเดือน", Icon: CalendarClock, grad: "from-sky-500 to-blue-600" },
+            { href: "/rewards", label: "แลกของรางวัล", desc: "ใช้แต้มแลก", Icon: Gift, grad: "from-amber-500 to-orange-600" },
+          ].map(({ href, label, desc, Icon, grad }) => (
+            <Link key={href} href={href}>
+              <div className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-br p-4 text-white shadow-md transition-all active:scale-[0.98]", grad)}>
+                <Icon className="w-6 h-6" />
+                <p className="mt-3 text-sm font-bold leading-tight">{label}</p>
+                <p className="mt-0.5 text-[11px] text-white/80">{desc}</p>
+              </div>
+            </Link>
+          ))}
         </div>
       </section>
 
