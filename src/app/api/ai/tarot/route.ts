@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { cardMeaning, parseCardTokens } from "@/lib/tarot/engine";
 import { buildTarotPrompt } from "@/lib/ai/prompts";
 import { retrieveRag, formatRagContext, guessIntentsFromText } from "@/lib/rag/retriever";
+import { creditGate, settleReading } from "@/lib/auth/withCredits";
+import { ReadingType } from "@/lib/reading/types";
 
 type GeminiTarotResponse = {
   summary: string;
@@ -65,6 +67,11 @@ export async function POST(req: Request) {
     if (!cards.length && !isEsiimsi) {
       return NextResponse.json({ error: "invalid_cards" }, { status: 400 });
     }
+
+    // Optional, auth-aware credit gate. Anonymous requests pass through
+    // unchanged; logged-in users without credits get a 402.
+    const gate = await creditGate(ReadingType.TAROT);
+    if (gate.blockedResponse) return gate.blockedResponse;
 
     // Determine spread type based on card count
     const countMap: Record<number, 1 | 2 | 3 | 4 | 5 | 6 | 10> = { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 10: 10 };
@@ -191,6 +198,18 @@ ${formatRagContext(rag.chunks)}`;
         cardStructure: fallbackStructure,
       };
     }
+
+    // Successful (non-fallback) reading: deduct credits + record server history
+    // for logged-in users. Best-effort; never blocks the response.
+    await settleReading({
+      user: gate.user,
+      readingType: ReadingType.TAROT,
+      history: {
+        type: isEsiimsi ? "esiimsi" : "tarot",
+        summary: ai.summary,
+        details: { cardsToken: body.cardsToken, count: body.count, question },
+      },
+    });
 
     return NextResponse.json({ ok: true, ai });
   } catch (error) {

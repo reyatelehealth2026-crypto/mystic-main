@@ -1,32 +1,9 @@
 import type { ReadingVertical } from "@/lib/reading/types";
 import { ReadingType } from "@/lib/reading/types";
+import { getCreditCost } from "@/lib/monetization/creditCost";
 
-/**
- * Local credit cost lookup to avoid circular/broken dependency on pipeline.ts
- */
-function getCreditCost(type: ReadingType, options?: any): number {
-  switch (type) {
-    case ReadingType.HOROSCOPE:
-    case ReadingType.SPECIALIZED:
-      if (options?.period === "daily") return 1;
-      if (options?.period === "weekly") return 2;
-      if (options?.period === "monthly") return 3;
-      return 1;
-    case ReadingType.COMPATIBILITY:
-      return 2;
-    case ReadingType.CHINESE_ZODIAC:
-      return 1;
-    case ReadingType.NAME_NUMEROLOGY:
-      return 2;
-    case ReadingType.TAROT:
-    case ReadingType.SPIRIT_CARD:
-    case ReadingType.NUMEROLOGY:
-    case ReadingType.DAILY_CARD:
-      return 1;
-    default:
-      return 1;
-  }
-}
+// `getCreditCost` is imported from the shared pure module so the client paywall
+// and the server credit layer stay in lockstep (single source of truth).
 
 export interface PaywallContext {
   vertical: ReadingVertical;
