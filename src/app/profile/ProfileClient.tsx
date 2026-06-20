@@ -165,6 +165,11 @@ export function ProfileClient({ version }: { version?: string }) {
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
+                <Link href="/consult">
+                  <Button variant="default" size="default">
+                    {language === "th" ? "ปรึกษาหมอดูสด" : "Live consult"}
+                  </Button>
+                </Link>
                 <Link href="/pricing">
                   <Button variant="secondary" size="default">
                     {language === "th" ? "เติมเครดิต" : "Top up credits"}
@@ -174,6 +179,13 @@ export function ProfileClient({ version }: { version?: string }) {
                   <Link href="/admin/customers">
                     <Button variant="ghost" size="default">
                       {language === "th" ? "ลูกค้า (CRM)" : "Customers (CRM)"}
+                    </Button>
+                  </Link>
+                ) : null}
+                {user.isAdmin ? (
+                  <Link href="/admin/consultations">
+                    <Button variant="ghost" size="default">
+                      {language === "th" ? "คิวหมอดู" : "Consult queue"}
                     </Button>
                   </Link>
                 ) : null}

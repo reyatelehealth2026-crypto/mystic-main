@@ -48,7 +48,7 @@ export interface CreditTransactionRow {
   id: string;
   user_id: string;
   delta: number;
-  reason: "purchase" | "reading_spend" | "signup_bonus" | "admin_adjust";
+  reason: "purchase" | "reading_spend" | "signup_bonus" | "admin_adjust" | "consultation_spend";
   reading_type: string | null;
   order_id: string | null;
   balance_after: number;
@@ -64,4 +64,14 @@ export interface NotificationRow {
   status: "sent" | "failed";
   error: string | null;
   created_at: string;
+}
+
+export interface ConsultationRow {
+  id: string;
+  user_id: string;
+  credits_spent: number;
+  status: "open" | "closed";
+  opened_at: string;
+  closed_at: string | null;
+  closed_by: string | null;
 }
