@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import * as React from "react";
+import { useRecordReadingView } from "@/lib/history/useRecordReadingView";
 import { AppBar } from "@/components/nav/AppBar";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -37,6 +38,13 @@ export default function SpiritPathPage() {
 
   const [submitted, setSubmitted] = React.useState<null | { day: number; month: number; year: number }>(null);
   const [markdown, setMarkdown] = React.useState<string>("");
+
+  useRecordReadingView({
+    type: "spirit-path",
+    summary: markdown ? markdown.slice(0, 200) : "",
+    ready: markdown !== "",
+    dedupeKey: submitted ? `${submitted.year}-${submitted.month}-${submitted.day}` : undefined,
+  });
 
   React.useEffect(() => {
     trackEvent("reading_start", { vertical: "spirit-card", step: "spirit_path_form_view" });

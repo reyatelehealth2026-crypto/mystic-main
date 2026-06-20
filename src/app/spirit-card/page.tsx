@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
+import { useRecordReadingView } from "@/lib/history/useRecordReadingView";
 import { Heart } from "lucide-react";
 import { useLibrary } from "@/lib/library/useLibrary";
 import { buildSavedSpiritCardReading } from "@/lib/library/storage";
@@ -42,6 +43,13 @@ export default function SpiritCardPage() {
   const [loading, setLoading] = useState(false);
   const [submittedDob, setSubmittedDob] = useState<string | null>(null);
   const [aiReading, setAiReading] = useState<null | { summary: string; cardStructure: string }>(null);
+
+  useRecordReadingView({
+    type: "spirit-card",
+    summary: aiReading?.summary,
+    ready: !!submittedDob,
+    dedupeKey: submittedDob ?? undefined,
+  });
 
   useEffect(() => {
     trackEvent("reading_start", { vertical: "spirit-card", step: "form_view" });

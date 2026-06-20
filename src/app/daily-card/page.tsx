@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRecordReadingView } from "@/lib/history/useRecordReadingView";
 import { HeartSave } from "@/components/ui/HeartSave";
 import { ShareButton } from "@/components/ui/ShareButton";
 import { useLibrary } from "@/lib/library/useLibrary";
@@ -70,6 +71,13 @@ export default function DailyCardPage() {
   const [showDetails, setShowDetails] = useState(false);
   const [copied, setCopied] = useState(false);
   const [aiReading, setAiReading] = useState<null | { summary: string; cardStructure: string }>(null);
+
+  useRecordReadingView({
+    type: "daily-card",
+    summary: aiReading?.summary,
+    ready: !!drawn,
+    dedupeKey: drawn ? new Date().toISOString().slice(0, 10) : undefined,
+  });
 
   useEffect(() => {
     const saved = loadTodayCard();

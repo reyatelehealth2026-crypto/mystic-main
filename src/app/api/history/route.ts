@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireUser, getOptionalUser, UnauthorizedError } from "@/lib/auth/getCurrentUser";
 import { listReadingHistory, syncReadingHistory } from "@/lib/supabase/history";
-import { deductServerCredits } from "@/lib/supabase/credits";
+import { chargeReading } from "@/lib/supabase/credits";
 import { ReadingType } from "@/lib/reading/types";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +14,8 @@ const CHARGEABLE: Record<string, ReadingType> = {
   love_tarot: ReadingType.TAROT,
   "spirit-card": ReadingType.SPIRIT_CARD,
   spirit_card: ReadingType.SPIRIT_CARD,
+  "spirit-path": ReadingType.SPIRIT_CARD,
+  spirit_path: ReadingType.SPIRIT_CARD,
   "daily-card": ReadingType.DAILY_CARD,
   daily_card: ReadingType.DAILY_CARD,
   numerology: ReadingType.NUMEROLOGY,
@@ -45,13 +47,13 @@ export async function POST(req: Request) {
     ]);
 
     // Charge for a genuinely new view only (idempotent: re-sent clientId inserts
-    // 0 rows → no charge). First reading of each type is free (ledger-tracked).
-    let charge: { charged: boolean; free: boolean; newBalance: number } | null = null;
+    // 0 rows → no charge). Charged EVERY time (no free-first).
+    let charge: { charged: boolean; insufficient: boolean; newBalance: number } | null = null;
     const rt = CHARGEABLE[b.type];
     if (inserted > 0 && rt) {
       try {
-        const r = await deductServerCredits(user.id, rt);
-        charge = { charged: r.ok && !r.isFreeReading, free: r.isFreeReading, newBalance: r.newBalance };
+        const r = await chargeReading(user.id, rt);
+        charge = { charged: r.ok && !r.free, insufficient: r.insufficient, newBalance: r.newBalance };
       } catch {
         // never block the record on a charge failure
       }

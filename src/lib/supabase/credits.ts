@@ -122,6 +122,45 @@ export async function deductServerCredits(
   return { ok: true, isFreeReading: false, newBalance: data as number, reason: "deducted" };
 }
 
+export interface ChargeResult {
+  ok: boolean;
+  free: boolean; // cost was 0
+  insufficient: boolean;
+  newBalance: number;
+}
+
+/**
+ * Charge for a reading view — EVERY time (no free-first). Cost comes from the
+ * admin-managed `service_costs` (falling back to defaults). Skips the charge
+ * (insufficient=true) when the balance can't cover it; never goes negative.
+ */
+export async function chargeReading(
+  userId: string,
+  readingType: ReadingType,
+  options?: { period?: "daily" | "weekly" | "monthly" } & Record<string, unknown>,
+): Promise<ChargeResult> {
+  const cost = await resolveCreditCost(readingType, options);
+  const user = await getUserById(userId);
+  const balance = user?.credits ?? 0;
+  if (cost <= 0) return { ok: true, free: true, insufficient: false, newBalance: balance };
+  if (balance < cost) return { ok: false, free: false, insufficient: true, newBalance: balance };
+
+  const db = getServiceClient();
+  const { data, error } = await db.rpc("apply_credit_delta", {
+    p_user_id: userId,
+    p_delta: -cost,
+    p_reason: "reading_spend",
+    p_reading_type: readingType,
+  });
+  if (error) {
+    if (String(error.message ?? "").includes("insufficient_credits")) {
+      return { ok: false, free: false, insufficient: true, newBalance: balance };
+    }
+    throw error;
+  }
+  return { ok: true, free: false, insufficient: false, newBalance: data as number };
+}
+
 export async function grantCredits(
   userId: string,
   amount: number,

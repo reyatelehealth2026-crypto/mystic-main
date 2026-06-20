@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRecordReadingView } from "@/lib/history/useRecordReadingView";
 import { Share2, RefreshCw } from "lucide-react";
 import { analyzeThaiPhone } from "@/lib/numerology/engine";
 import { runReadingPipeline } from "@/lib/reading/pipeline";
@@ -46,6 +47,13 @@ export default function NumerologyPage() {
 
   // Save
   const [savedId, setSavedId] = useState<string | null>(null);
+
+  useRecordReadingView({
+    type: "numerology",
+    summary: aiReading?.summary,
+    ready: !!submittedPhone,
+    dedupeKey: submittedPhone ?? undefined,
+  });
 
   useEffect(() => {
     if (!submittedPhone) {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useRecordReadingView } from "@/lib/history/useRecordReadingView";
 import { AppBar } from "@/components/nav/AppBar";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -17,6 +18,13 @@ function ResultContent() {
   const [reading, setReading] = useState<HoroscopeReading | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  useRecordReadingView({
+    type: "horoscope",
+    summary: "ดวงรายวัน",
+    ready: !!reading,
+    dedupeKey: `${sign ?? ""}_daily`,
+  });
 
   useEffect(() => {
     if (!sign) {

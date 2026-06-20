@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useRecordReadingView } from "@/lib/history/useRecordReadingView";
 import { Card, CardDesc, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { AppBar } from "@/components/nav/AppBar";
@@ -16,6 +17,13 @@ export default function ResultClient() {
 
   const [error, setError] = React.useState<string>("");
   const [reading, setReading] = React.useState<ReturnType<typeof getBaselineNameNumerology> | null>(null);
+
+  useRecordReadingView({
+    type: "name-numerology",
+    summary: "ผลเลขศาสตร์ชื่อ",
+    ready: !!reading,
+    dedupeKey: `${firstName}_${lastName}`,
+  });
 
   React.useEffect(() => {
     try {

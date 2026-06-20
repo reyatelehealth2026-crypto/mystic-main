@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useRecordReadingView } from "@/lib/history/useRecordReadingView";
 import { AppBar } from "@/components/nav/AppBar";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -19,6 +20,13 @@ function ResultContent() {
   const [reading, setReading] = useState<ChineseZodiacReading | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  useRecordReadingView({
+    type: "chinese-zodiac",
+    summary: "ผลดวงปีจีน",
+    ready: !!reading,
+    dedupeKey: `${year ?? ""}_${period ?? ""}`,
+  });
 
   useEffect(() => {
     if (!year || !period) {

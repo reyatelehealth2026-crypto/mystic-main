@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useRecordReadingView } from "@/lib/history/useRecordReadingView";
 import { AppBar } from "@/components/nav/AppBar";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -18,6 +19,13 @@ function ResultContent() {
   const [reading, setReading] = useState<ThaiCompatibilityReading | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  useRecordReadingView({
+    type: "compatibility",
+    summary: "ผลดูดวงความเข้ากัน",
+    ready: !!reading,
+    dedupeKey: `${date1 ?? ""}_${date2 ?? ""}`,
+  });
 
   useEffect(() => {
     if (!date1 || !date2) {
