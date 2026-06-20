@@ -165,6 +165,11 @@ export function ProfileClient({ version }: { version?: string }) {
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
+                <Link href="/membership">
+                  <Button variant="default" size="default">
+                    {language === "th" ? "บัตรสมาชิก" : "Membership"}
+                  </Button>
+                </Link>
                 <Link href="/consult">
                   <Button variant="default" size="default">
                     {language === "th" ? "ปรึกษาหมอดูสด" : "Live consult"}
