@@ -1,6 +1,8 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
+import { useAuth } from "@/components/auth/AuthProvider";
 import {
   Sparkles,
   Calendar,
@@ -94,10 +96,32 @@ const categories = [
   },
 ];
 
+const HREF_TO_TYPE: Record<string, string> = {
+  "/tarot": "tarot",
+  "/daily-card": "daily_card",
+  "/spirit-path": "spirit_card",
+  "/numerology": "numerology",
+  "/horoscope": "horoscope",
+  "/compatibility": "compatibility",
+  "/chinese-zodiac": "chinese_zodiac",
+  "/name-numerology": "name_numerology",
+};
+
 export default function ExplorePage() {
   const { theme } = useTheme();
   const isPastel = theme === "pastel";
   const isRainbow = theme === "rainbow";
+  const { user } = useAuth();
+  const [costs, setCosts] = React.useState<Record<string, { label: string; cost: number }>>({});
+
+  React.useEffect(() => {
+    fetch("/api/service-costs", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.ok) setCosts(d.costs);
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <main className={cn("min-h-screen pb-24", isPastel ? "bg-transparent" : isRainbow ? "bg-transparent" : "bg-white")}>
@@ -135,8 +159,14 @@ export default function ExplorePage() {
       {/* Categories Grid */}
       <section className="px-5 py-6">
         <h1 className={cn("font-serif text-2xl font-semibold mb-2", isPastel || isRainbow ? "text-white" : "text-gray-900")}>สำรวจศาสตร์</h1>
-        <p className={cn("text-sm mb-6", isPastel || isRainbow ? "text-white/70" : "text-gray-500")}>เลือกศาสตร์ที่คุณสนใจเพื่อเริ่มดูดวง</p>
-        
+        <p className={cn("text-sm mb-3", isPastel || isRainbow ? "text-white/70" : "text-gray-500")}>เลือกศาสตร์ที่คุณสนใจเพื่อเริ่มดูดวง</p>
+
+        {user ? (
+          <div className="mb-5 inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-700">
+            💎 แต้มคงเหลือ {user.credits}
+          </div>
+        ) : null}
+
         <div className="grid grid-cols-2 gap-3">
           {categories.map((cat) => {
             const Icon = cat.icon;
@@ -161,6 +191,22 @@ export default function ExplorePage() {
                 </div>
                 <h3 className={cn("font-semibold text-sm mb-1", isPastel || isRainbow ? "text-white" : "text-[var(--text)]")}>{cat.title}</h3>
                 <p className={cn("text-xs line-clamp-2", isPastel || isRainbow ? "text-white/70" : "text-[var(--text-muted)]")}>{cat.description}</p>
+                {(() => {
+                  const t = HREF_TO_TYPE[cat.href];
+                  const c = t ? costs[t] : undefined;
+                  if (!c) return null;
+                  const enough = !user || user.credits >= c.cost;
+                  return (
+                    <span
+                      className={cn(
+                        "mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                        enough ? "bg-violet-100 text-violet-700" : "bg-red-100 text-red-600",
+                      )}
+                    >
+                      💎 {c.cost} เครดิต{!enough ? " · แต้มไม่พอ" : ""}
+                    </span>
+                  );
+                })()}
               </Link>
             );
           })}

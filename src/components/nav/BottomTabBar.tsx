@@ -9,7 +9,7 @@ import { useTheme } from "@/lib/theme/ThemeProvider";
 
 const bottomTabs = [
   { label: "หน้าแรก", href: "/", icon: Home },
-  { label: "ดูดวง", href: "/tarot", icon: Sparkles },
+  { label: "ดูดวง", href: "/explore", icon: Sparkles },
   { label: "สมาชิก", href: "/membership", icon: Gem },
   { label: "บันทึก", href: "/library/saved", icon: Bookmark },
   { label: "ตั้งค่า", href: "/settings", icon: Settings },
