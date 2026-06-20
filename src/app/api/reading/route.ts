@@ -7,6 +7,8 @@ import { generateHoroscope } from "@/lib/horoscope/engine";
 import { calculateThaiCompatibility } from "@/lib/thai-astrology/engine";
 import { generateChineseZodiacReading } from "@/lib/chinese-zodiac/engine";
 import { getBaselineNameNumerology } from "@/lib/name-numerology/engine";
+import { runReadingPipeline } from "@/lib/reading/pipeline";
+import { analyzeThaiPhone } from "@/lib/numerology/engine";
 import { TimePeriod, type ZodiacSign } from "@/lib/horoscope/types";
 
 export const dynamic = "force-dynamic";
@@ -64,6 +66,25 @@ function dispatch(type: string, p: Params): Dispatch | null {
         rt: ReadingType.NAME_NUMEROLOGY,
         run: () => getBaselineNameNumerology({ firstName: p.firstName, lastName: p.lastName }),
       };
+    case "tarot":
+      return {
+        rt: ReadingType.TAROT,
+        run: () =>
+          runReadingPipeline({ kind: "tarot", cardsToken: p.cardsToken, count: Number(p.count), question: p.question }),
+      };
+    case "spirit_card":
+      return {
+        rt: ReadingType.SPIRIT_CARD,
+        run: () => runReadingPipeline({ kind: "spirit-card", dob: p.dob }),
+      };
+    case "numerology": {
+      const analyzed = analyzeThaiPhone(p.phone);
+      return {
+        rt: ReadingType.NUMEROLOGY,
+        run: () =>
+          analyzed ? runReadingPipeline({ kind: "numerology", phone: analyzed.normalizedPhone }) : null,
+      };
+    }
     default:
       return null;
   }
