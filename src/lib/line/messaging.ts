@@ -86,6 +86,29 @@ export async function sendLinePush(
   }
 }
 
+/**
+ * Reply to an inbound webhook event using its one-time replyToken. Unlike push,
+ * reply does not require the same-provider userId — it always works for events
+ * the bot receives. Env-guarded like `sendLinePush`.
+ */
+export async function replyLineMessage(
+  replyToken: string,
+  messages: LineMessage[],
+): Promise<PushResult> {
+  const token = process.env.LINE_MESSAGING_CHANNEL_ACCESS_TOKEN;
+  if (!token) return { ok: false, reason: "missing_line_messaging_token" };
+  try {
+    const resp = await fetch("https://api.line.me/v2/bot/message/reply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ replyToken, messages }),
+    });
+    return resp.ok ? { ok: true } : { ok: false, reason: "line_reply_failed" };
+  } catch {
+    return { ok: false, reason: "line_reply_error" };
+  }
+}
+
 export function sendPurchaseConfirmation(
   lineUserId: string,
   creditAmount: number,

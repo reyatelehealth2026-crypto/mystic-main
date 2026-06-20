@@ -15,6 +15,7 @@ import { ShareButton } from "@/components/ui/ShareButton";
 import { TarotShareableCard } from "@/components/share/tarot/TarotShareableCard";
 import { cn } from "@/lib/cn";
 import { useHistoryStore } from "@/store/useHistoryStore";
+import { SendToLine } from "./SendToLine";
 
 function normalizeText(value: unknown): string {
   if (typeof value === "string") return value;
@@ -334,6 +335,12 @@ export default function ResultClient() {
 
       {/* ── Bottom actions ── */}
       <div className="mt-6 flex flex-col gap-3">
+        {drawnCards.length > 0 && aiReading ? (
+          <SendToLine
+            cards={drawnCards.map((d) => d.card.nameTh ?? d.card.name).join(", ")}
+            summary={aiReading.summary}
+          />
+        ) : null}
         {/* Keep only library save + new reading to avoid duplicate share buttons */}
         <Button className="w-full" size="lg" onClick={toggleSaved}>
           {savedId ? "Saved" : "Save to Library"}
