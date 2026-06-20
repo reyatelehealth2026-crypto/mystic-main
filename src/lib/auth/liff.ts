@@ -60,7 +60,9 @@ export async function isInLineClient(): Promise<boolean> {
   return liff.isInClient();
 }
 
-type LiffMessage = { type: "text"; text: string };
+type LiffMessage =
+  | { type: "text"; text: string }
+  | { type: "flex"; altText: string; contents: unknown };
 
 /**
  * Send messages into the user's 1:1 chat with the linked OA. Only works inside
@@ -73,7 +75,7 @@ export async function sendLiffMessages(messages: LiffMessage[]): Promise<boolean
   const liff = (await import("@line/liff")).default;
   if (!liff.isInClient()) return false;
   try {
-    await liff.sendMessages(messages);
+    await liff.sendMessages(messages as Parameters<typeof liff.sendMessages>[0]);
     return true;
   } catch {
     return false;
@@ -90,7 +92,7 @@ export async function shareReadingToFriends(messages: LiffMessage[]): Promise<bo
   const liff = (await import("@line/liff")).default;
   if (!liff.isApiAvailable("shareTargetPicker")) return false;
   try {
-    const res = await liff.shareTargetPicker(messages);
+    const res = await liff.shareTargetPicker(messages as Parameters<typeof liff.shareTargetPicker>[0]);
     return Boolean(res);
   } catch {
     return false;

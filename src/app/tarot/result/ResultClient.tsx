@@ -335,10 +335,13 @@ export default function ResultClient() {
 
       {/* ── Bottom actions ── */}
       <div className="mt-6 flex flex-col gap-3">
-        {drawnCards.length > 0 && aiReading ? (
+        {drawnCards.length > 0 ? (
           <SendToLine
-            cards={drawnCards.map((d) => d.card.nameTh ?? d.card.name).join(", ")}
-            summary={aiReading.summary}
+            cards={drawnCards.map((d) => ({
+              name: d.card.nameTh ?? d.card.name,
+              image: d.card.image ?? "",
+              reversed: d.orientation === "reversed",
+            }))}
           />
         ) : null}
         {/* Keep only library save + new reading to avoid duplicate share buttons */}

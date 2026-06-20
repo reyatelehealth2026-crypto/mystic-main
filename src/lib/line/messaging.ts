@@ -10,10 +10,9 @@ import { getServiceClient } from "@/lib/supabase/server";
  * userId namespace) and the user must have added the bot as a friend.
  */
 
-export interface LineMessage {
-  type: "text";
-  text: string;
-}
+export type LineMessage =
+  | { type: "text"; text: string }
+  | { type: "flex"; altText: string; contents: unknown };
 
 export interface PushResult {
   ok: boolean;

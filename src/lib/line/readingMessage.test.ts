@@ -1,18 +1,29 @@
 import { describe, it, expect } from "vitest";
-import { buildReadingMessageText } from "./readingMessage";
+import { buildReadingFlexMessage } from "./readingMessage";
 
-describe("buildReadingMessageText", () => {
-  it("includes header, cards, and summary", () => {
-    const text = buildReadingMessageText({ cards: "The Sun, The Moon", summary: "วันนี้ดีมาก" });
-    expect(text).toContain("🔮 ผลไพ่ทาโรต์ของคุณ");
-    expect(text).toContain("ไพ่: The Sun, The Moon");
-    expect(text).toContain("วันนี้ดีมาก");
+const card = (name: string, reversed = false) => ({
+  name,
+  imageUrl: `https://x.y/card/${name}.png`,
+  reversed,
+});
+
+describe("buildReadingFlexMessage", () => {
+  it("lists card names in altText", () => {
+    const msg = buildReadingFlexMessage([card("The Sun"), card("The Moon")]);
+    expect(msg.type).toBe("flex");
+    expect(msg.altText).toContain("The Sun");
+    expect(msg.altText).toContain("The Moon");
   });
 
-  it("appends the url line only when provided", () => {
-    const withUrl = buildReadingMessageText({ cards: "A", summary: "B", url: "https://x.y/z" });
-    expect(withUrl).toContain("ดูผลเต็ม: https://x.y/z");
-    const withoutUrl = buildReadingMessageText({ cards: "A", summary: "B" });
-    expect(withoutUrl).not.toContain("ดูผลเต็ม:");
+  it("uses a single bubble for one card", () => {
+    const msg = buildReadingFlexMessage([card("The Star")]);
+    expect((msg.contents as { type: string }).type).toBe("bubble");
+  });
+
+  it("uses a carousel for multiple cards", () => {
+    const msg = buildReadingFlexMessage([card("A"), card("B"), card("C")]);
+    const contents = msg.contents as { type: string; contents: unknown[] };
+    expect(contents.type).toBe("carousel");
+    expect(contents.contents).toHaveLength(3);
   });
 });
