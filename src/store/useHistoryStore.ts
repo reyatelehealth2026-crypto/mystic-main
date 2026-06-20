@@ -42,20 +42,8 @@ export const useHistoryStore = create<HistoryState>()(
             id: makeId(),
             date: new Date().toISOString(),
           };
-          // Mirror to the server for logged-in users (idempotent via clientId;
-          // anonymous users silently no-op). Fire-and-forget — never block UI.
-          if (typeof window !== "undefined") {
-            void fetch("/api/history", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                type: newItem.type,
-                summary: newItem.summary,
-                clientId: newItem.id,
-                details: newItem.details,
-              }),
-            }).catch(() => {});
-          }
+          // Local-only. Server recording + credit charge go through
+          // useRecordReadingView (which also shows the spend-confirm popup).
           return { history: [newItem, ...state.history].slice(0, MAX_HISTORY_ENTRIES) };
         }),
       clearHistory: () => set({ history: [] }),

@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { requestConfirm } from "@/lib/ui/confirm";
 import { Card, CardTitle, CardDesc } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 
@@ -28,6 +29,20 @@ export function ConsultClient() {
   }, [user, refresh]);
 
   async function start() {
+    const ok = await requestConfirm({
+      title: "ยืนยันเปิดรอบปรึกษา",
+      icon: "💬",
+      details: [
+        { label: "ปรึกษาหมอดูสด", value: "1 รอบ" },
+        { label: "ใช้แต้ม", value: "1 แต้ม", highlight: true },
+        { label: "แต้มคงเหลือ", value: `${user?.credits ?? 0} แต้ม` },
+      ],
+      message: "เปิดรอบแล้วทักหาหมอดูที่ LINE ได้เลย",
+      confirmText: "เปิดรอบเลย",
+      tone: "spend",
+    });
+    if (!ok) return;
+
     setBusy(true);
     setError("");
     try {
@@ -35,6 +50,7 @@ export function ConsultClient() {
       const data = await res.json();
       if (res.ok && data.ok) {
         setHasOpen(true);
+        window.dispatchEvent(new Event("rf:credits-changed"));
       } else if (res.status === 402) {
         setError(`เครดิตไม่พอ — ต้องใช้ ${data.requiredCredits} เครดิต (คุณมี ${data.currentCredits})`);
       } else {

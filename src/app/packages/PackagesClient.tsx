@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { requestConfirm } from "@/lib/ui/confirm";
 import { Card, CardTitle, CardDesc } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 
@@ -30,6 +31,22 @@ export function PackagesClient() {
   }, []);
 
   async function subscribe(planId: string) {
+    const plan = plans.find((p) => p.id === planId);
+    const ok = await requestConfirm({
+      title: "ยืนยันสมัครแพ็ก",
+      icon: "📅",
+      details: plan
+        ? [
+            { label: "แพ็ก", value: plan.name },
+            { label: "ดูได้", value: `${plan.monthlyQuota} ครั้ง/เดือน`, highlight: true },
+            { label: "ราคา", value: `฿${(plan.priceCents / 100).toFixed(0)} / เดือน` },
+          ]
+        : undefined,
+      message: "ยังไม่ผูกระบบชำระเงิน — สมัครเพื่อทดลองใช้ก่อน",
+      confirmText: "สมัครเลย",
+    });
+    if (!ok) return;
+
     setBusy(planId);
     setMsg("");
     try {

@@ -15,7 +15,7 @@ import { ShareButton } from "@/components/ui/ShareButton";
 import { TarotShareableCard } from "@/components/share/tarot/TarotShareableCard";
 import { cn } from "@/lib/cn";
 import { useHistoryStore } from "@/store/useHistoryStore";
-import { useAuth } from "@/components/auth/AuthProvider";
+import { useRecordReadingView } from "@/lib/history/useRecordReadingView";
 import { SendToLine } from "./SendToLine";
 
 function normalizeText(value: unknown): string {
@@ -79,7 +79,13 @@ export default function ResultClient() {
   );
 
   const { addHistory } = useHistoryStore();
-  const { refresh: refreshAuth } = useAuth();
+
+  useRecordReadingView({
+    type: searchParams.get("mode") === "love" ? "love-tarot" : "tarot",
+    summary: aiReading?.summary,
+    ready: !!aiReading,
+    dedupeKey: cardsToken,
+  });
   const [hasSavedHistory, setHasSavedHistory] = useState(false);
 
   useEffect(() => {
@@ -133,9 +139,6 @@ export default function ResultClient() {
         }
       });
       setHasSavedHistory(true);
-      // The view is charged server-side via POST /api/history; refresh the
-      // session shortly after so the credit balance on screen reflects it.
-      setTimeout(() => void refreshAuth(), 1500);
     }
 
     if (savedId && result) {
