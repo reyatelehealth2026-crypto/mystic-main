@@ -181,16 +181,9 @@ export function ProfileClient({ version }: { version?: string }) {
                   </Button>
                 </Link>
                 {user.isAdmin ? (
-                  <Link href="/admin/customers">
+                  <Link href="/admin">
                     <Button variant="ghost" size="default">
-                      {language === "th" ? "ลูกค้า (CRM)" : "Customers (CRM)"}
-                    </Button>
-                  </Link>
-                ) : null}
-                {user.isAdmin ? (
-                  <Link href="/admin/consultations">
-                    <Button variant="ghost" size="default">
-                      {language === "th" ? "คิวหมอดู" : "Consult queue"}
+                      {language === "th" ? "แดชบอร์ดหมอดู" : "Admin dashboard"}
                     </Button>
                   </Link>
                 ) : null}
