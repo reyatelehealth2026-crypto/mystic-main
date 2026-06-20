@@ -25,6 +25,9 @@ function formatMemberNo(no: number | null): string {
 export function MembershipCard() {
   const { user, loading, login } = useAuth();
   const [data, setData] = React.useState<Membership | null>(null);
+  const [history, setHistory] = React.useState<
+    Array<{ id: string; type: string; summary: string | null; created_at: string }>
+  >([]);
 
   React.useEffect(() => {
     if (!user) return;
@@ -32,6 +35,12 @@ export function MembershipCard() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (d?.ok) setData(d as Membership);
+      })
+      .catch(() => {});
+    fetch("/api/history", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.ok) setHistory((d.history ?? []).slice(0, 6));
       })
       .catch(() => {});
   }, [user]);
@@ -145,6 +154,40 @@ export function MembershipCard() {
           <Button className="w-full bg-[#06C755] text-white hover:bg-[#05b34c]">🎁 แลกของรางวัล</Button>
         </Link>
       </div>
+
+      {/* reading history */}
+      <div className="mt-5">
+        <h2 className="text-sm font-semibold text-fg">ประวัติการดูดวง</h2>
+        {history.length === 0 ? (
+          <p className="mt-2 text-xs text-fg-muted">ยังไม่มีประวัติ — เริ่มดูดวงเลย</p>
+        ) : (
+          <ul className="mt-2 divide-y divide-border rounded-2xl border border-border">
+            {history.map((h) => (
+              <li key={h.id} className="flex items-center justify-between gap-3 px-4 py-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-fg">{READING_LABELS[h.type] ?? h.type}</p>
+                  {h.summary ? <p className="truncate text-xs text-fg-muted">{h.summary}</p> : null}
+                </div>
+                <span className="shrink-0 text-[11px] text-fg-subtle">
+                  {new Date(h.created_at).toLocaleDateString("th-TH", { day: "numeric", month: "short" })}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }
+
+const READING_LABELS: Record<string, string> = {
+  tarot: "ไพ่ทาโรต์",
+  "love-tarot": "ทาโรต์ความรัก",
+  "spirit-card": "ไพ่จิตวิญญาณ",
+  "daily-card": "ไพ่รายวัน",
+  numerology: "เลขศาสตร์",
+  horoscope: "ดวงชะตา",
+  compatibility: "ความเข้ากัน",
+  chinese_zodiac: "ปีจีน",
+  name_numerology: "เลขศาสตร์ชื่อ",
+};
