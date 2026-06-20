@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/Button';
 import { Save, Plus, Trash2, ChevronDown, ChevronUp, Crown, X } from 'lucide-react';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 const CIRCLE_COLORS = [
   'bg-gradient-to-br from-red-400 to-red-600',
@@ -35,12 +36,23 @@ function newEmptyPackage(): PackageConfig {
 
 export default function AdminConfigPanel() {
   const { toggles, packages, setToggle, updatePackage, addPackage, removePackage, reorderPackages } = useConfigStore();
+  const { user, loading: authLoading } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [toast, setToast] = useState('');
 
   useEffect(() => { setMounted(true); }, []);
-  if (!mounted) return null;
+  if (!mounted || authLoading) return null;
+
+  // Client-side admin gate (the sensitive customer data lives behind
+  // server-gated /api/admin/* routes; this guard is UX only).
+  if (!user?.isAdmin) {
+    return (
+      <div className="mx-auto max-w-md px-5 py-16 text-center">
+        <p className="text-sm text-fg-muted">หน้านี้สำหรับผู้ดูแลระบบเท่านั้น</p>
+      </div>
+    );
+  }
 
   const showToast = (msg: string) => {
     setToast(msg);

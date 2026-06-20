@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Card, CardTitle, CardDesc } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
 import { Button } from "@/components/ui/Button";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 type Language = "en" | "th";
 type ThemeChoice = "system" | "light" | "dark";
@@ -98,6 +99,7 @@ function Row({
 }
 
 export function ProfileClient({ version }: { version?: string }) {
+  const { user, loading: authLoading, login, logout } = useAuth();
   const [language, setLanguage] = React.useState<Language>("th");
   const [theme, setTheme] = React.useState<ThemeChoice>("light");
   const [dailyReminder, setDailyReminder] = React.useState(false);
@@ -137,23 +139,82 @@ export function ProfileClient({ version }: { version?: string }) {
       <div className="space-y-4">
         {/* Account */}
         <Card className="p-5">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <CardTitle>Account</CardTitle>
-              <CardDesc className="mt-1">
-                {language === "th"
-                  ? "คุณกำลังใช้งานแบบผู้เยี่ยมชม"
-                  : "You are currently browsing as a guest."}
-              </CardDesc>
-            </div>
-            <Chip selected>{language === "th" ? "ผู้เยี่ยมชม" : "Guest"}</Chip>
-          </div>
+          {user ? (
+            <>
+              <div className="flex items-center gap-4">
+                {user.pictureUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={user.pictureUrl}
+                    alt=""
+                    className="size-12 rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="grid size-12 place-items-center rounded-full bg-accent-soft text-lg">
+                    {(user.displayName ?? "?").slice(0, 1)}
+                  </span>
+                )}
+                <div className="min-w-0">
+                  <CardTitle>{user.displayName ?? (language === "th" ? "สมาชิก" : "Member")}</CardTitle>
+                  <CardDesc className="mt-0.5">
+                    {language === "th"
+                      ? `เครดิตคงเหลือ ${user.credits} · ระดับ ${user.membershipTier}`
+                      : `${user.credits} credits · ${user.membershipTier}`}
+                  </CardDesc>
+                </div>
+              </div>
 
-          <div className="mt-4">
-            <Button variant="secondary" size="default" disabled aria-disabled="true">
-              {language === "th" ? "เข้าสู่ระบบ (เร็ว ๆ นี้)" : "Sign in (soon)"}
-            </Button>
-          </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link href="/pricing">
+                  <Button variant="secondary" size="default">
+                    {language === "th" ? "เติมเครดิต" : "Top up credits"}
+                  </Button>
+                </Link>
+                {user.isAdmin ? (
+                  <Link href="/admin/customers">
+                    <Button variant="ghost" size="default">
+                      {language === "th" ? "ลูกค้า (CRM)" : "Customers (CRM)"}
+                    </Button>
+                  </Link>
+                ) : null}
+                <Button variant="ghost" size="default" onClick={() => void logout()}>
+                  {language === "th" ? "ออกจากระบบ" : "Sign out"}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <CardTitle>Account</CardTitle>
+                  <CardDesc className="mt-1">
+                    {language === "th"
+                      ? "เข้าสู่ระบบเพื่อบันทึกประวัติและเครดิตข้ามอุปกรณ์"
+                      : "Sign in to sync history and credits across devices."}
+                  </CardDesc>
+                </div>
+                <Chip selected>{language === "th" ? "ผู้เยี่ยมชม" : "Guest"}</Chip>
+              </div>
+
+              <div className="mt-4">
+                <Button
+                  variant="default"
+                  size="default"
+                  onClick={login}
+                  disabled={authLoading}
+                  className="bg-[#06C755] text-white hover:bg-[#05b34c]"
+                >
+                  {authLoading
+                    ? language === "th"
+                      ? "กำลังตรวจสอบ…"
+                      : "Checking…"
+                    : language === "th"
+                      ? "เข้าสู่ระบบด้วย LINE"
+                      : "Sign in with LINE"}
+                </Button>
+              </div>
+            </>
+          )}
         </Card>
 
         {/* Settings */}

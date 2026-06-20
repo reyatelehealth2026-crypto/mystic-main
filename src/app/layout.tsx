@@ -7,6 +7,7 @@ import { BottomTabBar } from "@/components/nav/BottomTabBar";
 import { ThemeProvider } from "@/lib/theme/ThemeProvider";
 import { MemphisBackground } from "@/components/effects/MemphisBackground";
 import { StoreHydrator } from "@/store/StoreHydrator";
+import { AuthProvider } from "@/components/auth/AuthProvider";
 import { SITE_URL, SITE_NAME } from "@/lib/site";
 
 const inter = Inter({
@@ -150,11 +151,13 @@ export default function RootLayout({
       <body className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-bg pb-20 text-fg`}>
         <ThemeProvider>
           <StoreHydrator />
-          <MemphisBackground />
-          {children}
-          <SpeedInsights />
-          <Analytics />
-          <BottomTabBar />
+          <AuthProvider>
+            <MemphisBackground />
+            {children}
+            <SpeedInsights />
+            <Analytics />
+            <BottomTabBar />
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -33,9 +33,27 @@ Create `.env.local`:
 GEMINI_API_KEY=...                       # required for /api/ai/* routes
 GEMINI_MODEL=gemini-2.0-flash            # text model
 GEMINI_IMAGE_MODEL=gemini-3-pro-image-preview  # used by /api/ai/wallpaper
+
+# CRM + LINE login (see "CRM / LINE auth" below). All optional for the public
+# fortune flows — when unset the app runs fully anonymously as before.
+NEXT_PUBLIC_SUPABASE_URL=...             # Supabase project URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...        # not used client-side today (reserved)
+SUPABASE_SERVICE_ROLE_KEY=...            # SERVER ONLY — never import client-side
+LINE_LOGIN_CHANNEL_ID=...                # LINE Login channel
+LINE_LOGIN_CHANNEL_SECRET=...
+NEXT_PUBLIC_LIFF_ID=...                  # LIFF app id (in-app LINE login)
+LINE_MESSAGING_CHANNEL_ACCESS_TOKEN=...  # LINE Messaging API push (optional)
+SESSION_SECRET=...                       # >=32 bytes, HS256 session signing key
+ADMIN_LINE_USER_IDS=Uxxx,Uyyy            # comma-separated admin allowlist
 ```
 
 If `GEMINI_API_KEY` is missing, AI routes return `400 missing_gemini_api_key`. If Gemini call fails or returns malformed JSON, routes still respond `200 { ok: true, fallback: true }` with a deterministic structure built from the engine — keep this contract when modifying routes.
+
+On Cloudflare, public values go in `wrangler.jsonc` `vars`; secrets (`SUPABASE_SERVICE_ROLE_KEY`, `LINE_LOGIN_CHANNEL_SECRET`, `SESSION_SECRET`, `LINE_MESSAGING_CHANNEL_ACCESS_TOKEN`, `ADMIN_LINE_USER_IDS`) go in via `wrangler secret put`. All are read with `process.env.X` directly, like `GEMINI_API_KEY`.
+
+## CRM / LINE auth
+
+The CRM/account layer is additive — anonymous fortune flows are untouched. Schema lives in `supabase/migrations/0001_init.sql` (run manually in Supabase). Server data access goes through `src/lib/supabase/` using the **service-role key only** (RLS is deny-all; the anon key is never used client-side). Auth supports both LIFF (in-LINE) and web LINE Login OAuth, converging on `verifyLineIdToken → upsertUserFromLine → signSession` (httpOnly `rf_session` cookie via `jose`). Credits are authoritative server-side via the atomic `apply_credit_delta` Postgres function and the `credit_transactions` ledger; AI routes opt in via `creditGate()`/`settleReading()` in `src/lib/auth/withCredits.ts` (logged-out callers pass through unchanged). Admin CRM pages live under `src/app/admin/customers/`, gated by `requireAdmin()` (the `ADMIN_LINE_USER_IDS` allowlist). `@line/liff` must only be dynamic-imported client-side.
 
 ## Architecture
 
