@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { requestConfirm } from "@/lib/ui/confirm";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { requestReadingUnlock } from "@/lib/ui/readingGate";
 
 // Map history type strings → service_costs keys (enum form) for the cost lookup.
 const COST_KEY: Record<string, string> = {
@@ -43,9 +44,10 @@ function markCharged(key?: string): void {
 }
 
 /**
- * When a reading is ready, ask the user to confirm the credit spend (popup),
- * then record the view server-side (which charges). Confirms once per distinct
- * reading (dedupeKey + localStorage), so refresh/revisit won't re-prompt.
+ * Gates a reading behind a spend-confirm lock (blurs content until confirmed),
+ * then records the view server-side (which charges). Logged-out users are not
+ * gated/charged here (existing client paywall applies). Confirms once per
+ * distinct reading (dedupeKey) so refresh/revisit won't re-prompt or re-charge.
  */
 export function useRecordReadingView(params: {
   type: string;
@@ -54,10 +56,12 @@ export function useRecordReadingView(params: {
   dedupeKey?: string;
 }): void {
   const { type, summary, ready, dedupeKey } = params;
+  const { user } = useAuth();
   const sent = React.useRef(false);
 
   React.useEffect(() => {
     if (!ready || sent.current) return;
+    if (!user) return; // anonymous: no server charge/gate
     if (dedupeKey && alreadyCharged(`${type}:${dedupeKey}`)) {
       sent.current = true;
       return;
@@ -65,26 +69,18 @@ export function useRecordReadingView(params: {
     sent.current = true;
 
     void (async () => {
-      let cost: number | null = null;
+      let cost = 1;
       try {
         const res = await fetch("/api/service-costs", { cache: "no-store" });
         const d = await res.json();
-        cost = d?.costs?.[COST_KEY[type] ?? type]?.cost ?? null;
+        cost = d?.costs?.[COST_KEY[type] ?? type]?.cost ?? 1;
       } catch {
-        /* ignore — confirm without the number */
+        /* keep default */
       }
 
-      const ok = await requestConfirm({
-        title: "ยืนยันการดูดวง",
-        icon: "🔮",
-        message: cost == null ? "บันทึกผลและหักแต้มตามแพ็กเกจ" : undefined,
-        details: cost == null ? undefined : [{ label: "ใช้แต้ม", value: `${cost} แต้ม`, highlight: true }],
-        confirmText: "ดูเลย",
-        cancelText: "ยังไม่ดู",
-        tone: "spend",
-      });
+      const ok = await requestReadingUnlock(cost, user.credits);
       if (!ok) {
-        sent.current = false; // allow re-confirm later
+        sent.current = false; // allow re-prompt if they come back
         return;
       }
 
@@ -103,5 +99,5 @@ export function useRecordReadingView(params: {
         /* ignore */
       }
     })();
-  }, [ready, type, summary, dedupeKey]);
+  }, [ready, type, summary, dedupeKey, user]);
 }

@@ -9,6 +9,7 @@ import { MemphisBackground } from "@/components/effects/MemphisBackground";
 import { StoreHydrator } from "@/store/StoreHydrator";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { ConfirmHost } from "@/components/ui/ConfirmHost";
+import { ReadingGateHost } from "@/components/ui/ReadingGateHost";
 import { SITE_URL, SITE_NAME } from "@/lib/site";
 
 const inter = Inter({
@@ -159,6 +160,7 @@ export default function RootLayout({
             <Analytics />
             <BottomTabBar />
             <ConfirmHost />
+            <ReadingGateHost />
           </AuthProvider>
         </ThemeProvider>
       </body>
