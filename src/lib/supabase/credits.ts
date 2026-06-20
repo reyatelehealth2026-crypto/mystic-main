@@ -1,8 +1,29 @@
 import { getServiceClient } from "@/lib/supabase/server";
 import { getUserById } from "@/lib/supabase/users";
 import { getCreditCost } from "@/lib/monetization/creditCost";
+import { getServiceCost } from "@/lib/supabase/catalog";
 import type { CreditCheckResult } from "@/lib/monetization/paywall";
 import { ReadingType } from "@/lib/reading/types";
+
+/**
+ * Authoritative per-reading cost: a DB override (admin-managed `service_costs`)
+ * wins, otherwise the static default. Period-based costs fall back to the
+ * default so weekly/monthly multipliers stay intact.
+ */
+async function resolveCreditCost(
+  readingType: ReadingType,
+  options?: { period?: "daily" | "weekly" | "monthly" } & Record<string, unknown>,
+): Promise<number> {
+  if (!options?.period) {
+    try {
+      const override = await getServiceCost(readingType);
+      if (override != null) return override;
+    } catch {
+      // fall through to the static default
+    }
+  }
+  return getCreditCost(readingType, options);
+}
 
 type CreditOptions = { period?: "daily" | "weekly" | "monthly" } & Record<string, unknown>;
 
@@ -30,7 +51,7 @@ export async function checkServerCredits(
   readingType: ReadingType,
   options?: CreditOptions,
 ): Promise<CreditCheckResult> {
-  const requiredCredits = getCreditCost(readingType, options);
+  const requiredCredits = await resolveCreditCost(readingType, options);
   const user = await getUserById(userId);
   const currentCredits = user?.credits ?? 0;
   const isFreeReading = !(await hasUsedFreeReading(userId, readingType));

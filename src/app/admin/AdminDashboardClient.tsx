@@ -93,6 +93,9 @@ export function AdminDashboardClient() {
         <Link href="/admin/customers" className="flex-1">
           <Button variant="secondary" className="w-full">👥 ลูกค้า (CRM)</Button>
         </Link>
+        <Link href="/admin/packages" className="flex-1">
+          <Button variant="secondary" className="w-full">📦 จัดการแพ็กเกจ</Button>
+        </Link>
       </div>
 
       {/* consultation queue */}

@@ -5,13 +5,29 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Card, CardTitle, CardDesc } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { SUBSCRIPTION_PLANS } from "@/lib/subscription/plans";
+
+interface Plan {
+  id: string;
+  name: string;
+  monthlyQuota: number;
+  priceCents: number;
+}
 
 export function PackagesClient() {
   const router = useRouter();
   const { user, loading, login } = useAuth();
+  const [plans, setPlans] = React.useState<Plan[]>([]);
   const [busy, setBusy] = React.useState<string | null>(null);
   const [msg, setMsg] = React.useState("");
+
+  React.useEffect(() => {
+    fetch("/api/subscription/plans", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.ok) setPlans(d.plans as Plan[]);
+      })
+      .catch(() => {});
+  }, []);
 
   async function subscribe(planId: string) {
     setBusy(planId);
@@ -46,7 +62,8 @@ export function PackagesClient() {
         </Button>
       ) : (
         <div className="mt-5 space-y-3">
-          {SUBSCRIPTION_PLANS.map((p) => (
+          {plans.length === 0 ? <p className="text-sm text-fg-muted">ยังไม่มีแพ็ก</p> : null}
+          {plans.map((p) => (
             <Card key={p.id} className="flex items-center justify-between gap-4 p-4">
               <div className="min-w-0">
                 <CardTitle>{p.name}</CardTitle>

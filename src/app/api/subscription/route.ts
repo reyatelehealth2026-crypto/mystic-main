@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireUser, UnauthorizedError } from "@/lib/auth/getCurrentUser";
-import { getPlan } from "@/lib/subscription/plans";
 import { subscriptionRemaining } from "@/lib/subscription/quota";
 import { createSubscription, getActiveSubscription } from "@/lib/supabase/subscriptions";
+import { listPlans } from "@/lib/supabase/catalog";
 
 export const dynamic = "force-dynamic";
 
@@ -32,10 +32,16 @@ export async function POST(req: Request) {
   try {
     const user = await requireUser();
     const body = (await req.json()) as { plan?: string };
-    const plan = getPlan((body.plan ?? "").trim());
-    if (!plan) return NextResponse.json({ error: "invalid_plan" }, { status: 400 });
+    const planId = (body.plan ?? "").trim();
+    const row = (await listPlans(true)).find((p) => p.id === planId);
+    if (!row) return NextResponse.json({ error: "invalid_plan" }, { status: 400 });
 
-    const sub = await createSubscription(user.id, plan);
+    const sub = await createSubscription(user.id, {
+      id: row.id,
+      name: row.name,
+      monthlyQuota: row.monthly_quota,
+      priceCents: row.price_cents,
+    });
     return NextResponse.json({
       ok: true,
       subscription: { planName: sub.plan_name, quota: sub.monthly_quota, used: 0, remaining: sub.monthly_quota, periodEnd: sub.period_end },
