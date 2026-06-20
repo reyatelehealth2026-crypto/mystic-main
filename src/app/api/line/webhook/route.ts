@@ -45,6 +45,17 @@ export async function POST(req: Request) {
   }
 
   for (const ev of events) {
+    // Welcome message when a user adds the OA as a friend.
+    if (ev.type === "follow" && ev.replyToken) {
+      await replyLineMessage(ev.replyToken, [
+        {
+          type: "text",
+          text: `ยินดีต้อนรับสู่ REFFORTUNE 🔮\nดูดวง · ปรึกษาหมอดูสด · สะสมแต้มแลกของรางวัล\nเริ่มเลย 👉 ${APP_URL}`,
+        },
+      ]);
+      continue;
+    }
+
     if (ev.type !== "message" || ev.message?.type !== "text" || !ev.replyToken) continue;
 
     let hasOpenRound = false;

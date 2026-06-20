@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { requireUser, UnauthorizedError } from "@/lib/auth/getCurrentUser";
-import { decideConsultationStart } from "@/lib/consultation/policy";
+import { decideConsultationStart, CONSULTATION_CREDIT_COST } from "@/lib/consultation/policy";
 import { getOpenConsultationForUser, openConsultation } from "@/lib/supabase/consultations";
-import { consumeSubscriptionQuota } from "@/lib/supabase/subscriptions";
+import { consumeSubscriptionQuota, refundSubscriptionQuota } from "@/lib/supabase/subscriptions";
+import { getServiceCost } from "@/lib/supabase/catalog";
 
 export const dynamic = "force-dynamic";
 
@@ -30,13 +31,21 @@ export async function POST() {
       return NextResponse.json({ ok: true, reused: true, consultation: existing });
     }
 
-    // Subscription quota covers the round for free when available.
+    // Subscription quota covers the round for free when available. If opening
+    // the round then fails, refund the consumed quota.
     if (await consumeSubscriptionQuota(user.id)) {
-      const consultation = await openConsultation(user.id, 0);
-      return NextResponse.json({ ok: true, reused: false, viaSubscription: true, consultation });
+      try {
+        const consultation = await openConsultation(user.id, 0);
+        return NextResponse.json({ ok: true, reused: false, viaSubscription: true, consultation });
+      } catch (e) {
+        await refundSubscriptionQuota(user.id);
+        throw e;
+      }
     }
 
-    const decision = decideConsultationStart({ hasOpenRound: false, currentCredits: user.credits });
+    // Cost is admin-configurable via service_costs ("consultation"), else default.
+    const cost = (await getServiceCost("consultation")) ?? CONSULTATION_CREDIT_COST;
+    const decision = decideConsultationStart({ hasOpenRound: false, currentCredits: user.credits, cost });
     if (decision.action === "insufficient") {
       return NextResponse.json(
         {
@@ -47,8 +56,7 @@ export async function POST() {
         { status: 402 },
       );
     }
-    const cost = decision.action === "charge" ? decision.cost : 0;
-    const consultation = await openConsultation(user.id, cost);
+    const consultation = await openConsultation(user.id, decision.action === "charge" ? decision.cost : 0);
     return NextResponse.json({ ok: true, reused: false, viaSubscription: false, consultation });
   } catch (err) {
     if (err instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });

@@ -33,7 +33,13 @@ export async function openConsultation(userId: string, cost: number): Promise<Co
     .insert({ user_id: userId, credits_spent: cost, status: "open" })
     .select("*")
     .single();
-  if (error) throw error;
+  if (error) {
+    // Refund the credits we just deducted so a failed insert doesn't burn them.
+    if (cost > 0) {
+      await db.rpc("apply_credit_delta", { p_user_id: userId, p_delta: cost, p_reason: "admin_adjust" });
+    }
+    throw error;
+  }
   return data as ConsultationRow;
 }
 

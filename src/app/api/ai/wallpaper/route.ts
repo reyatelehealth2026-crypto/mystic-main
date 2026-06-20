@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ensureUser } from "@/lib/auth/apiGuard";
 
 // ──────────────────────────────────────────────
 // Request type — รับข้อมูลจาก wizard UI
@@ -78,6 +79,8 @@ CRITICAL: The image must be a pure artwork filling the ENTIRE canvas. NO phone f
 // ──────────────────────────────────────────────
 
 export async function POST(req: Request) {
+  const guard = await ensureUser();
+  if (guard instanceof NextResponse) return guard;
   try {
     const apiKey = process.env.GEMINI_API_KEY;
 

@@ -25,7 +25,26 @@ export async function getActiveSubscription(userId: string): Promise<Subscriptio
     .limit(1)
     .maybeSingle();
   if (error) throw error;
-  return (data as SubscriptionRow) ?? null;
+  const sub = (data as SubscriptionRow) ?? null;
+
+  // Lazily expire a lapsed subscription so it stops granting quota.
+  if (sub && new Date(sub.period_end).getTime() <= Date.now()) {
+    await db.from("subscriptions").update({ status: "expired" }).eq("id", sub.id);
+    return null;
+  }
+  return sub;
+}
+
+/** Refund one consumed quota unit (used when opening a round fails mid-flow). */
+export async function refundSubscriptionQuota(userId: string): Promise<void> {
+  const db = getServiceClient();
+  const sub = await getActiveSubscription(userId);
+  if (!sub || sub.used_count <= 0) return;
+  await db
+    .from("subscriptions")
+    .update({ used_count: sub.used_count - 1 })
+    .eq("id", sub.id)
+    .eq("used_count", sub.used_count);
 }
 
 export async function createSubscription(

@@ -6,14 +6,19 @@
  */
 
 import { NextResponse } from "next/server";
-import { 
-  getValidationMetrics, 
-  getValidationPassRate, 
+import { ensureAdmin } from "@/lib/auth/apiGuard";
+import {
+  getValidationMetrics,
+  getValidationPassRate,
   getFallbackUsageRate,
-  getErrorLogs 
+  getErrorLogs
 } from "@/lib/ai/validation";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
+  const guard = await ensureAdmin();
+  if (guard instanceof NextResponse) return guard;
   try {
     const metrics = getValidationMetrics();
     const passRate = getValidationPassRate();
