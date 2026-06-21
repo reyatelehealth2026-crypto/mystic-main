@@ -7,6 +7,7 @@ import { calculateThaiCompatibility } from "@/lib/thai-astrology/engine";
 import { generateChineseZodiacReading } from "@/lib/chinese-zodiac/engine";
 import { getBaselineNameNumerology } from "@/lib/name-numerology/engine";
 import { runReadingPipeline } from "@/lib/reading/pipeline";
+import { spiritPathFromDateParts } from "@/lib/tarot/spiritPath";
 import { analyzeThaiPhone } from "@/lib/numerology/engine";
 import { TimePeriod, type ZodiacSign } from "@/lib/horoscope/types";
 
@@ -87,6 +88,12 @@ function dispatch(type: string, p: Params): Dispatch | null {
       return {
         rt: ReadingType.SPIRIT_CARD,
         run: () => runReadingPipeline({ kind: "spirit-card", dob: p.dob }),
+      };
+    case "spirit_path":
+      return {
+        rt: ReadingType.SPIRIT_CARD,
+        run: () =>
+          spiritPathFromDateParts({ day: Number(p.day), month: Number(p.month), year: Number(p.year) }),
       };
     case "numerology": {
       const analyzed = analyzeThaiPhone(p.phone);
