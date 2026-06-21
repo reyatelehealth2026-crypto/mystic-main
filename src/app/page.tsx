@@ -152,7 +152,7 @@ export default function Home() {
   }, []);
 
   return (
-    <main className={cn("min-h-screen pb-24", isPastel ? "bg-transparent" : isRainbow ? "bg-transparent" : "bg-white")}>
+    <main className={cn("min-h-screen pb-24", isPastel ? "bg-transparent" : isRainbow ? "bg-transparent" : "bg-bg")}>
       {/* Header - Redesigned */}
       <header className="px-5 pt-6 pb-4 flex justify-between items-center">
         <div className="w-10"></div> {/* Spacer for centering logo */}
@@ -174,7 +174,7 @@ export default function Home() {
         </Link>
         <Link href="/admin-config-panel" className={cn(
           "w-10 h-10 flex items-center justify-center rounded-full transition-colors",
-          isPastel ? "hover:bg-white/10 text-white/70 hover:text-white" : isRainbow ? "hover:bg-white/10 text-white/60 hover:text-white" : "hover:bg-violet-50 text-gray-400 hover:text-violet-600"
+          isPastel ? "hover:bg-white/10 text-white/70 hover:text-white" : isRainbow ? "hover:bg-white/10 text-white/60 hover:text-white" : "hover:bg-surface text-fg-subtle hover:text-fg"
         )}>
           <Settings className="w-5 h-5" />
         </Link>
@@ -231,7 +231,7 @@ export default function Home() {
                       ? "bg-white/10 backdrop-blur text-white/50 border border-white/20"
                       : isRainbow
                         ? "bg-[#1a1a2e] text-white/40 border border-[rgba(255,0,255,0.1)]"
-                        : "bg-gray-100 text-gray-400",
+                        : "bg-surface text-fg-subtle",
                   )}>
                     ปิดปรับปรุงชั่วคราว
                   </button>
@@ -340,8 +340,8 @@ export default function Home() {
       {/* Packages Section */}
       <section className="px-5 pt-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className={cn("font-serif text-xl font-semibold", isPastel || isRainbow ? "text-white" : "text-gray-900")}>แพ็กเกจแนะนำ</h2>
-          <Link href="/pricing" className={cn("text-sm flex items-center gap-1", isPastel || isRainbow ? "text-white/80" : "text-violet-600")}>
+          <h2 className={cn("font-serif text-xl font-semibold", isPastel || isRainbow ? "text-white" : "text-fg")}>แพ็กเกจแนะนำ</h2>
+          <Link href="/pricing" className={cn("text-sm flex items-center gap-1", isPastel || isRainbow ? "text-white/80" : "text-accent")}>
             ดูทั้งหมด <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
@@ -372,7 +372,7 @@ export default function Home() {
                     ? "bg-white/15 backdrop-blur border-white/25 hover:bg-white/25"
                     : isRainbow
                       ? "bg-[#1a1a2e]/80 border-[rgba(255,0,255,0.15)] hover:border-[rgba(255,0,255,0.3)] shadow-sm"
-                      : "bg-white border-gray-100 hover:border-violet-200 shadow-sm"
+                      : "bg-surface border-border hover:border-accent/20 shadow-sm"
                 )}>
                   {/* Badge */}
                   {badgeLabel && (
@@ -382,7 +382,7 @@ export default function Home() {
                         ? "bg-white/20 text-white"
                         : isRainbow
                           ? "bg-[rgba(255,0,255,0.2)] text-white"
-                          : "bg-violet-100 text-violet-700"
+                          : "bg-accent/10 text-accent"
                     )}>
                       <Crown className="w-3 h-3" />
                       {badgeLabel}
@@ -393,27 +393,27 @@ export default function Home() {
                     {/* Left content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <h3 className={cn("font-semibold text-base leading-snug", isPastel || isRainbow ? "text-white" : "text-gray-900")}>
+                        <h3 className={cn("font-semibold text-base leading-snug", isPastel || isRainbow ? "text-white" : "text-fg")}>
                           {pkg.name}
                         </h3>
-                        <p className={cn("text-base font-bold shrink-0", isPastel || isRainbow ? "text-white" : "text-violet-600")}>
+                        <p className={cn("text-base font-bold shrink-0", isPastel || isRainbow ? "text-white" : "text-accent")}>
                           {pkg.price}
                         </p>
                       </div>
 
-                      <p className={cn("text-xs mt-0.5", isPastel || isRainbow ? "text-white/60" : "text-gray-400")}>
+                      <p className={cn("text-xs mt-0.5", isPastel || isRainbow ? "text-white/60" : "text-fg-muted")}>
                         {pkg.description}
                       </p>
 
                       {pkg.detail && (
-                        <p className={cn("text-xs mt-1", isPastel ? "text-violet-200" : isRainbow ? "text-[#ff00ff]/80" : "text-violet-500")}>
+                        <p className={cn("text-xs mt-1", isPastel ? "text-violet-200" : isRainbow ? "text-[#ff00ff]/80" : "text-accent")}>
                           {pkg.detail}
                         </p>
                       )}
 
                       {/* Features */}
                       <div className="mt-2.5">
-                        <span className={cn("text-[11px]", isPastel || isRainbow ? "text-white/50" : "text-gray-400")}>รวม:</span>
+                        <span className={cn("text-[11px]", isPastel || isRainbow ? "text-white/50" : "text-fg-muted")}>รวม:</span>
                         <div className="flex flex-wrap gap-1.5 mt-1">
                           {visibleFeatures.map((feature) => (
                             <span key={feature} className={cn(
@@ -422,7 +422,7 @@ export default function Home() {
                                 ? "bg-white/15 text-white/80"
                                 : isRainbow
                                   ? "bg-[rgba(255,0,255,0.1)] text-white/70"
-                                  : "bg-gray-100 text-gray-600"
+                                  : "bg-surface text-fg-muted"
                             )}>
                               {feature}
                             </span>
