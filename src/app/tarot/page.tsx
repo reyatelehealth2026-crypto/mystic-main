@@ -1,113 +1,90 @@
-"use client";
-
 import Link from "next/link";
 import { Layers, Grid3X3, LayoutGrid } from "lucide-react";
-import { useTheme } from "@/lib/theme/ThemeProvider";
-import { cn } from "@/lib/cn";
-import { BrandLogo } from "@/components/ui/BrandLogo";
+import { AppBar } from "@/components/nav/AppBar";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { FeatureMenu } from "@/components/nav/FeatureMenu";
+import { FAB } from "@/components/ui/FAB";
 
 const spreads = [
   {
     count: 1,
     title: "ไพ่ 1 ใบ",
     description: "เพื่อคำตอบที่ ชัดเจน ตรงประเด็น",
-    eta: "",
     icon: Layers,
   },
   {
     count: 2,
     title: "ไพ่ 2 ใบ",
     description: "เปิดไพ่เปรียบเทียบหรือ เปิดไพ่ คำตอบ + ไพ่ขยายความ",
-    eta: "",
     icon: Grid3X3,
   },
   {
     count: 3,
     title: "ไพ่ 3 ใบ",
     description: "ดู ทิศทางชีวิตปัจจุบัน • อนาคต • ผลสรุป",
-    eta: "",
     icon: Grid3X3,
   },
   {
     count: 4,
     title: "ไพ่ 4 ใบ",
     description: "ปิดไพ่ตัวแทนความรัก • การเงิน • การงาน • สุขภาพ หรือเลือกหัวข้ออื่นๆ",
-    eta: "",
     icon: LayoutGrid,
   },
   {
     count: 5,
     title: "ไพ่ 5 ใบ",
     description: "เปิดไพ่โครงสร้างตรวจดวงลึก ครบทุกมิติ",
-    eta: "",
     icon: LayoutGrid,
   },
   {
     count: 10,
     title: "ไพ่ 10 ใบ",
     description: "Celtic Cross การอ่านไพ่ตาม ราศีจักรวิเคราะห์เชิงลึกแบบมืออาชีพ",
-    eta: "",
     icon: LayoutGrid,
   },
 ];
 
 export default function TarotHomePage() {
-  const { theme } = useTheme();
-  const isPastel = theme === "pastel";
-  const isRainbow = theme === "rainbow";
-
   return (
-    <main className={cn("min-h-screen", isPastel ? "bg-transparent" : isRainbow ? "bg-transparent" : "bg-white")}>
-      <header className="flex items-center justify-between px-5 pt-4 pb-2">
-        <Link href="/" className="flex items-center gap-2">
-          <BrandLogo size={24} inverted={isPastel || isRainbow} />
-        </Link>
+    <main className="mx-auto w-full max-w-lg">
+      <header className="px-5 pt-7 pb-3">
+        <AppBar title="ทาโรต์" className="px-0 pt-0 pb-0" />
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-fg">เลือกไพ่ทาโรต์</h1>
+        <p className="mt-1 text-sm text-fg-muted">เลือกจำนวนไพ่ที่ต้องการทำนาย</p>
       </header>
 
-      <section className="px-5 pt-4 pb-3">
-        <h1 className={cn("font-serif text-3xl font-semibold tracking-tight", isPastel || isRainbow ? "text-white" : "text-gray-900")}>
-          ทาโรต์
-        </h1>
-        <p className={cn("mt-1 text-sm", isPastel || isRainbow ? "text-white/70" : "text-gray-500")}>
-          เลือกจำนวนไพ่ที่ต้องการทำนาย
-        </p>
-      </section>
-
-      <section className="px-5 pb-6">
+      <div className="px-5 pb-6">
         <div className="flex flex-col gap-3">
           {spreads.map((spread) => (
-            <Link
-              key={spread.title}
-              href={`/tarot/pick?count=${spread.count}`}
-              className="block"
-            >
-              <div className={cn(
-                "p-5 rounded-[24px] transition-all hover:-translate-y-0.5",
-                isPastel
-                  ? "bg-white/20 backdrop-blur border border-white/30 hover:bg-white/30 hover:shadow-[0_8px_32px_rgba(199,125,255,0.3)]"
-                  : isRainbow
-                    ? "bg-[#1a1a2e]/80 backdrop-blur border border-[rgba(255,0,255,0.15)] hover:border-[rgba(255,0,255,0.4)] hover:shadow-[0_8px_32px_rgba(255,0,255,0.2)]"
-                    : "ds-card hover:[border-color:var(--border-mystical)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,1),0_1px_2px_rgba(46,16,101,0.05),0_12px_28px_-8px_rgba(124,58,237,0.18)]"
-              )}>
+            <Link key={spread.count} href={`/tarot/pick?count=${spread.count}`} className="block">
+              <Card className="p-5">
                 <div className="flex items-start gap-4">
-                  <div className={cn(
-                    "flex h-12 w-12 flex-shrink-0 items-center justify-center",
-                    isPastel ? "bg-white/20 text-white rounded-2xl" : isRainbow ? "bg-[rgba(255,0,255,0.15)] text-white rounded-2xl" : "ds-bubble",
-                  )}>
+                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-accent/10 text-accent">
                     <spread.icon className="w-6 h-6" />
                   </div>
                   <div className="flex-1">
-                    <h3 className={cn("text-base font-semibold", isPastel || isRainbow ? "text-white" : "text-[var(--text)]")}>{spread.title}</h3>
-                    <div className={cn("mt-1 text-sm", isPastel || isRainbow ? "text-white/70" : "text-[var(--text-muted)]")}>
-                      {spread.description}
-                    </div>
+                    <h3 className="text-base font-semibold text-fg">{spread.title}</h3>
+                    <p className="mt-1 text-sm text-fg-muted">{spread.description}</p>
                   </div>
                 </div>
-              </div>
+              </Card>
             </Link>
           ))}
         </div>
-      </section>
+
+        <div className="sticky bottom-20 z-30 mt-6">
+          <Link href="/tarot/pick?count=3">
+            <Button className="w-full" size="lg">เริ่มเปิดไพ่ 3 ใบ</Button>
+          </Link>
+        </div>
+
+        <div className="mt-8">
+          <FeatureMenu />
+        </div>
+      </div>
+
+      <FAB />
     </main>
   );
 }

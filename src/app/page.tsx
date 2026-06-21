@@ -430,7 +430,7 @@ export default function Home() {
                           {extraCount > 0 && (
                             <span className={cn(
                               "text-[11px] px-2 py-0.5 rounded-full",
-                              isPastel ? "bg-white/10 text-white/60" : isRainbow ? "bg-[rgba(255,0,255,0.1)] text-white/50" : "bg-violet-50 text-violet-500"
+                              isPastel ? "bg-white/10 text-white/60" : isRainbow ? "bg-[rgba(255,0,255,0.1)] text-white/50" : "bg-accent/5 text-accent"
                             )}>
                               +{extraCount} รายการ
                             </span>
@@ -463,13 +463,13 @@ export default function Home() {
             ? "bg-white/20 backdrop-blur border-white/30"
             : isRainbow
               ? "bg-[#1a1a2e]/60 border-[rgba(255,215,0,0.2)]"
-              : "bg-gradient-to-br from-amber-50 to-orange-50 border-amber-100"
+              : "bg-accent/5 border-accent/20"
         )}>
-          <div className={cn("flex items-center gap-2 mb-2", isPastel || isRainbow ? "text-white" : "text-amber-600")}>
+          <div className={cn("flex items-center gap-2 mb-2", isPastel || isRainbow ? "text-white" : "text-accent")}>
             <Sparkles className="w-4 h-4" />
             <span className="text-xs font-medium">คำแนะนำวันนี้</span>
           </div>
-          <p className={cn("text-sm leading-relaxed", isPastel || isRainbow ? "text-white/90" : "text-gray-700")}>
+          <p className={cn("text-sm leading-relaxed", isPastel || isRainbow ? "text-white/90" : "text-fg-muted")}>
             "การเปิดรับพลังงานบวกจะช่วยให้คุณผ่านพ้นวันที่ท้าทายไปได้ด้วยดี"
           </p>
         </div>
