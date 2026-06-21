@@ -5,6 +5,9 @@
 -- Priority: free re-view (dedupe) > subscription quota > credits.
 -- Atomic: dedupe insert + quota decrement + credit debit in one transaction.
 
+-- Return type gains via_subscription, so the old function must be dropped first.
+drop function if exists public.charge_reading_once(uuid, text, text, integer);
+
 create or replace function public.charge_reading_once(
   p_user_id   uuid,
   p_client_id text,
