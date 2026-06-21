@@ -36,7 +36,7 @@ export function TriwaiTable({ chart, ageYears, className }: TriwaiTableProps) {
               className={cn(
                 "rounded-lg p-3 border",
                 isCurrent
-                  ? "border-violet-300 bg-violet-50"
+                  ? "border-accent/30 bg-accent/5"
                   : "border-border bg-surface/40"
               )}
             >
@@ -55,7 +55,7 @@ export function TriwaiTable({ chart, ageYears, className }: TriwaiTableProps) {
                 ราศี{sign.thaiName} · ภพที่ {a.lordHouse} ({houseInfo.thai})
               </div>
               {a.dignities.length > 0 && (
-                <div className="mt-1 text-[10px] text-violet-700 font-medium">
+                <div className="mt-1 text-[10px] text-accent font-medium">
                   {a.dignities.join(" / ")}
                 </div>
               )}

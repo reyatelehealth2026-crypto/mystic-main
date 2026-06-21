@@ -13,6 +13,9 @@ import { HeartSave } from "@/components/ui/HeartSave";
 import { Button } from "@/components/ui/Button";
 import { ShareButton } from "@/components/ui/ShareButton";
 import { TarotShareableCard } from "@/components/share/tarot/TarotShareableCard";
+import { AppBar } from "@/components/nav/AppBar";
+import { FeatureMenu } from "@/components/nav/FeatureMenu";
+import { FAB } from "@/components/ui/FAB";
 import { cn } from "@/lib/cn";
 import { useHistoryStore } from "@/store/useHistoryStore";
 import { SendToLine } from "./SendToLine";
@@ -284,11 +287,8 @@ export default function ResultClient() {
       <main className="mx-auto w-full max-w-lg px-5 py-8">
         <div className="rounded-2xl border border-danger/30 bg-danger/10 p-4">
           <p className="text-sm text-danger">ไม่พบข้อมูลไพ่ที่สมบูรณ์ กรุณากลับไปเปิดไพ่ใหม่อีกครั้ง</p>
-          <Link
-            href="/tarot"
-            className="mt-3 inline-flex items-center justify-center rounded-xl bg-gold px-4 py-2 text-sm font-semibold text-bg hover:opacity-90"
-          >
-            กลับไปเลือกไพ่
+          <Link href="/tarot" className="block mt-3">
+            <Button className="w-full" size="lg">กลับไปเลือกไพ่</Button>
           </Link>
         </div>
       </main>
@@ -299,13 +299,17 @@ export default function ResultClient() {
   const isTenCardSpread = count === 10;
 
   return (
-    <main className="mx-auto w-full max-w-lg px-5 py-6">
-      {/* ── Header ── */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-fg">Tarot result • {count} cards</h1>
-        <HeartSave saved={!!savedId} onToggle={toggleSaved} label="Save reading" />
-      </div>
+    <main className="mx-auto w-full max-w-lg">
+      <header className="px-5 pt-7 pb-3">
+        <AppBar
+          title="ผลไพ่ทาโรต์"
+          className="px-0 pt-0 pb-0"
+          right={<HeartSave saved={!!savedId} onToggle={toggleSaved} label="Save reading" />}
+        />
+        <h1 className="mt-1 text-xl font-bold tracking-tight text-fg">ผลการเปิดไพ่ {count} ใบ</h1>
+      </header>
 
+      <div className="px-5 pb-6">
       {saveToast && (
         <div className="mt-3 rounded-xl border border-success/25 bg-success/10 p-3 text-sm text-success">
           {saveToast}
@@ -359,7 +363,7 @@ export default function ResultClient() {
 
       {/* ── Shareable Result Card ── */}
       {drawnCards.length > 0 && aiReading && (
-        <section className="mt-6 rounded-2xl border border-accent/30 bg-gradient-to-br from-accent-soft to-purple-50 p-4">
+        <section className="mt-6 rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/5 to-accent/10 p-4">
           <h2 className="text-sm font-bold text-fg flex items-center gap-2">
             <span>✨</span> แชร์ผลคำทำนาย
           </h2>
@@ -423,6 +427,13 @@ export default function ResultClient() {
           </Button>
         </Link>
       </div>
+
+      <div className="mt-8">
+        <FeatureMenu />
+      </div>
+      </div>
+
+      <FAB />
     </main>
   );
 }

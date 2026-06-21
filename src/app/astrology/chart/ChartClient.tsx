@@ -88,7 +88,7 @@ export function ChartClient() {
                 onClick={() => setSystem(s)}
                 className={
                   system === s
-                    ? "rounded-lg bg-violet-600 text-white text-xs font-semibold px-3 py-1.5"
+                    ? "rounded-lg bg-accent text-white text-xs font-semibold px-3 py-1.5"
                     : "rounded-lg border border-border text-xs font-medium px-3 py-1.5 hover:bg-surface"
                 }
               >
@@ -128,7 +128,7 @@ function Tabs({ view, onChange }: { view: View; onChange: (v: View) => void }) {
           className={cn(
             "rounded-md py-2 text-xs font-medium transition-colors",
             view === t.id
-              ? "bg-bg text-violet-700 shadow-sm"
+              ? "bg-bg text-accent shadow-sm"
               : "text-fg-muted hover:text-fg"
           )}
         >

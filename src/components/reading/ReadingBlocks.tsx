@@ -9,7 +9,7 @@ function blockStyle(block: InterpretationBlock): string {
     return "border-emerald-300/20 bg-emerald-400/10";
   }
 
-  return "border-white/10 bg-white/[0.03]";
+  return "border-border bg-surface";
 }
 
 export function ReadingBlocks({ blocks }: { blocks: InterpretationBlock[] }) {
@@ -17,9 +17,9 @@ export function ReadingBlocks({ blocks }: { blocks: InterpretationBlock[] }) {
     <section className="mt-6 grid gap-4 md:grid-cols-2">
       {blocks.map((block) => (
         <article key={block.id} className={`rounded-2xl border p-5 ${blockStyle(block)}`}>
-          <h2 className="text-base font-semibold text-white">{block.title}</h2>
-          <p className="mt-2 whitespace-pre-line text-sm text-slate-200">{block.body}</p>
-          {block.meta ? <p className="mt-3 text-xs text-slate-400">{block.meta}</p> : null}
+          <h2 className="text-base font-semibold text-fg">{block.title}</h2>
+          <p className="mt-2 whitespace-pre-line text-sm text-fg-muted">{block.body}</p>
+          {block.meta ? <p className="mt-3 text-xs text-fg-subtle">{block.meta}</p> : null}
         </article>
       ))}
     </section>

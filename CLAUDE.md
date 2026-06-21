@@ -67,6 +67,8 @@ Every divination type has a deterministic engine in `src/lib/<domain>/` (e.g. `t
 
 When adding a new reading type, add a `ReadingType` enum value, route it in `processReading()`, and emit blocks through the same `InterpretationBlock` shape so the result UI in `src/components/reading/` keeps working.
 
+Each newer domain also ships a `baseline.ts` alongside `engine.ts` — this is where the deterministic fallback text lives, separately from the engine computation logic. Follow this pattern for new verticals.
+
 ### Prompt builder system (`src/lib/ai/`)
 
 All Gemini prompts go through builders in `src/lib/ai/prompts.ts` — never inline a prompt string in a route. Architecture:
@@ -81,7 +83,11 @@ Changing a template propagates to every route using it — that's the point. Kee
 
 ### RAG retriever
 
-`src/lib/rag/retriever.ts` is a dependency-free lexical retriever over markdown/JSON in `public/docs/` (loaded via `fs` at request time, so it works in Node runtime API routes only — not Edge). Routes call `retrieveRag(...)` then append `formatRagContext(chunks)` to the built prompt. The `esiimsi` (เซียมซี) flow uses its own KB file and a special prompt branch in `src/app/api/ai/tarot/route.ts` — preserve that branch when refactoring.
+`src/lib/rag/retriever.ts` is a dependency-free lexical retriever. The markdown files in `public/docs/` are **pre-bundled at build time** by `scripts/generate-rag-data.mjs` into `src/lib/rag/data.generated.ts` (auto-generated — never edit by hand). This makes the retriever bundle-safe for Edge/worker runtimes. Routes call `retrieveRag(...)` then append `formatRagContext(chunks)` to the built prompt. The `esiimsi` (เซียมซี) flow uses its own KB file and a special prompt branch in `src/app/api/ai/tarot/route.ts` — preserve that branch when refactoring.
+
+### Astrology engine (`src/lib/astrology/`)
+
+Vedic/Thai natal chart computation: tropical planet positions (`positions.ts`), ascendant/lagna (`lagna.ts`), houses (`houses.ts`), nakshatra placement, divisional charts — decanate and navamsha (`divisional.ts`), ฤกษ์ groups (`reference.ts`), ตรียางค์พิษ (`poison.ts`), dignitaries/มาตรฐานดาว (`dignities.ts`), dasha periods (`dasha.ts`), and sunrise offset (`sunrise.ts`). The high-level entry point is `engine.ts → computeNatalChart(BirthInput)` returning a `NatalChart`. Thai province data for local time is in `thai-provinces.ts`. The `src/app/astrology/` route drives this engine.
 
 ### Client state
 
@@ -112,4 +118,4 @@ Theme is managed by `src/lib/theme/ThemeProvider.tsx` (themes: `light` | `pastel
 - Many files have a `*_Zone.Identifier` sibling (Windows alternate-data-stream metadata from a WSL/Windows transfer). They're zero-byte and tracked — leave them alone unless asked to clean up.
 - `.kiro/specs/` and `.kiro/steering/` contain feature specs and product/tech/structure briefs that are the source of truth for ongoing work (`enhanced-ai-prompts`, `popular-fortune-features`).
 - `IMPLEMENTATION.md`, `SYSTEM_LEAP_BLUEPRINT.md`, and `CHECKPOINT_*` documents describe sprint-level intent and acceptance criteria; consult them before large refactors.
-- `public/docs/` ships the RAG knowledge base — do not delete files referenced in `src/lib/rag/retriever.ts` `FILES`.
+- `public/docs/` ships the RAG knowledge base — do not delete files listed in `scripts/generate-rag-data.mjs`. Adding or renaming a doc there requires re-running the script (happens automatically on `npm run build`). `src/lib/rag/data.generated.ts` is auto-generated; never edit it by hand.

@@ -80,7 +80,7 @@ export default function EsiimsiClient() {
 
       {/* ── Top Bar: Minimal & Clinical ── */}
       <div className="absolute top-0 left-0 right-0 p-6 flex items-center justify-between z-50">
-        <Link href="/explore" className="group p-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all backdrop-blur-md">
+        <Link href="/" className="group p-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all backdrop-blur-md">
           <ChevronLeft className="w-5 h-5 text-yellow-500/70 group-hover:text-yellow-500 transition-colors" />
         </Link>
         <div className="flex flex-col items-center">

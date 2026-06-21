@@ -6,9 +6,11 @@ import { Share2, RefreshCw } from "lucide-react";
 import { analyzeThaiPhone } from "@/lib/numerology/engine";
 import type { ReadingSession } from "@/lib/reading/types";
 import { removeReading } from "@/lib/library/storage";
-import { useTheme } from "@/lib/theme/ThemeProvider";
-import { cn } from "@/lib/cn";
-import { BrandLogo } from "@/components/ui/BrandLogo";
+import { AppBar } from "@/components/nav/AppBar";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { FeatureMenu } from "@/components/nav/FeatureMenu";
+import { FAB } from "@/components/ui/FAB";
 
 function normalizeText(value: unknown): string {
   if (typeof value === "string") return value;
@@ -25,9 +27,6 @@ function normalizeText(value: unknown): string {
 }
 
 export default function NumerologyPage() {
-  const { theme } = useTheme();
-  const isPastel = theme === "pastel";
-  const isRainbow = theme === "rainbow";
   const [phone, setPhone] = useState("");
   const [submittedPhone, setSubmittedPhone] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -77,8 +76,6 @@ export default function NumerologyPage() {
   }, [submittedPhone]);
 
   const [aiReading, setAiReading] = useState<null | { summary: string; cardStructure: string }>(null);
-
-  // Save
   const [savedId, setSavedId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -165,41 +162,30 @@ export default function NumerologyPage() {
   }
 
   return (
-    <main className={cn("min-h-screen", isPastel ? "bg-transparent" : isRainbow ? "bg-transparent" : "bg-white")}>
-      {/* Header */}
-      <header className="flex items-center justify-between px-5 pt-4 pb-2">
-        <Link href="/" className="flex items-center gap-2">
-          <BrandLogo size={24} inverted={isPastel || isRainbow} />
-        </Link>
+    <main className="mx-auto w-full max-w-lg">
+      <header className="px-5 pt-7 pb-3">
+        <AppBar title="เลขศาสตร์" className="px-0 pt-0 pb-0" />
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-fg">วิเคราะห์เบอร์โทรศัพท์</h1>
+        <p className="mt-1 text-sm text-fg-muted">กรอกเบอร์ แล้วดูคะแนน/แนวโน้มงาน-เงิน-ความสัมพันธ์</p>
       </header>
 
-      <div className="px-5 pb-10 pt-6">
-        <header className="space-y-2">
-          <h1 className={cn("font-serif text-2xl font-semibold", isPastel || isRainbow ? "text-white" : "text-gray-900")}>วิเคราะห์เบอร์โทรศัพท์</h1>
-          <p className={cn("text-sm", isPastel || isRainbow ? "text-white/70" : "text-gray-500")}>กรอกเบอร์ แล้วดูคะแนน/แนวโน้มงาน-เงิน-ความสัมพันธ์</p>
-        </header>
+      <div className="px-5 pb-6">
+        <Card className="p-5">
+          <h2 className="text-base font-semibold text-fg">คำนวณ</h2>
+          <p className="mt-1 text-sm text-fg-muted">ใส่เบอร์โทรศัพท์ (ระบบจะจัดรูปแบบให้เอง)</p>
 
-        <div className={cn("mt-6 rounded-[24px] border p-5 shadow-sm", isPastel ? "bg-white/20 backdrop-blur border-white/30" : isRainbow ? "bg-[#1a1a2e]/80 border-[rgba(255,0,255,0.2)]" : "border-gray-200 bg-white")}>
-          <h2 className={cn("text-lg font-semibold", isPastel || isRainbow ? "text-white" : "text-gray-900")}>คำนวณ</h2>
-          <p className={cn("mt-1 text-sm", isPastel || isRainbow ? "text-white/70" : "text-gray-500")}>ใส่เบอร์โทรศัพท์ (ระบบจะจัดรูปแบบให้เอง)</p>
-
-          <form onSubmit={onSubmit} className="mt-5 space-y-4">
+          <form onSubmit={onSubmit} className="mt-4 space-y-4">
             <div className="space-y-2">
-              <label className={cn("text-sm font-medium", isPastel || isRainbow ? "text-white/80" : "text-gray-600")}>เบอร์โทรศัพท์</label>
+              <label className="text-sm font-medium text-fg-muted">เบอร์โทรศัพท์</label>
               <input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 inputMode="tel"
                 placeholder="เช่น 0812345678"
-                className={cn(
-                  "w-full rounded-xl border px-4 py-3 text-sm outline-none transition",
-                  isPastel ? "bg-white/20 border-white/30 text-white placeholder:text-white/50 focus:border-white/60" :
-                  isRainbow ? "bg-[#1a1a2e]/80 border-[rgba(255,0,255,0.3)] text-white placeholder:text-white/40 focus:border-[#ff00ff]" :
-                  "border-gray-200 bg-white text-gray-900 focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
-                )}
+                className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-fg outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20 placeholder:text-fg-subtle"
                 required
               />
-              {error ? <p className="text-sm text-red-500">{error}</p> : null}
+              {error ? <p className="text-sm text-danger">{error}</p> : null}
               {needCredits ? (
                 <Link href="/pricing" className="mt-2 inline-block rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white">
                   เติมแต้ม
@@ -207,51 +193,39 @@ export default function NumerologyPage() {
               ) : null}
             </div>
 
-            <button
-              type="submit"
-              className={cn(
-                "w-full h-12 rounded-xl font-medium shadow-lg transition-all active:scale-[0.98]",
-                isPastel ? "bg-white/30 backdrop-blur text-white border border-white/50 hover:bg-white/50" :
-                isRainbow ? "bg-gradient-to-r from-[#ff00ff] to-[#00ffff] text-white shadow-[rgba(255,0,255,0.3)]" :
-                "bg-violet-600 text-white shadow-violet-200 hover:bg-violet-700 hover:shadow-xl"
-              )}
-            >
+            <Button type="submit" className="w-full" size="lg">
               วิเคราะห์
-            </button>
+            </Button>
           </form>
-        </div>
+        </Card>
 
         {baseline && session && (
-          <section className="mt-6 space-y-4">
-            <div className={cn("rounded-[24px] border p-5 shadow-sm", isPastel ? "bg-white/20 backdrop-blur border-white/30" : isRainbow ? "bg-[#1a1a2e]/80 border-[rgba(255,0,255,0.2)]" : "border-gray-200 bg-white")}>
-              <h2 className={cn("text-lg font-semibold", isPastel || isRainbow ? "text-white" : "text-gray-900")}>สรุปคะแนน</h2>
-              <p className={cn("mt-2 text-sm", isPastel || isRainbow ? "text-white/80" : "text-gray-600")}>
-                คะแนน {" "}
-                <span className={cn("font-semibold", isPastel || isRainbow ? "text-white" : "text-violet-600")}>{baseline.score}/99</span> ({baseline.tier}) •
+          <div className="mt-5 space-y-4">
+            <Card className="p-5">
+              <h2 className="text-base font-semibold text-fg">สรุปคะแนน</h2>
+              <p className="mt-2 text-sm text-fg-muted">
+                คะแนน{" "}
+                <span className="font-semibold text-accent">{baseline.score}/99</span> ({baseline.tier}) •
                 เลขรวม {baseline.total} • เลขราก {baseline.root}
               </p>
-            </div>
+            </Card>
 
-            <div className={cn("rounded-[24px] border p-5 shadow-sm", isPastel ? "bg-white/20 backdrop-blur border-white/30" : isRainbow ? "bg-[#1a1a2e]/80 border-[rgba(255,0,255,0.2)]" : "border-gray-200 bg-white")}>
-              <h2 className={cn("text-lg font-semibold", isPastel || isRainbow ? "text-white" : "text-gray-900")}>คำทำนาย</h2>
+            <Card className="p-5">
+              <h2 className="text-base font-semibold text-fg">คำทำนาย</h2>
               {!aiReading ? (
-                <p className={cn("mt-2 text-sm", isPastel || isRainbow ? "text-white/50" : "text-gray-400")}>กำลังสรุปคำทำนาย...</p>
+                <p className="mt-2 text-sm text-fg-subtle">กำลังสรุปคำทำนาย...</p>
               ) : (
                 <>
-                  <p className={cn("mt-2 whitespace-pre-line text-sm leading-relaxed", isPastel || isRainbow ? "text-white/80" : "text-gray-600")}>{aiReading.summary}</p>
-                  <div className={cn("mt-4 rounded-xl border p-4", isPastel ? "border-white/20 bg-white/10" : isRainbow ? "border-[rgba(255,0,255,0.2)] bg-[rgba(255,0,255,0.05)]" : "border-violet-100 bg-violet-50/50")}>
-                    <p className={cn("text-xs font-medium", isPastel || isRainbow ? "text-white" : "text-violet-600")}>รายละเอียด</p>
-                    <p className={cn("mt-2 whitespace-pre-line text-sm leading-relaxed", isPastel || isRainbow ? "text-white/80" : "text-gray-600")}>{aiReading.cardStructure}</p>
+                  <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-fg-muted">{aiReading.summary}</p>
+                  <div className="mt-4 rounded-xl border border-accent/20 bg-accent/5 p-4">
+                    <p className="text-xs font-medium text-accent">รายละเอียด</p>
+                    <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-fg-muted">{aiReading.cardStructure}</p>
                   </div>
 
                   <div className="mt-6 flex flex-col gap-3">
-                    <button
-                      className={cn(
-                        "w-full h-12 rounded-xl font-medium shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2",
-                        isPastel ? "bg-white/30 backdrop-blur text-white border border-white/50 hover:bg-white/50" :
-                        isRainbow ? "bg-gradient-to-r from-[#ff00ff] to-[#00ffff] text-white shadow-[rgba(255,0,255,0.3)]" :
-                        "bg-violet-600 text-white shadow-violet-200 hover:bg-violet-700 hover:shadow-xl"
-                      )}
+                    <Button
+                      className="w-full flex items-center justify-center gap-2"
+                      size="lg"
                       onClick={() => {
                         if (navigator.share) {
                           navigator.share({
@@ -267,14 +241,11 @@ export default function NumerologyPage() {
                     >
                       <Share2 className="w-4 h-4" />
                       แชร์ผลลัพธ์
-                    </button>
-                    <button
-                      className={cn(
-                        "w-full h-12 rounded-xl font-medium transition-all active:scale-[0.98] flex items-center justify-center gap-2",
-                        isPastel ? "bg-white/10 border border-white/20 text-white hover:bg-white/20" :
-                        isRainbow ? "bg-[#1a1a2e] border border-[rgba(255,0,255,0.3)] text-white hover:border-[rgba(255,0,255,0.5)]" :
-                        "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300"
-                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full flex items-center justify-center gap-2"
+                      size="lg"
                       onClick={() => {
                         setSubmittedPhone(null);
                         setPhone("");
@@ -282,14 +253,20 @@ export default function NumerologyPage() {
                     >
                       <RefreshCw className="w-4 h-4" />
                       วิเคราะห์เบอร์อื่น
-                    </button>
+                    </Button>
                   </div>
                 </>
               )}
-            </div>
-          </section>
+            </Card>
+          </div>
         )}
+
+        <div className="mt-8">
+          <FeatureMenu />
+        </div>
       </div>
+
+      <FAB />
     </main>
   );
 }

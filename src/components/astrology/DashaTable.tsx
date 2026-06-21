@@ -101,7 +101,7 @@ export function DashaTable({
             <>
               {" · "}
               ปัจจุบันเสวยอายุ{" "}
-              <span className="font-semibold text-violet-700">
+              <span className="font-semibold text-accent">
                 {getPlanetInfo(active.planet as PlanetId).thaiName}
               </span>
             </>
@@ -116,7 +116,7 @@ export function DashaTable({
                 key={`${p.planet}-${i}`}
                 className={cn(
                   "flex items-center justify-between text-xs py-1 px-2 rounded",
-                  isActive ? "bg-violet-100 text-violet-900 font-medium" : "text-fg-muted"
+                  isActive ? "bg-accent/10 text-accent font-medium" : "text-fg-muted"
                 )}
               >
                 <span>

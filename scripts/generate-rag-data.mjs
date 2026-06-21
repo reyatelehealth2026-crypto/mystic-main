@@ -5,8 +5,9 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const ROOT = path.resolve(new URL("..", import.meta.url).pathname);
+const ROOT = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
 const DOCS_DIR = path.join(ROOT, "public/docs");
 const OUT = path.join(ROOT, "src/lib/rag/data.generated.ts");
 
