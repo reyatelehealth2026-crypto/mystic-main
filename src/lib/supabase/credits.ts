@@ -10,7 +10,7 @@ import { ReadingType } from "@/lib/reading/types";
  * wins, otherwise the static default. Period-based costs fall back to the
  * default so weekly/monthly multipliers stay intact.
  */
-async function resolveCreditCost(
+export async function resolveCreditCost(
   readingType: ReadingType,
   options?: { period?: "daily" | "weekly" | "monthly" } & Record<string, unknown>,
 ): Promise<number> {
@@ -23,6 +23,41 @@ async function resolveCreditCost(
     }
   }
   return getCreditCost(readingType, options);
+}
+
+export interface ChargeOnceResult {
+  charged: boolean;
+  balance: number;
+  insufficient: boolean;
+}
+
+/**
+ * Atomically charge for a reading exactly once per (user, clientId). The DB
+ * function inserts the dedupe row + debits in one transaction, so concurrent
+ * identical requests can never double-charge, and a re-view is free.
+ */
+export async function chargeReadingOnce(
+  userId: string,
+  clientId: string,
+  type: string,
+  readingType: ReadingType,
+  options?: { period?: "daily" | "weekly" | "monthly" } & Record<string, unknown>,
+): Promise<ChargeOnceResult> {
+  const cost = await resolveCreditCost(readingType, options);
+  const db = getServiceClient();
+  const { data, error } = await db.rpc("charge_reading_once", {
+    p_user_id: userId,
+    p_client_id: clientId,
+    p_type: type,
+    p_cost: cost,
+  });
+  if (error) throw error;
+  const row = Array.isArray(data) ? data[0] : data;
+  return {
+    charged: Boolean(row?.charged),
+    balance: Number(row?.balance ?? 0),
+    insufficient: Boolean(row?.insufficient),
+  };
 }
 
 type CreditOptions = { period?: "daily" | "weekly" | "monthly" } & Record<string, unknown>;

@@ -35,7 +35,9 @@ function ResultContent() {
         });
         const data = await res.json();
         if (res.ok && data.ok) {
-          setReading(data.reading as HoroscopeReading);
+          const r = data.reading as HoroscopeReading;
+          if (r?.dateRange) r.dateRange = { start: new Date(r.dateRange.start), end: new Date(r.dateRange.end) };
+          setReading(r);
           window.dispatchEvent(new Event("rf:credits-changed"));
         } else if (res.status === 401) {
           setError("กรุณาเข้าสู่ระบบด้วย LINE ก่อนดูดวง");

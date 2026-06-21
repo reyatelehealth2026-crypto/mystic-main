@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { ensureUser } from "@/lib/auth/apiGuard";
-import { chargeReading } from "@/lib/supabase/credits";
-import { recordReading, isReadingRecorded } from "@/lib/supabase/history";
+import { chargeReadingOnce } from "@/lib/supabase/credits";
 import { ReadingType } from "@/lib/reading/types";
 import { generateHoroscope } from "@/lib/horoscope/engine";
 import { calculateThaiCompatibility } from "@/lib/thai-astrology/engine";
@@ -21,6 +20,18 @@ const PERIOD: Record<string, TimePeriod> = {
   weekly: TimePeriod.WEEKLY,
   monthly: TimePeriod.MONTHLY,
 };
+
+/** Stable, order-independent string of the inputs — the dedupe identity. */
+function canonicalParams(p: Params): string {
+  return JSON.stringify(
+    Object.keys(p)
+      .sort()
+      .reduce<Params>((acc, k) => {
+        acc[k] = p[k];
+        return acc;
+      }, {}),
+  );
+}
 
 interface Dispatch {
   rt: ReadingType;
@@ -101,14 +112,11 @@ export async function POST(req: Request) {
   const user = guard;
 
   try {
-    const body = (await req.json()) as { type?: string; params?: Params; dedupeKey?: string };
+    const body = (await req.json()) as { type?: string; params?: Params };
     const type = body.type ?? "";
     const params = body.params ?? {};
     const entry = dispatch(type, params);
     if (!entry) return NextResponse.json({ error: "unknown_type" }, { status: 400 });
-
-    const clientId = `${type}:${body.dedupeKey ?? JSON.stringify(params)}`;
-    const already = await isReadingRecorded(user.id, clientId);
 
     // Generate FIRST so a failed generation never charges the user.
     const reading = await entry.run();
@@ -116,21 +124,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "invalid_input" }, { status: 400 });
     }
 
-    let newBalance = user.credits;
-    if (!already) {
-      const charge = await chargeReading(user.id, entry.rt, entry.period ? { period: entry.period } : undefined);
-      if (charge.insufficient) {
-        return NextResponse.json({ error: "insufficient_credits", balance: charge.newBalance }, { status: 402 });
-      }
-      newBalance = charge.newBalance;
-      try {
-        await recordReading(user.id, { type, summary: null, clientId });
-      } catch {
-        /* history is best-effort */
-      }
+    // Dedupe identity is derived from the actual inputs (NOT a client-supplied
+    // key) so a paid reading can only be re-shown for the SAME inputs.
+    const clientId = `${type}:${canonicalParams(params)}`;
+    const charge = await chargeReadingOnce(user.id, clientId, type, entry.rt, entry.period ? { period: entry.period } : undefined);
+    if (charge.insufficient) {
+      return NextResponse.json({ error: "insufficient_credits", balance: charge.balance }, { status: 402 });
     }
 
-    return NextResponse.json({ ok: true, reading, newBalance, charged: !already });
+    return NextResponse.json({ ok: true, reading, newBalance: charge.balance, charged: charge.charged });
   } catch (err) {
     return NextResponse.json(
       { error: "reading_failed", detail: err instanceof Error ? err.message : String(err) },

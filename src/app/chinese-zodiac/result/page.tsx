@@ -7,7 +7,7 @@ import { AppBar } from "@/components/nav/AppBar";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { AnimalDisplay } from "@/components/chinese-zodiac/AnimalDisplay";
-import { ChineseZodiacReading, ChineseZodiacAnimal, ChineseElement } from "@/lib/chinese-zodiac/types";
+import { ChineseZodiacReading } from "@/lib/chinese-zodiac/types";
 import { TimePeriod } from "@/lib/horoscope/types";
 
 function ResultContent() {
@@ -37,7 +37,9 @@ function ResultContent() {
         });
         const data = await res.json();
         if (res.ok && data.ok) {
-          setReading(data.reading as ChineseZodiacReading);
+          const r = data.reading as ChineseZodiacReading;
+          if (r?.dateRange) r.dateRange = { start: new Date(r.dateRange.start), end: new Date(r.dateRange.end) };
+          setReading(r);
           window.dispatchEvent(new Event("rf:credits-changed"));
         } else if (res.status === 401) {
           setError("กรุณาเข้าสู่ระบบด้วย LINE ก่อนดูดวง");
