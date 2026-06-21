@@ -139,7 +139,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "insufficient_credits", balance: charge.balance }, { status: 402 });
     }
 
-    return NextResponse.json({ ok: true, reading, newBalance: charge.balance, charged: charge.charged });
+    return NextResponse.json({
+      ok: true,
+      reading,
+      newBalance: charge.balance,
+      charged: charge.charged,
+      viaSubscription: charge.viaSubscription,
+    });
   } catch (err) {
     return NextResponse.json(
       { error: "reading_failed", detail: err instanceof Error ? err.message : String(err) },

@@ -29,6 +29,7 @@ export interface ChargeOnceResult {
   charged: boolean;
   balance: number;
   insufficient: boolean;
+  viaSubscription: boolean;
 }
 
 /**
@@ -57,6 +58,7 @@ export async function chargeReadingOnce(
     charged: Boolean(row?.charged),
     balance: Number(row?.balance ?? 0),
     insufficient: Boolean(row?.insufficient),
+    viaSubscription: Boolean(row?.via_subscription),
   };
 }
 
