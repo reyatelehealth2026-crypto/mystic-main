@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AppBar } from "@/components/nav/AppBar";
+import { Button } from "@/components/ui/Button";
 
 interface PricingDetailPageProps {
   params: Promise<{
@@ -155,80 +156,75 @@ export default async function PricingDetailPage({ params }: PricingDetailPagePro
   }
 
   return (
-    <main className="mx-auto w-full max-w-lg px-5 py-6 pb-24">
-      {/* Back Button */}
-      <Link 
-        href="/" 
-        className="inline-flex items-center gap-1 text-sm text-violet-600 mb-4 hover:underline"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <polyline points="15 18 9 12 15 6" />
-        </svg>
-        กลับหน้าแรก
-      </Link>
+    <main className="mx-auto w-full max-w-lg">
+      <header className="px-5 pt-7 pb-3">
+        <AppBar title="แพ็กเกจ" className="px-0 pt-0 pb-0" backHref="/pricing" />
+      </header>
 
-      {/* Header */}
-      <div className="mb-6">
-        <span className="inline-block px-3 py-1 bg-violet-100 text-violet-700 text-xs font-medium rounded-full mb-2">
-          {pkg.subtitle}
-        </span>
-        <h1 className="text-2xl font-bold text-gray-900">{pkg.name}</h1>
-        <div className="mt-2 flex items-baseline gap-2">
-          <span className="text-3xl font-bold text-violet-600">{pkg.price}</span>
-          {pkg.priceAlt && (
-            <span className="text-sm text-gray-500">หรือ {pkg.priceAlt}</span>
-          )}
-        </div>
-        <p className="text-sm text-gray-500 mt-1">{pkg.description}</p>
-      </div>
-
-      {/* Description */}
-      <div className="p-4 bg-violet-50 rounded-2xl border border-violet-100 mb-6">
-        <p className="text-gray-700 leading-relaxed">{pkg.fullDescription}</p>
-      </div>
-
-      {/* Features */}
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-3">รายละเอียดที่จะได้รับ</h2>
-        <ul className="space-y-2">
-          {pkg.features.map((feature, i) => (
-            <li key={i} className="flex items-start gap-3">
-              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-xs">
-                ✓
-              </span>
-              <span className="text-gray-700">{feature}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Includes */}
-      {pkg.includes.length > 0 && (
+      <div className="px-5 pb-24">
+        {/* Header */}
         <div className="mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">รวมในแพ็กเกจ</h2>
+          <span className="inline-block px-3 py-1 bg-accent/10 text-accent text-xs font-medium rounded-full mb-2">
+            {pkg.subtitle}
+          </span>
+          <h1 className="text-2xl font-bold text-fg">{pkg.name}</h1>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-3xl font-bold text-accent">{pkg.price}</span>
+            {pkg.priceAlt && (
+              <span className="text-sm text-fg-muted">หรือ {pkg.priceAlt}</span>
+            )}
+          </div>
+          <p className="text-sm text-fg-muted mt-1">{pkg.description}</p>
+        </div>
+
+        {/* Description */}
+        <div className="p-4 bg-accent/5 rounded-2xl border border-accent/20 mb-6">
+          <p className="text-fg leading-relaxed">{pkg.fullDescription}</p>
+        </div>
+
+        {/* Features */}
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-fg mb-3">รายละเอียดที่จะได้รับ</h2>
           <ul className="space-y-2">
-            {pkg.includes.map((item, i) => (
+            {pkg.features.map((feature, i) => (
               <li key={i} className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-xs">
-                  ⭐
+                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-accent/10 text-accent flex items-center justify-center text-xs">
+                  ✓
                 </span>
-                <span className="text-gray-700">{item}</span>
+                <span className="text-fg">{feature}</span>
               </li>
             ))}
           </ul>
         </div>
-      )}
 
-      {/* Delivery Info */}
-      <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-500">ระยะเวลาทำงาน</p>
-            <p className="font-medium text-gray-900">{pkg.deliveryTime}</p>
+        {/* Includes */}
+        {pkg.includes.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold text-fg mb-3">รวมในแพ็กเกจ</h2>
+            <ul className="space-y-2">
+              {pkg.includes.map((item, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-accent/10 text-accent flex items-center justify-center text-xs">
+                    ⭐
+                  </span>
+                  <span className="text-fg">{item}</span>
+                </li>
+              ))}
+            </ul>
           </div>
-          <div className="text-right">
-            <p className="text-sm text-gray-500">รูปแบบไฟล์</p>
-            <p className="font-medium text-gray-900">{pkg.format}</p>
+        )}
+
+        {/* Delivery Info */}
+        <div className="p-4 bg-surface rounded-2xl border border-border mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-fg-muted">ระยะเวลาทำงาน</p>
+              <p className="font-medium text-fg">{pkg.deliveryTime}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-fg-muted">รูปแบบไฟล์</p>
+              <p className="font-medium text-fg">{pkg.format}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -236,9 +232,9 @@ export default async function PricingDetailPage({ params }: PricingDetailPagePro
       {/* CTA */}
       <div className="fixed bottom-20 left-0 right-0 px-5 z-30">
         <div className="max-w-lg mx-auto">
-          <button className="w-full h-12 rounded-xl bg-violet-600 text-white font-medium shadow-lg shadow-violet-200 hover:bg-violet-700 transition-all active:scale-[0.98]">
+          <Button className="w-full" size="lg">
             จองแพ็กเกจนี้
-          </button>
+          </Button>
         </div>
       </div>
     </main>
