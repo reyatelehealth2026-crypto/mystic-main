@@ -110,6 +110,12 @@ export async function POST(req: Request) {
     const clientId = `${type}:${body.dedupeKey ?? JSON.stringify(params)}`;
     const already = await isReadingRecorded(user.id, clientId);
 
+    // Generate FIRST so a failed generation never charges the user.
+    const reading = await entry.run();
+    if (reading == null) {
+      return NextResponse.json({ error: "invalid_input" }, { status: 400 });
+    }
+
     let newBalance = user.credits;
     if (!already) {
       const charge = await chargeReading(user.id, entry.rt, entry.period ? { period: entry.period } : undefined);
@@ -124,7 +130,6 @@ export async function POST(req: Request) {
       }
     }
 
-    const reading = await entry.run();
     return NextResponse.json({ ok: true, reading, newBalance, charged: !already });
   } catch (err) {
     return NextResponse.json(

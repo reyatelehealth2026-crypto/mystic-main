@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { parseCardTokens } from "@/lib/tarot/engine";
 import { trackEvent } from "@/lib/analytics/tracking";
 import { evaluatePaywall, recordFreeReading } from "@/lib/monetization/paywall";
-import { runReadingPipeline } from "@/lib/reading/pipeline";
+import type { ReadingSession } from "@/lib/reading/types";
 import { buildSavedTarotReading, removeReading, upsertReading } from "@/lib/library/storage";
 import { HeartSave } from "@/components/ui/HeartSave";
 import { Button } from "@/components/ui/Button";
@@ -15,7 +15,6 @@ import { ShareButton } from "@/components/ui/ShareButton";
 import { TarotShareableCard } from "@/components/share/tarot/TarotShareableCard";
 import { cn } from "@/lib/cn";
 import { useHistoryStore } from "@/store/useHistoryStore";
-import { useRecordReadingView } from "@/lib/history/useRecordReadingView";
 import { SendToLine } from "./SendToLine";
 
 function normalizeText(value: unknown): string {
@@ -46,10 +45,49 @@ export default function ResultClient() {
   const cardsToken = searchParams.get("cards") ?? "";
   const question = searchParams.get("question") ?? "";
 
-  const result = useMemo(
-    () => runReadingPipeline({ kind: "tarot", count, cardsToken, question }),
-    [cardsToken, count, question]
-  );
+  const [result, setResult] = useState<ReadingSession | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [needCredits, setNeedCredits] = useState(false);
+  const [authNeeded, setAuthNeeded] = useState(false);
+
+  // Generate + charge server-side (paywall enforced; re-view of same cards free).
+  useEffect(() => {
+    setResult(null);
+    setNeedCredits(false);
+    setAuthNeeded(false);
+    setLoading(true);
+    if (!cardsToken || count <= 0) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/reading", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "tarot", params: { cardsToken, count: String(count), question }, dedupeKey: cardsToken }),
+        });
+        const data = await res.json();
+        if (cancelled) return;
+        if (res.ok && data.ok) {
+          setResult(data.reading as ReadingSession);
+          window.dispatchEvent(new Event("rf:credits-changed"));
+        } else if (res.status === 402) {
+          setNeedCredits(true);
+        } else if (res.status === 401) {
+          setAuthNeeded(true);
+        }
+      } catch {
+        /* ignore — handled by empty state below */
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [cardsToken, count, question]);
 
   const drawnCards = useMemo(() => parseCardTokens(cardsToken), [cardsToken]);
 
@@ -79,13 +117,6 @@ export default function ResultClient() {
   );
 
   const { addHistory } = useHistoryStore();
-
-  useRecordReadingView({
-    type: searchParams.get("mode") === "love" ? "love-tarot" : "tarot",
-    summary: aiReading?.summary,
-    ready: !!aiReading,
-    dedupeKey: cardsToken,
-  });
   const [hasSavedHistory, setHasSavedHistory] = useState(false);
 
   useEffect(() => {
@@ -216,6 +247,36 @@ export default function ResultClient() {
       return;
     }
     handleSave();
+  }
+
+  if (loading) {
+    return (
+      <main className="mx-auto w-full max-w-lg px-5 py-16 text-center">
+        <div className="text-3xl">🔮</div>
+        <p className="mt-3 text-sm text-fg-muted">กำลังเปิดไพ่...</p>
+      </main>
+    );
+  }
+
+  if (authNeeded || needCredits) {
+    return (
+      <main className="mx-auto w-full max-w-lg px-5 py-8">
+        <div className="rounded-2xl border border-accent/30 bg-accent-soft p-5 text-center">
+          <div className="text-3xl">🔮</div>
+          <p className="mt-2 text-sm text-fg">
+            {authNeeded ? "กรุณาเข้าสู่ระบบด้วย LINE ก่อนดูไพ่" : "แต้มไม่พอ — เติมแต้มก่อนนะคะ"}
+          </p>
+          {needCredits ? (
+            <Link href="/pricing" className="mt-4 block">
+              <Button className="w-full bg-emerald-600 text-white hover:bg-emerald-700">เติมแต้ม</Button>
+            </Link>
+          ) : null}
+          <Link href="/tarot" className="mt-3 block">
+            <Button className="w-full" variant="ghost">กลับไปเลือกไพ่</Button>
+          </Link>
+        </div>
+      </main>
+    );
   }
 
   if (!result) {
