@@ -2,10 +2,9 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRecordReadingView } from "@/lib/history/useRecordReadingView";
 import { Share2, RefreshCw } from "lucide-react";
 import { analyzeThaiPhone } from "@/lib/numerology/engine";
-import { runReadingPipeline } from "@/lib/reading/pipeline";
+import type { ReadingSession } from "@/lib/reading/types";
 import { removeReading } from "@/lib/library/storage";
 import { useTheme } from "@/lib/theme/ThemeProvider";
 import { cn } from "@/lib/cn";
@@ -38,22 +37,49 @@ export default function NumerologyPage() {
     return analyzeThaiPhone(submittedPhone);
   }, [submittedPhone]);
 
-  const session = useMemo(() => {
-    if (!baseline) return null;
-    return runReadingPipeline({ kind: "numerology", phone: baseline.normalizedPhone });
-  }, [baseline]);
+  const [session, setSession] = useState<ReadingSession | null>(null);
+  const [needCredits, setNeedCredits] = useState(false);
+
+  // Generate + charge server-side (paywall can't be bypassed). Re-viewing the
+  // same phone is free (server dedups by clientId).
+  useEffect(() => {
+    setSession(null);
+    setNeedCredits(false);
+    if (!submittedPhone) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/reading", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "numerology", params: { phone: submittedPhone }, dedupeKey: submittedPhone }),
+        });
+        const data = await res.json();
+        if (cancelled) return;
+        if (res.ok && data.ok) {
+          setSession(data.reading as ReadingSession);
+          window.dispatchEvent(new Event("rf:credits-changed"));
+        } else if (res.status === 402) {
+          setNeedCredits(true);
+          setError("แต้มไม่พอ — เติมแต้มก่อนนะคะ");
+        } else if (res.status === 401) {
+          setError("กรุณาเข้าสู่ระบบด้วย LINE ก่อนดูดวง");
+        } else {
+          setError("เกิดข้อผิดพลาด ลองใหม่อีกครั้ง");
+        }
+      } catch {
+        if (!cancelled) setError("เกิดข้อผิดพลาด ลองใหม่อีกครั้ง");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [submittedPhone]);
 
   const [aiReading, setAiReading] = useState<null | { summary: string; cardStructure: string }>(null);
 
   // Save
   const [savedId, setSavedId] = useState<string | null>(null);
-
-  useRecordReadingView({
-    type: "numerology",
-    summary: aiReading?.summary,
-    ready: !!submittedPhone,
-    dedupeKey: submittedPhone ?? undefined,
-  });
 
   useEffect(() => {
     if (!submittedPhone) {
@@ -174,6 +200,11 @@ export default function NumerologyPage() {
                 required
               />
               {error ? <p className="text-sm text-red-500">{error}</p> : null}
+              {needCredits ? (
+                <Link href="/pricing" className="mt-2 inline-block rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white">
+                  เติมแต้ม
+                </Link>
+              ) : null}
             </div>
 
             <button
