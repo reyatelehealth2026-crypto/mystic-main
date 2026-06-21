@@ -3,30 +3,21 @@
 import * as React from 'react';
 import { ThaiNameInput, useThaiNameInput } from '@/components/name-numerology/ThaiNameInput';
 import { Button } from '@/components/ui/Button';
+import { AppBar } from '@/components/nav/AppBar';
 import { FeatureMenu } from '@/components/nav/FeatureMenu';
 import { FAB } from '@/components/ui/FAB';
 import { PrivacyNotice } from '@/components/ui/PrivacyNotice';
 import { ReadingType } from '@/lib/reading/types';
 import { useRouter } from 'next/navigation';
 
-/**
- * Name Numerology Input Page
- * 
- * Allows users to input their Thai name for numerology analysis.
- * Validates input in real-time and navigates to result page on submission.
- * 
- * Feature: popular-fortune-features
- * Requirements: 6.1, 6.6, 6.7, 9.6
- */
 export default function NameNumerologyPage() {
   const router = useRouter();
   const nameInput = useThaiNameInput();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (nameInput.validate()) {
-      // Navigate to result page with name data
       const params = new URLSearchParams({
         firstName: nameInput.firstName,
         lastName: nameInput.lastName
@@ -36,26 +27,20 @@ export default function NameNumerologyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg p-4">
-      {/* Privacy Notice - shows only on first use */}
-      <PrivacyNotice 
+    <main className="mx-auto w-full max-w-lg">
+      <PrivacyNotice
         featureType={ReadingType.NAME_NUMEROLOGY}
         featureName="เลขศาสตร์ชื่อ"
       />
-      
-      <div className="mx-auto max-w-2xl py-8">
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="mb-2 text-3xl font-bold text-fg">
-            วิเคราะห์ชื่อด้วยเลขศาสตร์
-          </h1>
-          <p className="text-fg-muted">
-            ค้นพบความหมายและพลังของชื่อคุณผ่านเลขศาสตร์ไทย
-          </p>
-        </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-8">
+      <header className="px-5 pt-7 pb-3">
+        <AppBar title="เลขศาสตร์ชื่อ" className="px-0 pt-0 pb-0" />
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-fg">วิเคราะห์ชื่อด้วยเลขศาสตร์</h1>
+        <p className="mt-1 text-sm text-fg-muted">ค้นพบความหมายและพลังของชื่อคุณผ่านเลขศาสตร์ไทย</p>
+      </header>
+
+      <div className="px-5 pb-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
             <ThaiNameInput
               firstName={nameInput.firstName}
@@ -66,7 +51,6 @@ export default function NameNumerologyPage() {
             />
           </div>
 
-          {/* Submit Button */}
           <div className="flex gap-3">
             <Button
               type="submit"
@@ -88,8 +72,7 @@ export default function NameNumerologyPage() {
           </div>
         </form>
 
-        {/* Info Section */}
-        <div className="mt-8 rounded-2xl border border-border bg-surface p-6">
+        <div className="mt-6 rounded-2xl border border-border bg-surface p-6">
           <h2 className="mb-3 text-lg font-semibold text-fg">
             เกี่ยวกับการวิเคราะห์ชื่อ
           </h2>
@@ -98,9 +81,7 @@ export default function NameNumerologyPage() {
               เลขศาสตร์ชื่อเป็นศาสตร์โบราณที่ใช้วิเคราะห์ความหมายและพลังของชื่อ
               โดยแปลงตัวอักษรเป็นตัวเลขและวิเคราะห์ความหมาย
             </p>
-            <p>
-              การวิเคราะห์จะให้ข้อมูลเกี่ยวกับ:
-            </p>
+            <p>การวิเคราะห์จะให้ข้อมูลเกี่ยวกับ:</p>
             <ul className="ml-6 list-disc space-y-1">
               <li>บุคลิกภาพและลักษณะนิสัย</li>
               <li>จุดแข็งและจุดอ่อน</li>
@@ -111,14 +92,12 @@ export default function NameNumerologyPage() {
           </div>
         </div>
 
-        {/* Feature Menu */}
         <div className="mt-8">
           <FeatureMenu />
         </div>
       </div>
 
-      {/* FAB */}
       <FAB label="เพิ่มเพื่อน LINE" />
-    </div>
+    </main>
   );
 }

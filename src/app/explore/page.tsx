@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import {
   Sparkles,
@@ -15,9 +13,9 @@ import {
   ImageIcon,
   Moon
 } from "lucide-react";
-import { useTheme } from "@/lib/theme/ThemeProvider";
-import { cn } from "@/lib/cn";
-import { BrandLogo } from "@/components/ui/BrandLogo";
+import { AppBar } from "@/components/nav/AppBar";
+import { Card } from "@/components/ui/Card";
+import { FAB } from "@/components/ui/FAB";
 
 const categories = [
   {
@@ -95,138 +93,87 @@ const categories = [
 ];
 
 export default function ExplorePage() {
-  const { theme } = useTheme();
-  const isPastel = theme === "pastel";
-  const isRainbow = theme === "rainbow";
-
   return (
-    <main className={cn("min-h-screen pb-24", isPastel ? "bg-transparent" : isRainbow ? "bg-transparent" : "bg-white")}>
-      {/* Header */}
-      <header className={cn(
-        "sticky top-0 z-40 backdrop-blur-sm",
-        isPastel ? "bg-white/10 border-b border-white/20" : isRainbow ? "bg-[#0f0f1a]/90 border-b border-[rgba(255,0,255,0.2)]" : "bg-white/95 border-b border-gray-100"
-      )}>
-        <div className="flex items-center gap-3 px-5 py-4">
-          <Link href="/" className="flex items-center gap-2">
-            <BrandLogo size={24} inverted={isPastel || isRainbow} />
-          </Link>
-        </div>
-        
-        {/* Search Bar */}
-        <div className="px-5 pb-4">
-          <div className="relative">
-            <Search className={cn("absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5", isPastel ? "text-white/60" : isRainbow ? "text-white/50" : "text-gray-400")} />
-            <input
-              type="text"
-              placeholder="ค้นหาศาสตร์การดูดวง..."
-              className={cn(
-                "w-full h-12 pl-12 pr-4 rounded-2xl focus:outline-none",
-                isPastel 
-                  ? "bg-white/20 border border-white/30 text-white placeholder-white/60 focus:border-white/50 focus:ring-2 focus:ring-white/20"
-                  : isRainbow
-                    ? "bg-[#1a1a2e]/80 border border-[rgba(255,0,255,0.3)] text-white placeholder-white/40 focus:border-[#ff00ff] focus:ring-2 focus:ring-[rgba(255,0,255,0.2)]"
-                    : "bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
-              )}
-            />
-          </div>
+    <main className="mx-auto w-full max-w-lg pb-24">
+      <header className="px-5 pt-7 pb-3">
+        <AppBar title="สำรวจ" className="px-0 pt-0 pb-0" />
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-fg">สำรวจศาสตร์</h1>
+        <p className="mt-1 text-sm text-fg-muted">เลือกศาสตร์ที่คุณสนใจเพื่อเริ่มดูดวง</p>
+        <div className="mt-3 relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-fg-subtle" />
+          <input
+            type="text"
+            placeholder="ค้นหาศาสตร์การดูดวง..."
+            className="w-full h-12 pl-12 pr-4 rounded-2xl border border-border bg-surface text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+          />
         </div>
       </header>
 
-      {/* Categories Grid */}
-      <section className="px-5 py-6">
-        <h1 className={cn("font-serif text-2xl font-semibold mb-2", isPastel || isRainbow ? "text-white" : "text-gray-900")}>สำรวจศาสตร์</h1>
-        <p className={cn("text-sm mb-6", isPastel || isRainbow ? "text-white/70" : "text-gray-500")}>เลือกศาสตร์ที่คุณสนใจเพื่อเริ่มดูดวง</p>
-        
+      <div className="px-5 pb-6">
+        {/* Categories Grid */}
         <div className="grid grid-cols-2 gap-3">
           {categories.map((cat) => {
             const Icon = cat.icon;
             return (
-              <Link
-                key={cat.title}
-                href={cat.href}
-                className={cn(
-                  "group p-4 transition-all hover:-translate-y-0.5",
-                  isPastel
-                    ? "rounded-2xl bg-white/20 backdrop-blur border border-white/30 hover:bg-white/30 hover:shadow-[0_8px_32px_rgba(199,125,255,0.3)]"
-                    : isRainbow
-                      ? "rounded-2xl bg-[#1a1a2e]/80 backdrop-blur border border-[rgba(255,0,255,0.15)] hover:border-[rgba(255,0,255,0.4)] hover:shadow-[0_8px_32px_rgba(255,0,255,0.2)]"
-                      : "ds-card rounded-2xl hover:[border-color:var(--border-mystical)]",
-                )}
-              >
-                <div className={cn(
-                  "w-12 h-12 flex items-center justify-center mb-3",
-                  isPastel ? "bg-white/20 text-white rounded-2xl" : isRainbow ? "bg-[rgba(255,0,255,0.15)] text-white rounded-2xl" : "ds-bubble",
-                )}>
-                  <Icon className="w-6 h-6" />
-                </div>
-                <h3 className={cn("font-semibold text-sm mb-1", isPastel || isRainbow ? "text-white" : "text-[var(--text)]")}>{cat.title}</h3>
-                <p className={cn("text-xs line-clamp-2", isPastel || isRainbow ? "text-white/70" : "text-[var(--text-muted)]")}>{cat.description}</p>
+              <Link key={cat.title} href={cat.href} className="block">
+                <Card className="p-4">
+                  <div className="w-12 h-12 flex items-center justify-center mb-3 rounded-2xl bg-accent/10 text-accent">
+                    <Icon className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-semibold text-sm mb-1 text-fg">{cat.title}</h3>
+                  <p className="text-xs line-clamp-2 text-fg-muted">{cat.description}</p>
+                </Card>
               </Link>
             );
           })}
         </div>
-      </section>
 
-      {/* Popular Section */}
-      <section className="px-5 pb-6">
-        <h2 className={cn("font-serif text-xl font-semibold mb-4", isPastel || isRainbow ? "text-white" : "text-gray-900")}>ยอดนิยม</h2>
-        
-        <div className="space-y-3">
-          <Link href="/tarot" className={cn(
-            "flex items-center gap-4 p-4 rounded-2xl border",
-            isPastel
-              ? "bg-white/20 backdrop-blur border-white/30"
-              : isRainbow
-                ? "bg-[#1a1a2e]/80 border-[rgba(255,0,255,0.2)]"
-                : "bg-violet-50 border-violet-100"
-          )}>
-            <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", isPastel ? "bg-white/20 text-white" : isRainbow ? "bg-[rgba(255,0,255,0.15)] text-white" : "bg-violet-100 text-violet-600")}>
-              <Sparkles className="w-6 h-6" />
-            </div>
-            <div className="flex-1">
-              <h3 className={cn("font-semibold", isPastel || isRainbow ? "text-white" : "text-gray-900")}>ไพ่ทาโรต์ 3 ใบ</h3>
-              <p className={cn("text-sm", isPastel || isRainbow ? "text-white/70" : "text-gray-500")}>อดีต ปัจจุบัน อนาคต</p>
-            </div>
-            <span className={isPastel || isRainbow ? "text-white" : "text-violet-600"}>→</span>
+        {/* Popular Section */}
+        <div className="mt-6 space-y-3">
+          <h2 className="font-semibold text-lg text-fg">ยอดนิยม</h2>
+
+          <Link href="/tarot" className="block">
+            <Card className="flex items-center gap-4 p-4">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-accent/10 text-accent">
+                <Sparkles className="w-6 h-6" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-fg">ไพ่ทาโรต์ 3 ใบ</h3>
+                <p className="text-sm text-fg-muted">อดีต ปัจจุบัน อนาคต</p>
+              </div>
+              <span className="text-accent shrink-0">→</span>
+            </Card>
           </Link>
 
-          <Link href="/daily-card" className={cn(
-            "flex items-center gap-4 p-4 rounded-2xl border",
-            isPastel
-              ? "bg-white/20 backdrop-blur border-white/30"
-              : isRainbow
-                ? "bg-[#1a1a2e]/80 border-[rgba(0,255,255,0.2)]"
-                : "bg-rose-50 border-rose-100"
-          )}>
-            <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", isPastel ? "bg-white/20 text-white" : isRainbow ? "bg-[rgba(0,255,255,0.15)] text-white" : "bg-rose-100 text-rose-600")}>
-              <Calendar className="w-6 h-6" />
-            </div>
-            <div className="flex-1">
-              <h3 className={cn("font-semibold", isPastel || isRainbow ? "text-white" : "text-gray-900")}>ไพ่ประจำวัน</h3>
-              <p className={cn("text-sm", isPastel || isRainbow ? "text-white/70" : "text-gray-500")}>พลังงานวันนี้ของคุณ</p>
-            </div>
-            <span className={isPastel || isRainbow ? "text-white" : "text-rose-600"}>→</span>
+          <Link href="/daily-card" className="block">
+            <Card className="flex items-center gap-4 p-4">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-accent/10 text-accent">
+                <Calendar className="w-6 h-6" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-fg">ไพ่ประจำวัน</h3>
+                <p className="text-sm text-fg-muted">พลังงานวันนี้ของคุณ</p>
+              </div>
+              <span className="text-accent shrink-0">→</span>
+            </Card>
           </Link>
 
-          <Link href="/numerology" className={cn(
-            "flex items-center gap-4 p-4 rounded-2xl border",
-            isPastel
-              ? "bg-white/20 backdrop-blur border-white/30"
-              : isRainbow
-                ? "bg-[#1a1a2e]/80 border-[rgba(255,215,0,0.2)]"
-                : "bg-indigo-50 border-indigo-100"
-          )}>
-            <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", isPastel ? "bg-white/20 text-white" : isRainbow ? "bg-[rgba(255,215,0,0.15)] text-white" : "bg-indigo-100 text-indigo-600")}>
-              <Hash className="w-6 h-6" />
-            </div>
-            <div className="flex-1">
-              <h3 className={cn("font-semibold", isPastel || isRainbow ? "text-white" : "text-gray-900")}>วิเคราะห์เบอร์มงคล</h3>
-              <p className={cn("text-sm", isPastel || isRainbow ? "text-white/70" : "text-gray-500")}>เลขศาสตร์เบอร์โทร</p>
-            </div>
-            <span className={isPastel || isRainbow ? "text-white" : "text-indigo-600"}>→</span>
+          <Link href="/numerology" className="block">
+            <Card className="flex items-center gap-4 p-4">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-accent/10 text-accent">
+                <Hash className="w-6 h-6" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-fg">วิเคราะห์เบอร์มงคล</h3>
+                <p className="text-sm text-fg-muted">เลขศาสตร์เบอร์โทร</p>
+              </div>
+              <span className="text-accent shrink-0">→</span>
+            </Card>
           </Link>
         </div>
-      </section>
+      </div>
+
+      <FAB />
     </main>
   );
 }

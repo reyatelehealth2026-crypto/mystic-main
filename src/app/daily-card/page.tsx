@@ -11,6 +11,9 @@ import { cardMeaning } from "@/lib/tarot/engine";
 import { DrawnCard } from "@/lib/tarot/types";
 import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/Button";
+import { AppBar } from "@/components/nav/AppBar";
+import { FeatureMenu } from "@/components/nav/FeatureMenu";
+import { FAB } from "@/components/ui/FAB";
 
 const STORAGE_KEY = "reffortune_daily_card";
 // Local asset so the back of the card renders in dev/preview deploys too,
@@ -224,27 +227,25 @@ export default function DailyCardPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-lg px-5 py-6">
-      {/* ── Header ── */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 text-center">
-          <h1 className="text-2xl font-bold text-fg">
-            ไพ่รายวัน
-          </h1>
-          <p className="mt-1 text-sm text-fg-subtle">
-            {alreadyDrawn
-              ? "คุณเปิดไพ่วันนี้แล้ว กลับมาเปิดใหม่ได้พรุ่งนี้"
-              : "แตะที่ไพ่เพื่อเปิดพลังงานประจำวัน"}
-          </p>
-        </div>
+    <main className="mx-auto w-full max-w-lg">
+      <header className="px-5 pt-7 pb-3">
+        <AppBar
+          title="ไพ่รายวัน"
+          className="px-0 pt-0 pb-0"
+          right={<HeartSave saved={!!savedId} onToggle={toggleSaved} label="Save daily card" />}
+        />
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-fg">ไพ่รายวัน</h1>
+        <p className="mt-1 text-sm text-fg-muted">
+          {alreadyDrawn
+            ? "คุณเปิดไพ่วันนี้แล้ว กลับมาเปิดใหม่ได้พรุ่งนี้"
+            : "แตะที่ไพ่เพื่อเปิดพลังงานประจำวัน"}
+        </p>
+      </header>
 
-        <div className="pt-1">
-          <HeartSave saved={!!savedId} onToggle={toggleSaved} label="Save daily card" />
-        </div>
-      </div>
+      <div className="px-5 pb-6">
 
       {/* ── Card with flip animation ── */}
-      <div className="mt-6 flex justify-center" style={{ perspective: "1000px" }}>
+      <div className="flex justify-center" style={{ perspective: "1000px" }}>
         <button
           type="button"
           onClick={handleFlip}
@@ -381,6 +382,13 @@ export default function DailyCardPage() {
           </div>
         </div>
       )}
+
+        <div className="mt-8">
+          <FeatureMenu />
+        </div>
+      </div>
+
+      <FAB />
     </main>
   );
 }

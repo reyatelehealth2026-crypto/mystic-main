@@ -84,7 +84,7 @@ function ResultContent() {
   return (
     <div className="px-5 pb-6">
       {/* Header Card */}
-      <Card className="p-5 bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
+      <Card className="p-5 bg-gradient-to-br from-accent/5 to-accent/10 border-accent/20">
         <div className="text-center">
           <div className="flex items-center justify-center gap-3 mb-3">
             <div className="text-center">
@@ -185,14 +185,14 @@ function ResultContent() {
       </Card>
 
       {/* Auspicious Tips */}
-      <Card className="mt-4 p-5 bg-amber-50 border-amber-200">
-        <h3 className="text-sm font-bold text-amber-700 mb-3">🍀 เคล็ดลับเสริมดวง</h3>
+      <Card className="mt-4 p-5 bg-accent/5 border-accent/20">
+        <h3 className="text-sm font-bold text-accent mb-3">🍀 เคล็ดลับเสริมดวง</h3>
         <ul className="space-y-2">
           {reading.interpretation.auspicious.map((tip, index) => (
             <li key={index} className="flex items-start gap-2"
             >
-              <span className="text-amber-600 mt-0.5">🙏</span>
-              <span className="text-sm leading-relaxed text-gray-700 flex-1">{tip}</span>
+              <span className="text-accent mt-0.5">🙏</span>
+              <span className="text-sm leading-relaxed text-fg-muted flex-1">{tip}</span>
             </li>
           ))}
         </ul>

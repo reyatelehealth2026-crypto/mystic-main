@@ -129,7 +129,7 @@ export function PhromchartSquare({ chart, size = 360, className }: PhromchartSqu
                     fontSize={cellSize * 0.24}
                     className={cn(
                       "font-semibold",
-                      p.id === "lagna" ? "fill-violet-700" : "fill-fg"
+                      p.id === "lagna" ? "fill-accent" : "fill-fg"
                     )}
                   >
                     {p.thaiNumeral}

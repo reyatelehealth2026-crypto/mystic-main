@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState, useCallback } from "react";
-import Link from "next/link";
 import { Heart } from "lucide-react";
 import { useLibrary } from "@/lib/library/useLibrary";
 import { buildSavedSpiritCardReading } from "@/lib/library/storage";
@@ -9,7 +8,11 @@ import { trackEvent } from "@/lib/analytics/tracking";
 import { evaluatePaywall, recordFreeReading } from "@/lib/monetization/paywall";
 import { runReadingPipeline } from "@/lib/reading/pipeline";
 import { spiritCardFromDob } from "@/lib/tarot/spirit";
-import { BrandLogo } from "@/components/ui/BrandLogo";
+import { AppBar } from "@/components/nav/AppBar";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { FeatureMenu } from "@/components/nav/FeatureMenu";
+import { FAB } from "@/components/ui/FAB";
 
 function normalizeText(value: unknown): string {
   if (typeof value === "string") return value;
@@ -198,73 +201,73 @@ export default function SpiritCardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="flex items-center justify-between px-5 pt-4 pb-2">
-        <Link href="/" className="flex items-center gap-2">
-          <BrandLogo size={24} />
-        </Link>
+    <main className="mx-auto w-full max-w-lg">
+      <header className="px-5 pt-7 pb-3">
+        <AppBar title="ไพ่จิตวิญญาณ" className="px-0 pt-0 pb-0" />
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-fg">ไพ่จิตวิญญาณ</h1>
+        <p className="mt-1 text-sm text-fg-muted">รับข้อความจากจักรวาล ผ่านวันเกิดของคุณ</p>
       </header>
 
-      <div className="px-5 py-6">
-        <h1 className="font-serif text-2xl font-semibold text-gray-900">ไพ่จิตวิญญาณ</h1>
-        <p className="mt-1 text-sm text-gray-500">รับข้อความจากจักรวาล ผ่านวันเกิดของคุณ</p>
-
-        <form onSubmit={handleSubmit} className="mt-5 rounded-[24px] border border-gray-200 bg-white p-5 shadow-sm">
-          <label className="text-sm font-medium text-violet-600">วันเกิด</label>
-          <input
-            type="date"
-            value={dob}
-            onChange={(e) => setDob(e.target.value)}
-            required
-            className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-4 w-full h-12 rounded-xl bg-violet-600 text-white font-semibold text-sm shadow-lg shadow-violet-200 transition hover:bg-violet-700 hover:shadow-xl disabled:opacity-50 active:scale-[0.98]"
-          >
-            {loading ? "กำลังอ่าน..." : "เปิดไพ่จิตวิญญาณ"}
-          </button>
-        </form>
+      <div className="px-5 pb-6">
+        <Card className="p-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-accent block mb-2">วันเกิด</label>
+              <input
+                type="date"
+                value={dob}
+                onChange={(e) => setDob(e.target.value)}
+                required
+                className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-fg outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
+              />
+            </div>
+            <Button type="submit" disabled={loading} className="w-full" size="lg">
+              {loading ? "กำลังอ่าน..." : "เปิดไพ่จิตวิญญาณ"}
+            </Button>
+          </form>
+        </Card>
 
         {error && (
-          <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">
-            {error}
-          </div>
+          <Card className="mt-4 p-4 border-danger/30 bg-bg">
+            <p className="text-sm text-danger">{error}</p>
+          </Card>
         )}
 
         {aiReading && (
-          <section className="mt-5 space-y-4">
-            <div className="rounded-[24px] border border-gray-200 bg-white p-5 shadow-sm">
-              <h2 className="text-sm font-bold text-violet-600">สารจากจักรวาล</h2>
-              <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-gray-600">{aiReading.summary}</p>
-            </div>
-            <div className="rounded-[24px] border border-gray-200 bg-white p-5 shadow-sm">
-              <h2 className="text-sm font-bold text-violet-600">แนวทางปฏิบัติ</h2>
-              <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-gray-600">{aiReading.cardStructure}</p>
-            </div>
+          <div className="mt-5 space-y-4">
+            <Card className="p-5">
+              <h2 className="text-sm font-bold text-accent">สารจากจักรวาล</h2>
+              <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-fg-muted">{aiReading.summary}</p>
+            </Card>
+            <Card className="p-5">
+              <h2 className="text-sm font-bold text-accent">แนวทางปฏิบัติ</h2>
+              <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-fg-muted">{aiReading.cardStructure}</p>
+            </Card>
 
-            <div className="flex items-center justify-between rounded-[24px] border border-gray-200 bg-white p-4">
+            <Card className="p-4 flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold text-gray-900">บันทึกไว้ในคลัง</p>
-                <p className="mt-1 text-xs text-gray-500">แตะหัวใจเพื่อบันทึก/ยกเลิกบันทึก</p>
+                <p className="text-sm font-semibold text-fg">บันทึกไว้ในคลัง</p>
+                <p className="mt-1 text-xs text-fg-muted">แตะหัวใจเพื่อบันทึก/ยกเลิกบันทึก</p>
               </div>
               <button
                 onClick={toggleSaved}
                 className={`flex h-10 w-10 items-center justify-center rounded-full transition-all ${
-                  savedId
-                    ? "bg-red-50 text-red-500"
-                    : "bg-gray-100 text-gray-400 hover:bg-red-50 hover:text-red-500"
+                  savedId ? "bg-danger/10 text-danger" : "bg-surface border border-border text-fg-muted hover:bg-danger/10 hover:text-danger"
                 }`}
                 aria-label={savedId ? "ยกเลิกบันทึก" : "บันทึก"}
               >
                 <Heart className={`w-5 h-5 ${savedId ? "fill-current" : ""}`} />
               </button>
-            </div>
-          </section>
+            </Card>
+          </div>
         )}
+
+        <div className="mt-8">
+          <FeatureMenu />
+        </div>
       </div>
+
+      <FAB />
     </main>
   );
 }

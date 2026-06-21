@@ -134,7 +134,7 @@ export function SubWheel({ title, chart, signOf, size = 220, className }: SubWhe
                   fontSize={size * 0.055}
                   className={cn(
                     "font-semibold",
-                    p.id === "lagna" ? "fill-violet-700" : "fill-fg"
+                    p.id === "lagna" ? "fill-accent" : "fill-fg"
                   )}
                 >
                   {p.thaiNumeral}

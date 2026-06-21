@@ -1,13 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { RefreshCw, Share2, Download, ChevronLeft, Loader2 } from "lucide-react";
-import { BrandLogo } from "@/components/ui/BrandLogo";
 import { AnimatePresence, motion } from "framer-motion";
 import { toPng } from "html-to-image";
-import { useTheme } from "@/lib/theme/ThemeProvider";
 import { cn } from "@/lib/cn";
 import {
   analyseLuckyDigits,
@@ -17,6 +14,10 @@ import {
   type LuckyDigitCount,
 } from "@/lib/lucky-numbers/engine";
 import { trackEvent } from "@/lib/analytics/tracking";
+import { AppBar } from "@/components/nav/AppBar";
+import { Button, buttonVariants } from "@/components/ui/Button";
+import { FeatureMenu } from "@/components/nav/FeatureMenu";
+import { FAB } from "@/components/ui/FAB";
 
 type Stage = "choose-count" | "picking" | "result";
 
@@ -27,11 +28,9 @@ const REVEAL_STAGGER_MS = 850;
 // Pause after a pick before reshuffling the next round (ms).
 const PICK_TRANSITION_MS = 750;
 
-export default function LuckyNumbersPage() {
-  const { theme } = useTheme();
-  const isPastel = theme === "pastel";
-  const isRainbow = theme === "rainbow";
+const CARD_CLS = "rounded-[var(--radius-lg)] border border-border bg-surface p-5 shadow-[var(--shadow-soft)]";
 
+export default function LuckyNumbersPage() {
   const [stage, setStage] = useState<Stage>("choose-count");
   const [count, setCount] = useState<LuckyDigitCount>(2);
   const [deck, setDeck] = useState<LuckyDigit[]>(() => shuffleDigits());
@@ -106,68 +105,25 @@ export default function LuckyNumbersPage() {
     setRevealCount(0);
   }, []);
 
-  const themed = useMemo(() => {
-    const isAlt = isPastel || isRainbow;
-    return {
-      page: cn(
-        "min-h-screen",
-        isPastel ? "bg-transparent" : isRainbow ? "bg-transparent" : "bg-white",
-      ),
-      title: cn("font-serif text-2xl font-semibold", isAlt ? "text-white" : "text-gray-900"),
-      muted: cn("text-sm", isAlt ? "text-white/70" : "text-gray-500"),
-      cardBox: cn(
-        "rounded-[24px] border p-5 shadow-sm",
-        isPastel
-          ? "bg-white/20 backdrop-blur border-white/30"
-          : isRainbow
-          ? "bg-[#1a1a2e]/80 border-[rgba(255,0,255,0.2)]"
-          : "border-gray-200 bg-white",
-      ),
-      sectionTitle: cn("text-lg font-semibold", isAlt ? "text-white" : "text-gray-900"),
-      mutedSm: cn("text-sm", isAlt ? "text-white/70" : "text-gray-600"),
-      primaryBtn: cn(
-        "h-12 rounded-xl font-semibold shadow-lg transition-all active:scale-[0.98]",
-        isPastel
-          ? "bg-white/30 backdrop-blur text-white border border-white/50 hover:bg-white/50"
-          : isRainbow
-          ? "bg-gradient-to-r from-[#ff00ff] to-[#00ffff] text-white shadow-[rgba(255,0,255,0.3)]"
-          : "bg-violet-600 text-white shadow-violet-200 hover:bg-violet-700 hover:shadow-xl",
-      ),
-      ghostBtn: cn(
-        "h-12 rounded-xl font-medium transition-all active:scale-[0.98] flex items-center justify-center gap-2",
-        isPastel
-          ? "bg-white/10 border border-white/20 text-white hover:bg-white/20"
-          : isRainbow
-          ? "bg-[#1a1a2e] border border-[rgba(255,0,255,0.3)] text-white hover:border-[rgba(255,0,255,0.5)]"
-          : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300",
-      ),
-    };
-  }, [isPastel, isRainbow]);
-
   return (
-    <main className={themed.page}>
-      <header className="flex items-center justify-between px-5 pt-4 pb-2">
-        <Link href="/" className="flex items-center gap-2">
-          <BrandLogo size={24} inverted={isPastel || isRainbow} />
-        </Link>
+    <main className="mx-auto w-full max-w-lg">
+      <header className="px-5 pt-7 pb-3">
+        <AppBar title="ไพ่เลขมงคล" className="px-0 pt-0 pb-0" />
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-fg">ไพ่เลขมงคล</h1>
+        <p className="mt-1 text-sm text-fg-muted">หยิบไพ่จากครึ่งวงกลม รับชุดเลขเสริมดวงแบบสด ๆ</p>
       </header>
 
-      <div className="px-5 pb-10 pt-4">
-        <section className="space-y-1">
-          <h1 className={themed.title}>ไพ่เลขมงคล</h1>
-          <p className={themed.muted}>หยิบไพ่จากครึ่งวงกลม รับชุดเลขเสริมดวงแบบสด ๆ</p>
-        </section>
-
+      <div className="px-5 pb-10">
         {stage === "choose-count" && (
           <motion.section
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className={cn("mt-6 space-y-5", themed.cardBox)}
+            className={cn("mt-6 space-y-5", CARD_CLS)}
           >
             <div>
-              <h2 className={themed.sectionTitle}>เลือกจำนวนหลักก่อนเปิดไพ่</h2>
-              <p className={cn("mt-1", themed.mutedSm)}>
+              <h2 className="text-lg font-semibold text-fg">เลือกจำนวนหลักก่อนเปิดไพ่</h2>
+              <p className="mt-1 text-sm text-fg-muted">
                 ระบบจะให้คุณหยิบไพ่จาก 10 ใบ (เลข 0-9) ทีละใบ ครบจำนวนแล้วจึงเปิดเผยผลพร้อมกัน
               </p>
             </div>
@@ -179,7 +135,10 @@ export default function LuckyNumbersPage() {
                   onClick={() => startPicking(c)}
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.96 }}
-                  className={cn(themed.primaryBtn, "flex flex-col items-center justify-center gap-1 py-6")}
+                  className={cn(
+                    buttonVariants({ variant: "default", size: "lg" }),
+                    "h-auto flex flex-col items-center justify-center gap-1 py-6",
+                  )}
                 >
                   <span className="text-3xl font-bold">{c}</span>
                   <span className="text-xs uppercase tracking-widest opacity-80">หลัก</span>
@@ -195,32 +154,22 @@ export default function LuckyNumbersPage() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className={cn(themed.cardBox, "relative overflow-hidden")}
+              className={cn(CARD_CLS, "relative overflow-hidden")}
             >
               <div className="flex items-center justify-between">
                 <button
                   type="button"
                   onClick={resetAll}
-                  className={cn(
-                    "inline-flex items-center gap-1 text-sm",
-                    isPastel || isRainbow ? "text-white/80" : "text-violet-600",
-                  )}
+                  className="inline-flex items-center gap-1 text-sm text-accent"
                 >
                   <ChevronLeft className="h-4 w-4" /> เปลี่ยนจำนวน
                 </button>
-                <p className={cn("text-sm font-medium", isPastel || isRainbow ? "text-white" : "text-gray-700")}>
+                <p className="text-sm font-medium text-fg">
                   หยิบใบที่ {Math.min(picked.length + 1, count)} / {count}
                 </p>
               </div>
 
-              <div className={cn(
-                "mt-4 rounded-2xl border px-4 py-3 text-center text-sm leading-relaxed",
-                isPastel
-                  ? "border-white/30 bg-white/10 text-white/90"
-                  : isRainbow
-                  ? "border-[rgba(255,215,0,0.35)] bg-[rgba(255,215,0,0.06)] text-[#ffe79a]"
-                  : "border-amber-200 bg-amber-50/60 text-amber-800",
-              )}>
+              <div className="mt-4 rounded-2xl border border-accent/20 bg-accent/5 px-4 py-3 text-center text-sm leading-relaxed text-fg-muted">
                 🪔 หลับตา หายใจเข้าลึก ๆ ระลึกถึง<strong>เทวดาประจำตัว</strong>หรือ<strong>สิ่งศักดิ์สิทธิ์ที่คุณนับถือ</strong>
                 <br />
                 น้อมจิตขอพร ขอเลขนำโชค แล้วแตะใบที่รู้สึก &ldquo;ใช่&rdquo; ที่สุด
@@ -236,11 +185,7 @@ export default function LuckyNumbersPage() {
                         "relative h-16 w-12 overflow-hidden rounded-md border transition",
                         filled
                           ? "border-white/40 shadow-[0_0_18px_rgba(167,139,250,0.45)]"
-                          : isPastel
-                          ? "border-white/30 bg-white/10"
-                          : isRainbow
-                          ? "border-[rgba(255,0,255,0.25)] bg-[#0f0f1a]"
-                          : "border-violet-200 bg-violet-50",
+                          : "border-accent/20 bg-accent/5",
                       )}
                     >
                       {filled && (
@@ -253,10 +198,7 @@ export default function LuckyNumbersPage() {
                         />
                       )}
                       {!filled && (
-                        <div className={cn(
-                          "flex h-full items-center justify-center text-xs",
-                          isPastel || isRainbow ? "text-white/40" : "text-violet-300",
-                        )}>
+                        <div className="flex h-full items-center justify-center text-xs text-accent/40">
                           {i + 1}
                         </div>
                       )}
@@ -271,7 +213,6 @@ export default function LuckyNumbersPage() {
               deck={deck}
               pickingIndex={pickingIndex}
               onPick={handlePick}
-              isAlt={isPastel || isRainbow}
             />
           </section>
         )}
@@ -280,14 +221,12 @@ export default function LuckyNumbersPage() {
           <ResultView
             analysis={analysis}
             revealCount={revealCount}
-            themed={themed}
-            isAlt={isPastel || isRainbow}
-            isRainbow={isRainbow}
-            isPastel={isPastel}
             onReset={resetAll}
           />
         )}
       </div>
+
+      <FAB />
     </main>
   );
 }
@@ -301,10 +240,9 @@ interface SemicircleDeckProps {
   deck: LuckyDigit[];
   pickingIndex: number | null;
   onPick: (idx: number) => void;
-  isAlt: boolean;
 }
 
-function SemicircleDeck({ roundKey, deck, pickingIndex, onPick, isAlt }: SemicircleDeckProps) {
+function SemicircleDeck({ roundKey, deck, pickingIndex, onPick }: SemicircleDeckProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [{ radius, cardW, cardH, height }, setLayout] = useState(() => deckLayoutForWidth(360));
 
@@ -400,7 +338,7 @@ function SemicircleDeck({ roundKey, deck, pickingIndex, onPick, isAlt }: Semicir
         </AnimatePresence>
       </div>
 
-      <p className={cn("mt-2 text-center text-xs", isAlt ? "text-white/55" : "text-gray-400")}>
+      <p className="mt-2 text-center text-xs text-fg-muted">
         แตะใบที่รู้สึกว่า &ldquo;ใช่&rdquo; ที่สุด
       </p>
     </div>
@@ -429,20 +367,10 @@ function deckLayoutForWidth(width: number) {
 interface ResultViewProps {
   analysis: LuckyDigitAnalysis;
   revealCount: number;
-  themed: {
-    cardBox: string;
-    sectionTitle: string;
-    mutedSm: string;
-    primaryBtn: string;
-    ghostBtn: string;
-  };
-  isAlt: boolean;
-  isRainbow: boolean;
-  isPastel: boolean;
   onReset: () => void;
 }
 
-function ResultView({ analysis, revealCount, themed, isAlt, isRainbow, isPastel, onReset }: ResultViewProps) {
+function ResultView({ analysis, revealCount, onReset }: ResultViewProps) {
   const allRevealed = revealCount >= analysis.digits.length;
   const shareableRef = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState<null | "share" | "download">(null);
@@ -510,10 +438,10 @@ function ResultView({ analysis, revealCount, themed, isAlt, isRainbow, isPastel,
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className={themed.cardBox}
+        className={CARD_CLS}
       >
-        <h2 className={themed.sectionTitle}>ชุดเลขมงคลของคุณ</h2>
-        <p className={cn("mt-1", themed.mutedSm)}>
+        <h2 className="text-lg font-semibold text-fg">ชุดเลขมงคลของคุณ</h2>
+        <p className="mt-1 text-sm text-fg-muted">
           {allRevealed
             ? `ผลรวม ${analysis.sum} • เลขราก ${analysis.root}`
             : "ค่อย ๆ เปิดไพ่ทีละใบ..."}
@@ -544,7 +472,7 @@ function ResultView({ analysis, revealCount, themed, isAlt, isRainbow, isPastel,
                   initial={{ opacity: 0 }}
                   animate={{ opacity: flipped ? 1 : 0 }}
                   transition={{ delay: 0.3, duration: 0.4 }}
-                  className={cn("text-xs uppercase tracking-widest", isAlt ? "text-white/60" : "text-violet-500")}
+                  className="text-xs uppercase tracking-widest text-accent"
                 >
                   ใบที่ {i + 1}
                 </motion.span>
@@ -560,10 +488,7 @@ function ResultView({ analysis, revealCount, themed, isAlt, isRainbow, isPastel,
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.5 }}
-              className={cn(
-                "mt-6 text-center text-3xl font-semibold tracking-[0.3em]",
-                isAlt ? "text-white" : "text-violet-700",
-              )}
+              className="mt-6 text-center text-3xl font-semibold tracking-[0.3em] text-accent"
             >
               {analysis.combined}
             </motion.p>
@@ -580,31 +505,43 @@ function ResultView({ analysis, revealCount, themed, isAlt, isRainbow, isPastel,
             transition={{ delay: 0.4 }}
             className="grid grid-cols-1 gap-3 sm:grid-cols-3"
           >
-            <button
-              type="button"
+            <Button
               disabled={busy !== null}
-              className={cn(themed.primaryBtn, "w-full flex items-center justify-center gap-2 disabled:opacity-60")}
+              className="w-full flex items-center justify-center gap-2 disabled:opacity-60"
+              size="lg"
               onClick={handleShare}
             >
               {busy === "share" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
               แชร์รูป
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="outline"
               disabled={busy !== null}
-              className={cn(themed.ghostBtn, "w-full disabled:opacity-60")}
+              className="w-full flex items-center justify-center gap-2 disabled:opacity-60"
+              size="lg"
               onClick={handleDownload}
             >
               {busy === "download" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
               บันทึกรูป
-            </button>
-            <button type="button" className={cn(themed.ghostBtn, "w-full")} onClick={onReset}>
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full flex items-center justify-center gap-2"
+              size="lg"
+              onClick={onReset}
+            >
               <RefreshCw className="w-4 h-4" />
               เริ่มใหม่
-            </button>
+            </Button>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {allRevealed && (
+        <div className="mt-8">
+          <FeatureMenu />
+        </div>
+      )}
 
       {/* Off-screen shareable card — rendered once all flips have happened
           so html-to-image captures the final state. */}
@@ -612,8 +549,6 @@ function ResultView({ analysis, revealCount, themed, isAlt, isRainbow, isPastel,
         <ShareableCardOffscreen
           ref={shareableRef}
           analysis={analysis}
-          isPastel={isPastel}
-          isRainbow={isRainbow}
         />
       )}
     </section>
@@ -627,8 +562,6 @@ const ShareableCardOffscreen = function ShareableCardOffscreenInner({
 }: {
   ref: React.RefObject<HTMLDivElement | null>;
   analysis: LuckyDigitAnalysis;
-  isPastel: boolean;
-  isRainbow: boolean;
 }) {
   return (
     <div className="pointer-events-none fixed -left-[2000px] top-0 z-[-1]">
