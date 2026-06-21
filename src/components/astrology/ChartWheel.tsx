@@ -306,7 +306,7 @@ export function ChartWheel({ chart, transit, size = 480, className }: ChartWheel
                 stroke="currentColor"
                 strokeWidth="0.6"
                 className={cn(
-                  p.id === "lagna" ? "text-violet-600" : "text-fg"
+                  p.id === "lagna" ? "text-accent" : "text-fg"
                 )}
               />
               <text

@@ -10,7 +10,7 @@ import Link from 'next/link';
 
 function getIconForType(type: string) {
   switch (type) {
-    case 'tarot': return <Sparkles className="w-5 h-5 text-violet-500" />;
+    case 'tarot': return <Sparkles className="w-5 h-5 text-accent" />;
     case 'love-tarot': return <Heart className="w-5 h-5 text-pink-500" />;
     case 'spirit-card': return <Sparkles className="w-5 h-5 text-blue-500" />;
     case 'numerology': return <Hash className="w-5 h-5 text-amber-500" />;
