@@ -99,7 +99,7 @@ export function PlanetTable({ chart, className }: PlanetTableProps) {
                   )}
                 </Td>
                 <Td>
-                  <span className="text-[10px] text-violet-700 font-medium">
+                  <span className="text-[10px] text-accent font-medium">
                     {dignityText}
                   </span>
                 </Td>

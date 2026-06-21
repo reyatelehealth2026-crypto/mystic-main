@@ -269,7 +269,7 @@ export function ChartWheel({ chart, transit, size = 480, className }: ChartWheel
               textAnchor="middle"
               dominantBaseline="central"
               fontSize={size * 0.024}
-              className="fill-violet-700 font-semibold"
+              className="fill-accent font-semibold"
             >
               {house.number}
             </text>
@@ -317,7 +317,7 @@ export function ChartWheel({ chart, transit, size = 480, className }: ChartWheel
                 fontSize={size * 0.026}
                 className={cn(
                   "font-semibold",
-                  p.id === "lagna" ? "fill-violet-700" : "fill-fg"
+                  p.id === "lagna" ? "fill-accent" : "fill-fg"
                 )}
               >
                 {p.thaiNumeral}
