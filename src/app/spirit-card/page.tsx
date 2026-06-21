@@ -2,13 +2,13 @@
 
 import { FormEvent, useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
-import { useRecordReadingView } from "@/lib/history/useRecordReadingView";
 import { Heart } from "lucide-react";
 import { useLibrary } from "@/lib/library/useLibrary";
 import { buildSavedSpiritCardReading } from "@/lib/library/storage";
 import { trackEvent } from "@/lib/analytics/tracking";
 import { evaluatePaywall, recordFreeReading } from "@/lib/monetization/paywall";
 import { runReadingPipeline } from "@/lib/reading/pipeline";
+import type { ReadingSession } from "@/lib/reading/types";
 import { spiritCardFromDob } from "@/lib/tarot/spirit";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 
@@ -43,13 +43,43 @@ export default function SpiritCardPage() {
   const [loading, setLoading] = useState(false);
   const [submittedDob, setSubmittedDob] = useState<string | null>(null);
   const [aiReading, setAiReading] = useState<null | { summary: string; cardStructure: string }>(null);
+  const [session, setSession] = useState<ReadingSession | null>(null);
+  const [needCredits, setNeedCredits] = useState(false);
 
-  useRecordReadingView({
-    type: "spirit-card",
-    summary: aiReading?.summary,
-    ready: !!submittedDob,
-    dedupeKey: submittedDob ?? undefined,
-  });
+  // Generate + charge server-side (paywall enforced; re-view of same dob free).
+  useEffect(() => {
+    setSession(null);
+    setNeedCredits(false);
+    if (!submittedDob) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/reading", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "spirit_card", params: { dob: submittedDob }, dedupeKey: submittedDob }),
+        });
+        const data = await res.json();
+        if (cancelled) return;
+        if (res.ok && data.ok) {
+          setSession(data.reading as ReadingSession);
+          window.dispatchEvent(new Event("rf:credits-changed"));
+        } else if (res.status === 402) {
+          setNeedCredits(true);
+          setError("แต้มไม่พอ — เติมแต้มก่อนนะคะ");
+        } else if (res.status === 401) {
+          setError("กรุณาเข้าสู่ระบบด้วย LINE ก่อนดูดวง");
+        } else {
+          setError("เกิดข้อผิดพลาด ลองใหม่อีกครั้ง");
+        }
+      } catch {
+        if (!cancelled) setError("เกิดข้อผิดพลาด ลองใหม่อีกครั้ง");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [submittedDob]);
 
   useEffect(() => {
     trackEvent("reading_start", { vertical: "spirit-card", step: "form_view" });
@@ -66,11 +96,6 @@ export default function SpiritCardPage() {
     );
     setSavedId(existing?.id ?? null);
   }, [lib.items, submittedDob]);
-
-  const session = useMemo(() => {
-    if (!submittedDob) return null;
-    return runReadingPipeline({ kind: "spirit-card", dob: submittedDob });
-  }, [submittedDob]);
 
   const paywall = useMemo(() => {
     if (!session) return null;
@@ -239,6 +264,11 @@ export default function SpiritCardPage() {
         {error && (
           <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">
             {error}
+            {needCredits ? (
+              <Link href="/pricing" className="mt-3 block rounded-lg bg-emerald-600 px-4 py-2 text-center font-semibold text-white">
+                เติมแต้ม
+              </Link>
+            ) : null}
           </div>
         )}
 
