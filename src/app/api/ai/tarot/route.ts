@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { cardMeaning, parseCardTokens } from "@/lib/tarot/engine";
 import { buildTarotPrompt } from "@/lib/ai/prompts";
 import { retrieveRag, formatRagContext, guessIntentsFromText } from "@/lib/rag/retriever";
-import { creditGate, settleReading } from "@/lib/auth/withCredits";
+import { creditGate } from "@/lib/auth/withCredits";
 import { ReadingType } from "@/lib/reading/types";
 
 type GeminiTarotResponse = {
@@ -199,18 +199,9 @@ ${formatRagContext(rag.chunks)}`;
       };
     }
 
-    // Successful (non-fallback) reading: deduct credits + record server history
-    // for logged-in users. Best-effort; never blocks the response.
-    await settleReading({
-      user: gate.user,
-      readingType: ReadingType.TAROT,
-      history: {
-        type: isEsiimsi ? "esiimsi" : "tarot",
-        summary: ai.summary,
-        details: { cardsToken: body.cardsToken, count: body.count, question },
-      },
-    });
-
+    // Credits + server history are charged/recorded centrally when the client
+    // records the view via POST /api/history (works without AI). Charging here
+    // too would double-bill, so the AI route no longer settles.
     return NextResponse.json({ ok: true, ai });
   } catch (error) {
     return NextResponse.json(

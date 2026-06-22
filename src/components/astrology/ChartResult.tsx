@@ -71,8 +71,8 @@ export function ChartResult({
   return (
     <div className={cn("space-y-5", className)}>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="rounded-xl border border-violet-200 bg-violet-50/60 p-3">
-          <div className="text-[11px] uppercase tracking-wide text-violet-600 font-semibold mb-1">
+        <div className="rounded-xl border border-accent/20 bg-accent/5 p-3">
+          <div className="text-[11px] uppercase tracking-wide text-accent font-semibold mb-1">
             ดวงกำเนิด
           </div>
           <div className="text-xs text-fg">

@@ -1,11 +1,12 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Card, CardDesc, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { AppBar } from "@/components/nav/AppBar";
-import { getBaselineNameNumerology } from "@/lib/name-numerology/engine";
+import type { NameNumerologyReading } from "@/lib/name-numerology/types";
 
 export default function ResultClient() {
   const sp = useSearchParams();
@@ -15,19 +16,38 @@ export default function ResultClient() {
   const lastName = (sp.get("lastName") ?? "").trim();
 
   const [error, setError] = React.useState<string>("");
-  const [reading, setReading] = React.useState<ReturnType<typeof getBaselineNameNumerology> | null>(null);
+  const [needCredits, setNeedCredits] = React.useState(false);
+  const [reading, setReading] = React.useState<NameNumerologyReading | null>(null);
 
   React.useEffect(() => {
-    try {
-      if (!firstName || !lastName) {
-        setError("กรุณากรอกชื่อและนามสกุล");
-        return;
-      }
-      const r = getBaselineNameNumerology({ firstName, lastName });
-      setReading(r);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "เกิดข้อผิดพลาด");
+    if (!firstName || !lastName) {
+      setError("กรุณากรอกชื่อและนามสกุล");
+      return;
     }
+    const fetchReading = async () => {
+      try {
+        const res = await fetch("/api/reading", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "name_numerology", params: { firstName, lastName }, dedupeKey: `${firstName}_${lastName}` }),
+        });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          setReading(data.reading as NameNumerologyReading);
+          window.dispatchEvent(new Event("rf:credits-changed"));
+        } else if (res.status === 401) {
+          setError("กรุณาเข้าสู่ระบบด้วย LINE ก่อนดูดวง");
+        } else if (res.status === 402) {
+          setNeedCredits(true);
+          setError("แต้มไม่พอ — เติมแต้มก่อนนะคะ");
+        } else {
+          setError("เกิดข้อผิดพลาด");
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "เกิดข้อผิดพลาด");
+      }
+    };
+    void fetchReading();
   }, [firstName, lastName]);
 
   return (
@@ -42,7 +62,12 @@ export default function ResultClient() {
         <Card className="mt-6 p-5">
           <CardTitle>เกิดปัญหา</CardTitle>
           <CardDesc className="mt-2 text-danger">{error}</CardDesc>
-          <div className="mt-4">
+          {needCredits ? (
+            <Link href="/pricing" className="mt-4 block">
+              <Button className="w-full bg-emerald-600 text-white hover:bg-emerald-700">เติมแต้ม</Button>
+            </Link>
+          ) : null}
+          <div className="mt-3">
             <Button variant="secondary" className="w-full" onClick={() => router.push("/name-numerology")}>กลับไปกรอกใหม่</Button>
           </div>
         </Card>

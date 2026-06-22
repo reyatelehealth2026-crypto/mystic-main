@@ -54,11 +54,7 @@ export function Markdown({ children }: { children: string }) {
       {nodes.map((n, idx) => {
         if (n.type === "h4") {
           return (
-            <h4
-              key={idx}
-              className="text-sm font-bold"
-              style={{ color: "var(--purple-500)" }}
-            >
+            <h4 key={idx} className="text-sm font-bold text-accent">
               {n.text}
             </h4>
           );
@@ -66,7 +62,7 @@ export function Markdown({ children }: { children: string }) {
 
         if (n.type === "ul") {
           return (
-            <ul key={idx} className="list-disc space-y-1 pl-5 text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
+            <ul key={idx} className="list-disc space-y-1 pl-5 text-sm leading-relaxed text-fg-muted">
               {n.items.map((it, i) => (
                 <li key={i}>{it}</li>
               ))}
@@ -75,7 +71,7 @@ export function Markdown({ children }: { children: string }) {
         }
 
         return (
-          <p key={idx} className="whitespace-pre-line text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
+          <p key={idx} className="whitespace-pre-line text-sm leading-relaxed text-fg-muted">
             {n.text}
           </p>
         );

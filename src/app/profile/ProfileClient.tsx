@@ -197,15 +197,25 @@ export function ProfileClient({ version }: { version?: string }) {
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
+                <Link href="/membership">
+                  <Button variant="default" size="default">
+                    {language === "th" ? "บัตรสมาชิก" : "Membership"}
+                  </Button>
+                </Link>
+                <Link href="/consult">
+                  <Button variant="default" size="default">
+                    {language === "th" ? "ปรึกษาหมอดูสด" : "Live consult"}
+                  </Button>
+                </Link>
                 <Link href="/pricing">
                   <Button variant="secondary" size="default">
                     {language === "th" ? "เติมเครดิต" : "Top up credits"}
                   </Button>
                 </Link>
                 {user.isAdmin ? (
-                  <Link href="/admin/customers">
+                  <Link href="/admin">
                     <Button variant="ghost" size="default">
-                      {language === "th" ? "ลูกค้า (CRM)" : "Customers (CRM)"}
+                      {language === "th" ? "แดชบอร์ดหมอดู" : "Admin dashboard"}
                     </Button>
                   </Link>
                 ) : null}

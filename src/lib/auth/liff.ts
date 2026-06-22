@@ -62,6 +62,28 @@ export async function isInLineClient(): Promise<boolean> {
   return liff.isInClient();
 }
 
+type LiffMessage =
+  | { type: "text"; text: string }
+  | { type: "flex"; altText: string; contents: unknown };
+
+/**
+ * Send messages into the user's 1:1 chat with the linked OA. Only works inside
+ * the LINE client (and when the LIFF app is linked to the bot). Returns false
+ * when unavailable so callers can fall back to a server push.
+ */
+export async function sendLiffMessages(messages: LiffMessage[]): Promise<boolean> {
+  const ok = await ensureLiff();
+  if (!ok) return false;
+  const liff = (await import("@line/liff")).default;
+  if (!liff.isInClient()) return false;
+  try {
+    await liff.sendMessages(messages as Parameters<typeof liff.sendMessages>[0]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Returns true when `shareTargetPicker` is available in the current LIFF context.
  * Must be enabled in the LINE Developers console under the LIFF app settings.
@@ -109,6 +131,23 @@ export async function sendMessagesToChat(messages: LineMessage[]): Promise<boole
   try {
     await liff.sendMessages(messages as never);
     return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Open the share-target picker so the user can forward the reading to friends.
+ * Returns false when the API is unavailable (e.g. outside the LINE client).
+ */
+export async function shareReadingToFriends(messages: LiffMessage[]): Promise<boolean> {
+  const ok = await ensureLiff();
+  if (!ok) return false;
+  const liff = (await import("@line/liff")).default;
+  if (!liff.isApiAvailable("shareTargetPicker")) return false;
+  try {
+    const res = await liff.shareTargetPicker(messages as Parameters<typeof liff.shareTargetPicker>[0]);
+    return Boolean(res);
   } catch {
     return false;
   }

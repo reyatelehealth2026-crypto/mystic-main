@@ -1,5 +1,4 @@
 import { getServiceClient } from "@/lib/supabase/server";
-import type { FlexBubble } from "@/lib/line/flex";
 
 /**
  * LINE Messaging API push + reply. Env-guarded: if the channel access token is
@@ -12,9 +11,11 @@ import type { FlexBubble } from "@/lib/line/flex";
  */
 
 // Single source of truth for every message shape used across share / push / reply.
+// `contents` is intentionally `unknown` because readings push carousels
+// (`buildReadingFlexMessage`), not just single bubbles.
 export type LineMessage =
   | { type: "text"; text: string }
-  | { type: "flex"; altText: string; contents: FlexBubble };
+  | { type: "flex"; altText: string; contents: unknown };
 
 export interface PushResult {
   ok: boolean;

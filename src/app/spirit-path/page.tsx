@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import * as React from "react";
+import Link from "next/link";
 import { AppBar } from "@/components/nav/AppBar";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -14,7 +15,7 @@ import { trackEvent } from "@/lib/analytics/tracking";
 import { useLibrary } from "@/lib/library/useLibrary";
 import { buildSavedSpiritPathReading } from "@/lib/library/storage";
 import { getCardById } from "@/lib/tarot/deck";
-import { spiritPathFromDateParts } from "@/lib/tarot/spiritPath";
+import { spiritPathFromDateParts, type SpiritPathResult } from "@/lib/tarot/spiritPath";
 
 function toInt(value: string): number | null {
   const x = Number(value);
@@ -37,14 +38,50 @@ export default function SpiritPathPage() {
 
   const [submitted, setSubmitted] = React.useState<null | { day: number; month: number; year: number }>(null);
   const [markdown, setMarkdown] = React.useState<string>("");
+  const [result, setResult] = React.useState<SpiritPathResult | null>(null);
+  const [needCredits, setNeedCredits] = React.useState(false);
 
   React.useEffect(() => {
     trackEvent("reading_start", { vertical: "spirit-card", step: "spirit_path_form_view" });
   }, []);
 
-  const result = React.useMemo(() => {
-    if (!submitted) return null;
-    return spiritPathFromDateParts(submitted);
+  // Generate + charge server-side (paywall enforced; re-view of same date free).
+  React.useEffect(() => {
+    setResult(null);
+    setNeedCredits(false);
+    if (!submitted) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/reading", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "spirit_path",
+            params: { day: String(submitted.day), month: String(submitted.month), year: String(submitted.year) },
+            dedupeKey: `${submitted.year}-${submitted.month}-${submitted.day}`,
+          }),
+        });
+        const data = await res.json();
+        if (cancelled) return;
+        if (res.ok && data.ok) {
+          setResult(data.reading as SpiritPathResult);
+          window.dispatchEvent(new Event("rf:credits-changed"));
+        } else if (res.status === 402) {
+          setNeedCredits(true);
+          setError("แต้มไม่พอ — เติมแต้มก่อนนะคะ");
+        } else if (res.status === 401) {
+          setError("กรุณาเข้าสู่ระบบด้วย LINE ก่อนดูดวง");
+        } else {
+          setError("เกิดข้อผิดพลาด ลองใหม่อีกครั้ง");
+        }
+      } catch {
+        if (!cancelled) setError("เกิดข้อผิดพลาด ลองใหม่อีกครั้ง");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [submitted]);
 
   const zodiacCard = React.useMemo(() => {
@@ -216,6 +253,11 @@ export default function SpiritPathPage() {
             style={{ borderColor: "rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.06)", color: "var(--danger)" }}
           >
             {error}
+            {needCredits ? (
+              <Link href="/pricing" className="mt-3 block rounded-lg bg-emerald-600 px-4 py-2 text-center font-semibold text-white">
+                เติมแต้ม
+              </Link>
+            ) : null}
           </div>
         ) : null}
 

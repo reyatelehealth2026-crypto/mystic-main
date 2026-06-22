@@ -2,10 +2,10 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { AppBar } from "@/components/nav/AppBar";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { calculateThaiCompatibility } from "@/lib/thai-astrology/engine";
 import { ThaiCompatibilityReading } from "@/lib/thai-astrology/types";
 import { THAI_DAY_MEANINGS, THAI_YEAR_ANIMAL_MEANINGS } from "@/lib/thai-astrology/types";
 
@@ -18,6 +18,7 @@ function ResultContent() {
   const [reading, setReading] = useState<ThaiCompatibilityReading | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [needCredits, setNeedCredits] = useState(false);
 
   useEffect(() => {
     if (!date1 || !date2) {
@@ -26,17 +27,33 @@ function ResultContent() {
       return;
     }
 
-    try {
-      const result = calculateThaiCompatibility({
-        person1: { birthDate: new Date(date1) },
-        person2: { birthDate: new Date(date2) },
-      });
-      setReading(result);
-    } catch (err) {
-      setError("เกิดข้อผิดพลาดในการวิเคราะห์ความเข้ากัน กรุณาลองใหม่อีกครั้ง");
-    } finally {
-      setLoading(false);
-    }
+    const fetchReading = async () => {
+      try {
+        const res = await fetch("/api/reading", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "compatibility", params: { date1, date2 }, dedupeKey: `${date1}_${date2}` }),
+        });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          setReading(data.reading as ThaiCompatibilityReading);
+          window.dispatchEvent(new Event("rf:credits-changed"));
+        } else if (res.status === 401) {
+          setError("กรุณาเข้าสู่ระบบด้วย LINE ก่อนดูดวง");
+        } else if (res.status === 402) {
+          setNeedCredits(true);
+          setError("แต้มไม่พอ — เติมแต้มก่อนนะคะ");
+        } else {
+          setError("เกิดข้อผิดพลาดในการวิเคราะห์ความเข้ากัน กรุณาลองใหม่อีกครั้ง");
+        }
+      } catch {
+        setError("เกิดข้อผิดพลาดในการวิเคราะห์ความเข้ากัน กรุณาลองใหม่อีกครั้ง");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReading();
   }, [date1, date2]);
 
   if (loading) {
@@ -55,7 +72,12 @@ function ResultContent() {
       <div className="px-5">
         <Card className="p-5 bg-bg border-danger/30">
           <p className="text-sm text-danger">{error || "ไม่พบข้อมูล"}</p>
-          <Button className="mt-4 w-full" onClick={() => router.push("/compatibility")}>
+          {needCredits ? (
+            <Link href="/pricing" className="mt-4 block">
+              <Button className="w-full bg-emerald-600 text-white hover:bg-emerald-700">เติมแต้ม</Button>
+            </Link>
+          ) : null}
+          <Button className="mt-3 w-full" variant="ghost" onClick={() => router.push("/compatibility")}>
             กลับไปใส่วันเกิด
           </Button>
         </Card>
@@ -84,7 +106,7 @@ function ResultContent() {
   return (
     <div className="px-5 pb-6">
       {/* Header Card */}
-      <Card className="p-5 bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
+      <Card className="p-5 bg-gradient-to-br from-accent/5 to-accent/10 border-accent/20">
         <div className="text-center">
           <div className="flex items-center justify-center gap-3 mb-3">
             <div className="text-center">
@@ -185,14 +207,14 @@ function ResultContent() {
       </Card>
 
       {/* Auspicious Tips */}
-      <Card className="mt-4 p-5 bg-amber-50 border-amber-200">
-        <h3 className="text-sm font-bold text-amber-700 mb-3">🍀 เคล็ดลับเสริมดวง</h3>
+      <Card className="mt-4 p-5 bg-accent/5 border-accent/20">
+        <h3 className="text-sm font-bold text-accent mb-3">🍀 เคล็ดลับเสริมดวง</h3>
         <ul className="space-y-2">
           {reading.interpretation.auspicious.map((tip, index) => (
             <li key={index} className="flex items-start gap-2"
             >
-              <span className="text-amber-600 mt-0.5">🙏</span>
-              <span className="text-sm leading-relaxed text-gray-700 flex-1">{tip}</span>
+              <span className="text-accent mt-0.5">🙏</span>
+              <span className="text-sm leading-relaxed text-fg-muted flex-1">{tip}</span>
             </li>
           ))}
         </ul>

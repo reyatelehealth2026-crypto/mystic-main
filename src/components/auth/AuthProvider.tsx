@@ -44,6 +44,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Refresh the cached balance whenever credits change (reading charge, redeem…).
+  React.useEffect(() => {
+    const onChange = () => void refresh();
+    window.addEventListener("rf:credits-changed", onChange);
+    return () => window.removeEventListener("rf:credits-changed", onChange);
+  }, [refresh]);
+
   React.useEffect(() => {
     let cancelled = false;
     (async () => {

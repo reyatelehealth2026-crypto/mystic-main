@@ -1,8 +1,66 @@
 import { getServiceClient } from "@/lib/supabase/server";
 import { getUserById } from "@/lib/supabase/users";
 import { getCreditCost } from "@/lib/monetization/creditCost";
+import { getServiceCost } from "@/lib/supabase/catalog";
 import type { CreditCheckResult } from "@/lib/monetization/paywall";
 import { ReadingType } from "@/lib/reading/types";
+
+/**
+ * Authoritative per-reading cost: a DB override (admin-managed `service_costs`)
+ * wins, otherwise the static default. Period-based costs fall back to the
+ * default so weekly/monthly multipliers stay intact.
+ */
+export async function resolveCreditCost(
+  readingType: ReadingType,
+  options?: { period?: "daily" | "weekly" | "monthly" } & Record<string, unknown>,
+): Promise<number> {
+  if (!options?.period) {
+    try {
+      const override = await getServiceCost(readingType);
+      if (override != null) return override;
+    } catch {
+      // fall through to the static default
+    }
+  }
+  return getCreditCost(readingType, options);
+}
+
+export interface ChargeOnceResult {
+  charged: boolean;
+  balance: number;
+  insufficient: boolean;
+  viaSubscription: boolean;
+}
+
+/**
+ * Atomically charge for a reading exactly once per (user, clientId). The DB
+ * function inserts the dedupe row + debits in one transaction, so concurrent
+ * identical requests can never double-charge, and a re-view is free.
+ */
+export async function chargeReadingOnce(
+  userId: string,
+  clientId: string,
+  type: string,
+  readingType: ReadingType,
+  options?: { period?: "daily" | "weekly" | "monthly" } & Record<string, unknown>,
+): Promise<ChargeOnceResult> {
+  const cost = await resolveCreditCost(readingType, options);
+  const db = getServiceClient();
+  const { data, error } = await db.rpc("charge_reading_once", {
+    p_user_id: userId,
+    p_client_id: clientId,
+    p_type: type,
+    p_cost: cost,
+  });
+  if (error) throw error;
+  const row = Array.isArray(data) ? data[0] : data;
+  return {
+    charged: Boolean(row?.charged),
+    balance: Number(row?.balance ?? 0),
+    insufficient: Boolean(row?.insufficient),
+    viaSubscription: Boolean(row?.via_subscription),
+  };
+}
 
 type CreditOptions = { period?: "daily" | "weekly" | "monthly" } & Record<string, unknown>;
 
@@ -30,7 +88,7 @@ export async function checkServerCredits(
   readingType: ReadingType,
   options?: CreditOptions,
 ): Promise<CreditCheckResult> {
-  const requiredCredits = getCreditCost(readingType, options);
+  const requiredCredits = await resolveCreditCost(readingType, options);
   const user = await getUserById(userId);
   const currentCredits = user?.credits ?? 0;
   const isFreeReading = !(await hasUsedFreeReading(userId, readingType));
@@ -99,6 +157,45 @@ export async function deductServerCredits(
   });
   if (error) throw error;
   return { ok: true, isFreeReading: false, newBalance: data as number, reason: "deducted" };
+}
+
+export interface ChargeResult {
+  ok: boolean;
+  free: boolean; // cost was 0
+  insufficient: boolean;
+  newBalance: number;
+}
+
+/**
+ * Charge for a reading view — EVERY time (no free-first). Cost comes from the
+ * admin-managed `service_costs` (falling back to defaults). Skips the charge
+ * (insufficient=true) when the balance can't cover it; never goes negative.
+ */
+export async function chargeReading(
+  userId: string,
+  readingType: ReadingType,
+  options?: { period?: "daily" | "weekly" | "monthly" } & Record<string, unknown>,
+): Promise<ChargeResult> {
+  const cost = await resolveCreditCost(readingType, options);
+  const user = await getUserById(userId);
+  const balance = user?.credits ?? 0;
+  if (cost <= 0) return { ok: true, free: true, insufficient: false, newBalance: balance };
+  if (balance < cost) return { ok: false, free: false, insufficient: true, newBalance: balance };
+
+  const db = getServiceClient();
+  const { data, error } = await db.rpc("apply_credit_delta", {
+    p_user_id: userId,
+    p_delta: -cost,
+    p_reason: "reading_spend",
+    p_reading_type: readingType,
+  });
+  if (error) {
+    if (String(error.message ?? "").includes("insufficient_credits")) {
+      return { ok: false, free: false, insufficient: true, newBalance: balance };
+    }
+    throw error;
+  }
+  return { ok: true, free: false, insufficient: false, newBalance: data as number };
 }
 
 export async function grantCredits(

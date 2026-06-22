@@ -42,6 +42,8 @@ export const useHistoryStore = create<HistoryState>()(
             id: makeId(),
             date: new Date().toISOString(),
           };
+          // Local-only. Server recording + credit charge go through
+          // useRecordReadingView (which also shows the spend-confirm popup).
           return { history: [newItem, ...state.history].slice(0, MAX_HISTORY_ENTRIES) };
         }),
       clearHistory: () => set({ history: [] }),

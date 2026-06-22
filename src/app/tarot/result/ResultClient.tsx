@@ -7,14 +7,18 @@ import { useSearchParams } from "next/navigation";
 import { parseCardTokens } from "@/lib/tarot/engine";
 import { trackEvent } from "@/lib/analytics/tracking";
 import { evaluatePaywall, recordFreeReading } from "@/lib/monetization/paywall";
-import { runReadingPipeline } from "@/lib/reading/pipeline";
+import type { ReadingSession } from "@/lib/reading/types";
 import { buildSavedTarotReading, removeReading, upsertReading } from "@/lib/library/storage";
 import { HeartSave } from "@/components/ui/HeartSave";
 import { Button } from "@/components/ui/Button";
 import { ShareButton } from "@/components/ui/ShareButton";
 import { TarotShareableCard } from "@/components/share/tarot/TarotShareableCard";
+import { AppBar } from "@/components/nav/AppBar";
+import { FeatureMenu } from "@/components/nav/FeatureMenu";
+import { FAB } from "@/components/ui/FAB";
 import { cn } from "@/lib/cn";
 import { useHistoryStore } from "@/store/useHistoryStore";
+import { SendToLine } from "./SendToLine";
 
 function normalizeText(value: unknown): string {
   if (typeof value === "string") return value;
@@ -44,10 +48,49 @@ export default function ResultClient() {
   const cardsToken = searchParams.get("cards") ?? "";
   const question = searchParams.get("question") ?? "";
 
-  const result = useMemo(
-    () => runReadingPipeline({ kind: "tarot", count, cardsToken, question }),
-    [cardsToken, count, question]
-  );
+  const [result, setResult] = useState<ReadingSession | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [needCredits, setNeedCredits] = useState(false);
+  const [authNeeded, setAuthNeeded] = useState(false);
+
+  // Generate + charge server-side (paywall enforced; re-view of same cards free).
+  useEffect(() => {
+    setResult(null);
+    setNeedCredits(false);
+    setAuthNeeded(false);
+    setLoading(true);
+    if (!cardsToken || count <= 0) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/reading", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "tarot", params: { cardsToken, count: String(count), question }, dedupeKey: cardsToken }),
+        });
+        const data = await res.json();
+        if (cancelled) return;
+        if (res.ok && data.ok) {
+          setResult(data.reading as ReadingSession);
+          window.dispatchEvent(new Event("rf:credits-changed"));
+        } else if (res.status === 402) {
+          setNeedCredits(true);
+        } else if (res.status === 401) {
+          setAuthNeeded(true);
+        }
+      } catch {
+        /* ignore — handled by empty state below */
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [cardsToken, count, question]);
 
   const drawnCards = useMemo(() => parseCardTokens(cardsToken), [cardsToken]);
 
@@ -209,16 +252,43 @@ export default function ResultClient() {
     handleSave();
   }
 
+  if (loading) {
+    return (
+      <main className="mx-auto w-full max-w-lg px-5 py-16 text-center">
+        <div className="text-3xl">🔮</div>
+        <p className="mt-3 text-sm text-fg-muted">กำลังเปิดไพ่...</p>
+      </main>
+    );
+  }
+
+  if (authNeeded || needCredits) {
+    return (
+      <main className="mx-auto w-full max-w-lg px-5 py-8">
+        <div className="rounded-2xl border border-accent/30 bg-accent-soft p-5 text-center">
+          <div className="text-3xl">🔮</div>
+          <p className="mt-2 text-sm text-fg">
+            {authNeeded ? "กรุณาเข้าสู่ระบบด้วย LINE ก่อนดูไพ่" : "แต้มไม่พอ — เติมแต้มก่อนนะคะ"}
+          </p>
+          {needCredits ? (
+            <Link href="/pricing" className="mt-4 block">
+              <Button className="w-full bg-emerald-600 text-white hover:bg-emerald-700">เติมแต้ม</Button>
+            </Link>
+          ) : null}
+          <Link href="/tarot" className="mt-3 block">
+            <Button className="w-full" variant="ghost">กลับไปเลือกไพ่</Button>
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
   if (!result) {
     return (
       <main className="mx-auto w-full max-w-lg px-5 py-8">
         <div className="rounded-2xl border border-danger/30 bg-danger/10 p-4">
           <p className="text-sm text-danger">ไม่พบข้อมูลไพ่ที่สมบูรณ์ กรุณากลับไปเปิดไพ่ใหม่อีกครั้ง</p>
-          <Link
-            href="/tarot"
-            className="mt-3 inline-flex items-center justify-center rounded-xl bg-gold px-4 py-2 text-sm font-semibold text-bg hover:opacity-90"
-          >
-            กลับไปเลือกไพ่
+          <Link href="/tarot" className="block mt-3">
+            <Button className="w-full" size="lg">กลับไปเลือกไพ่</Button>
           </Link>
         </div>
       </main>
@@ -229,13 +299,17 @@ export default function ResultClient() {
   const isTenCardSpread = count === 10;
 
   return (
-    <main className="mx-auto w-full max-w-lg px-5 py-6">
-      {/* ── Header ── */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-fg">Tarot result • {count} cards</h1>
-        <HeartSave saved={!!savedId} onToggle={toggleSaved} label="Save reading" />
-      </div>
+    <main className="mx-auto w-full max-w-lg">
+      <header className="px-5 pt-7 pb-3">
+        <AppBar
+          title="ผลไพ่ทาโรต์"
+          className="px-0 pt-0 pb-0"
+          right={<HeartSave saved={!!savedId} onToggle={toggleSaved} label="Save reading" />}
+        />
+        <h1 className="mt-1 text-xl font-bold tracking-tight text-fg">ผลการเปิดไพ่ {count} ใบ</h1>
+      </header>
 
+      <div className="px-5 pb-6">
       {saveToast && (
         <div className="mt-3 rounded-xl border border-success/25 bg-success/10 p-3 text-sm text-success">
           {saveToast}
@@ -289,7 +363,7 @@ export default function ResultClient() {
 
       {/* ── Shareable Result Card ── */}
       {drawnCards.length > 0 && aiReading && (
-        <section className="mt-6 rounded-2xl border border-accent/30 bg-gradient-to-br from-accent-soft to-purple-50 p-4">
+        <section className="mt-6 rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/5 to-accent/10 p-4">
           <h2 className="text-sm font-bold text-fg flex items-center gap-2">
             <span>✨</span> แชร์ผลคำทำนาย
           </h2>
@@ -334,6 +408,15 @@ export default function ResultClient() {
 
       {/* ── Bottom actions ── */}
       <div className="mt-6 flex flex-col gap-3">
+        {drawnCards.length > 0 ? (
+          <SendToLine
+            cards={drawnCards.map((d) => ({
+              name: d.card.nameTh ?? d.card.name,
+              image: d.card.image ?? "",
+              reversed: d.orientation === "reversed",
+            }))}
+          />
+        ) : null}
         {/* Keep only library save + new reading to avoid duplicate share buttons */}
         <Button className="w-full" size="lg" onClick={toggleSaved}>
           {savedId ? "Saved" : "Save to Library"}
@@ -344,6 +427,13 @@ export default function ResultClient() {
           </Button>
         </Link>
       </div>
+
+      <div className="mt-8">
+        <FeatureMenu />
+      </div>
+      </div>
+
+      <FAB />
     </main>
   );
 }

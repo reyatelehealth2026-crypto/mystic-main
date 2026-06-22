@@ -2,11 +2,11 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { AppBar } from "@/components/nav/AppBar";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { ZodiacSign, TimePeriod, HoroscopeReading } from "@/lib/horoscope/types";
-import { generateHoroscope } from "@/lib/horoscope/engine";
+import { ZodiacSign, HoroscopeReading } from "@/lib/horoscope/types";
 import { getZodiacThaiName } from "@/lib/horoscope/zodiac";
 
 function ResultContent() {
@@ -17,6 +17,7 @@ function ResultContent() {
   const [reading, setReading] = useState<HoroscopeReading | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [needCredits, setNeedCredits] = useState(false);
 
   useEffect(() => {
     if (!sign) {
@@ -27,13 +28,26 @@ function ResultContent() {
 
     const fetchReading = async () => {
       try {
-        const result = await generateHoroscope({
-          zodiacSign: sign,
-          period: TimePeriod.WEEKLY,
-          date: new Date(),
+        const res = await fetch("/api/reading", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "horoscope", params: { sign, period: "weekly" }, dedupeKey: `${sign}_weekly` }),
         });
-        setReading(result);
-      } catch (err) {
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          const r = data.reading as HoroscopeReading;
+          if (r?.dateRange) r.dateRange = { start: new Date(r.dateRange.start), end: new Date(r.dateRange.end) };
+          setReading(r);
+          window.dispatchEvent(new Event("rf:credits-changed"));
+        } else if (res.status === 401) {
+          setError("กรุณาเข้าสู่ระบบด้วย LINE ก่อนดูดวง");
+        } else if (res.status === 402) {
+          setNeedCredits(true);
+          setError("แต้มไม่พอ — เติมแต้มก่อนนะคะ");
+        } else {
+          setError("เกิดข้อผิดพลาดในการโหลดดวง กรุณาลองใหม่อีกครั้ง");
+        }
+      } catch {
         setError("เกิดข้อผิดพลาดในการโหลดดวง กรุณาลองใหม่อีกครั้ง");
       } finally {
         setLoading(false);
@@ -59,7 +73,12 @@ function ResultContent() {
       <div className="px-5">
         <Card className="p-5 bg-bg border-danger/30">
           <p className="text-sm text-danger">{error || "ไม่พบข้อมูล"}</p>
-          <Button className="mt-4 w-full" onClick={() => router.push("/horoscope/weekly")}>
+          {needCredits ? (
+            <Link href="/pricing" className="mt-4 block">
+              <Button className="w-full bg-emerald-600 text-white hover:bg-emerald-700">เติมแต้ม</Button>
+            </Link>
+          ) : null}
+          <Button className="mt-3 w-full" variant="ghost" onClick={() => router.push("/horoscope/weekly")}>
             กลับไปเลือกราศี
           </Button>
         </Card>

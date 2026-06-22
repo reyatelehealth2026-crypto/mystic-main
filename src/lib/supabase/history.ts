@@ -51,6 +51,18 @@ export async function recordReading(
   if (error) throw error;
 }
 
+/** True if this user already has a reading recorded under the given clientId. */
+export async function isReadingRecorded(userId: string, clientId: string): Promise<boolean> {
+  const db = getServiceClient();
+  const { count, error } = await db
+    .from("reading_history")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("client_id", clientId);
+  if (error) throw error;
+  return (count ?? 0) > 0;
+}
+
 export async function listReadingHistory(
   userId: string,
   limit = 100,

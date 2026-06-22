@@ -13,15 +13,20 @@
  * available in Cloudflare Workers without Node.js polyfills.
  *
  * Timing contract: LINE retries if it doesn't receive 2xx within ~1 s.
- * We return 200 immediately, then handle side-effects (push, DB) asynchronously.
+ * We return 200 immediately, then handle side-effects (reply, DB) asynchronously.
+ *
+ * Live consultation: when a user has an OPEN consultation round, the human
+ * reader owns the 1:1 chat — the bot stays quiet (just a "please wait" note)
+ * so it never talks over the fortune teller.
  */
 
 import { NextResponse } from "next/server";
 import { drawCards, cardMeaning } from "@/lib/tarot/engine";
-import { buildDailyCardFlex } from "@/lib/line/flex";
+import { buildDailyCardFlex, liffDeepLink } from "@/lib/line/flex";
 import { sendLineReply } from "@/lib/line/messaging";
 import type { LineMessage } from "@/lib/line/messaging";
-import { liffDeepLink } from "@/lib/line/flex";
+import { getUserByLineId } from "@/lib/supabase/users";
+import { getOpenConsultationForUser } from "@/lib/supabase/consultations";
 
 export const dynamic = "force-dynamic";
 
@@ -77,13 +82,15 @@ function buildTodayCardMessages(): LineMessage[] {
 
 function buildHelpMessages(): LineMessage[] {
   const deepLink = liffDeepLink("/");
+  const consultLink = liffDeepLink("/consult");
   return [
     {
       type: "text",
       text:
         `สวัสดีค่ะ ✨ พิมพ์คำสั่งต่อไปนี้ได้เลย\n\n` +
         `🃏 "ไพ่วันนี้" — ดูไพ่รายวัน\n` +
-        `🔮 "ดูดวง" — ไปหน้าดูดวง\n\n` +
+        `🔮 "ดูดวง" — ไปหน้าดูดวง\n` +
+        `💬 ปรึกษาหมอดูสด — ${consultLink}\n\n` +
         `หรือเปิดแอปได้ที่: ${deepLink}`,
     },
   ];
@@ -96,11 +103,15 @@ function buildWelcomeMessages(): LineMessage[] {
       type: "text",
       text:
         `ยินดีต้อนรับสู่ REFFORTUNE ✨\n\n` +
-        `ดูดวงไพ่ทาโรต์ ดูดวงรายวัน และเลขมงคล\n` +
+        `ดูดวงไพ่ทาโรต์ · ดูดวงรายวัน · เลขมงคล · ปรึกษาหมอดูสด\n` +
         `เปิดแอปได้ที่: ${deepLink}\n\n` +
         `พิมพ์ "ไพ่วันนี้" เพื่อรับไพ่รายวันได้เลยค่ะ 🃏`,
     },
   ];
+}
+
+function buildConsultWaitMessages(): LineMessage[] {
+  return [{ type: "text", text: "หมอดูกำลังดูไพ่ให้อยู่นะคะ รอสักครู่นะคะ 🙏✨" }];
 }
 
 // ── LINE event types (minimal subset) ────────────────────────────────────────
@@ -156,6 +167,21 @@ export async function POST(req: Request) {
   return responsePromise;
 }
 
+/**
+ * True when the user has an open live-consultation round — in which case the
+ * human reader is handling the chat and the bot must stay quiet.
+ */
+async function hasOpenConsultation(lineUserId: string | null): Promise<boolean> {
+  if (!lineUserId) return false;
+  try {
+    const user = await getUserByLineId(lineUserId);
+    if (!user) return false;
+    return (await getOpenConsultationForUser(user.id)) !== null;
+  } catch {
+    return false; // lookup failure — let the bot reply normally
+  }
+}
+
 async function handleEvent(event: LineEvent): Promise<void> {
   if (event.type === "follow") {
     const followEvent = event as LineFollowEvent;
@@ -172,20 +198,32 @@ async function handleEvent(event: LineEvent): Promise<void> {
     const msgEvent = event as LineTextMessageEvent;
     if (msgEvent.message.type !== "text") return;
 
-    const text = msgEvent.message.text.trim();
-    const lower = text.toLowerCase();
+    const lineUserId = msgEvent.source?.userId ?? null;
+
+    // Open consultation round → the fortune teller owns this chat. Just nudge
+    // the user to wait; never auto-reply with bot commands over the reader.
+    if (await hasOpenConsultation(lineUserId)) {
+      await sendLineReply(
+        msgEvent.replyToken,
+        buildConsultWaitMessages(),
+        { messageType: "consult_wait", userId: lineUserId },
+      );
+      return;
+    }
+
+    const lower = msgEvent.message.text.trim().toLowerCase();
 
     if (lower.includes("ไพ่วันนี้") || lower.includes("daily") || lower.includes("ดูดวง")) {
       await sendLineReply(
         msgEvent.replyToken,
         buildTodayCardMessages(),
-        { messageType: "bot_reply_card", userId: msgEvent.source?.userId ?? null },
+        { messageType: "bot_reply_card", userId: lineUserId },
       );
     } else {
       await sendLineReply(
         msgEvent.replyToken,
         buildHelpMessages(),
-        { messageType: "bot_reply_help", userId: msgEvent.source?.userId ?? null },
+        { messageType: "bot_reply_help", userId: lineUserId },
       );
     }
   }

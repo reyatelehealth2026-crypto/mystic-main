@@ -9,6 +9,7 @@ export interface UserRow {
   status_message: string | null;
   credits: number;
   membership_tier: string;
+  member_no: number | null;
   created_at: string;
   last_login_at: string | null;
   // Added by 0002_notification_prefs.sql
@@ -52,7 +53,13 @@ export interface CreditTransactionRow {
   id: string;
   user_id: string;
   delta: number;
-  reason: "purchase" | "reading_spend" | "signup_bonus" | "admin_adjust";
+  reason:
+    | "purchase"
+    | "reading_spend"
+    | "signup_bonus"
+    | "admin_adjust"
+    | "consultation_spend"
+    | "reward_redeem";
   reading_type: string | null;
   order_id: string | null;
   balance_after: number;
@@ -68,4 +75,14 @@ export interface NotificationRow {
   status: "sent" | "failed";
   error: string | null;
   created_at: string;
+}
+
+export interface ConsultationRow {
+  id: string;
+  user_id: string;
+  credits_spent: number;
+  status: "open" | "closed";
+  opened_at: string;
+  closed_at: string | null;
+  closed_by: string | null;
 }

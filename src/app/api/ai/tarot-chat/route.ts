@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ensureUser } from "@/lib/auth/apiGuard";
 import { parseCardTokens } from "@/lib/tarot/engine";
 import { buildChatPrompt } from "@/lib/ai/prompts";
 import type { ChatTurn } from "@/lib/ai/types";
@@ -9,6 +10,8 @@ const FALLBACK_ANSWER =
   "ขออภัย ตอนนี้ระบบอ่านเชิงลึกหนาแน่น ลองพิมพ์คำถามอีกครั้งในไม่กี่นาที หรือทบทวนภาพรวมไพ่ที่ออกพร้อมคำแนะนำเดิมก่อนก็ได้นะคะ";
 
 export async function POST(req: Request) {
+  const guard = await ensureUser();
+  if (guard instanceof NextResponse) return guard;
   try {
     const apiKey = process.env.GEMINI_API_KEY;
 

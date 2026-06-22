@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
+import { ensureUser } from "@/lib/auth/apiGuard";
 import { retrieveRag, formatRagContext } from "@/lib/rag/retriever";
 
 export async function POST(req: Request) {
+  const guard = await ensureUser();
+  if (guard instanceof NextResponse) return guard;
   try {
     const body = (await req.json()) as {
       query?: string;
