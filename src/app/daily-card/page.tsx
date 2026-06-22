@@ -11,6 +11,8 @@ import { cardMeaning } from "@/lib/tarot/engine";
 import { DrawnCard } from "@/lib/tarot/types";
 import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/Button";
+import { ShareToLineButton } from "@/components/share/ShareToLineButton";
+import { buildDailyCardFlex } from "@/lib/line/flex";
 
 const STORAGE_KEY = "reffortune_daily_card";
 // Local asset so the back of the card renders in dev/preview deploys too,
@@ -354,8 +356,31 @@ export default function DailyCardPage() {
               />
             </div>
 
-            <div className="mt-2 flex items-center justify-center gap-3">
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
               <p className="text-xs text-fg-subtle">แชร์ไปยัง:</p>
+              {/* Native Flex share — only renders inside the LINE app */}
+              <ShareToLineButton
+                buildMessages={() =>
+                  drawn
+                    ? [
+                        buildDailyCardFlex({
+                          cardNameTh: drawn.card.nameTh ?? drawn.card.name,
+                          cardName: drawn.card.name,
+                          orientation: drawn.orientation,
+                          meaning: cardMeaning(drawn),
+                          keywords:
+                            drawn.orientation === "upright"
+                              ? drawn.card.keywordsUpright
+                              : drawn.card.keywordsReversed,
+                          imageUrl: drawn.card.image ? `/card/${drawn.card.image}` : null,
+                        }),
+                      ]
+                    : []
+                }
+                onFallback={() => handleSharePlatform("line")}
+                className="h-8 px-3 py-0 text-xs"
+              />
+              {/* URL fallback — always present; ShareToLineButton hides on non-LINE */}
               <button type="button" onClick={() => handleSharePlatform("line")} className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#06C755] transition hover:scale-110" aria-label="Share LINE">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 5.82 2 10.5c0 3.26 2.36 6.1 5.88 7.46-.08.72-.5 2.7-.57 3.12-.1.1.2.1.42.1.17-.1 2.4-1.6 3.3-2.3.2.0.5.0.8.0 5.5 0 10-3.8 10-8.5S17.5 2 12 2z" /></svg>
               </button>

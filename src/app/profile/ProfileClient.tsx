@@ -6,6 +6,7 @@ import { Card, CardTitle, CardDesc } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { AddFriendPrompt } from "@/components/onboarding/AddFriendPrompt";
 
 type Language = "en" | "th";
 type ThemeChoice = "system" | "light" | "dark";
@@ -105,18 +106,33 @@ export function ProfileClient({ version }: { version?: string }) {
   const [dailyReminder, setDailyReminder] = React.useState(false);
   const [loaded, setLoaded] = React.useState(false);
 
+  // Load preferences from localStorage on mount
   React.useEffect(() => {
     const initialLang = readLS<Language>(LS_LANGUAGE, "th");
     const initialTheme = readLS<ThemeChoice>(LS_THEME, "light");
     const initialDaily = readLS<boolean>(LS_DAILY_REMINDER, false);
-
     setLanguage(initialLang);
     setTheme(initialTheme);
     setDailyReminder(initialDaily);
     setLoaded(true);
-
     applyTheme(initialTheme);
   }, []);
+
+  // If user is logged in, seed dailyReminder from the server
+  React.useEffect(() => {
+    if (!user || !loaded) return;
+    fetch("/api/me/notifications", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((data: { optIn?: boolean }) => {
+        if (typeof data.optIn === "boolean") {
+          setDailyReminder(data.optIn);
+          writeLS(LS_DAILY_REMINDER, data.optIn);
+        }
+      })
+      .catch(() => {
+        // Fallback: keep localStorage value
+      });
+  }, [user, loaded]);
 
   React.useEffect(() => {
     if (!loaded) return;
@@ -129,10 +145,26 @@ export function ProfileClient({ version }: { version?: string }) {
     if (typeof document !== "undefined") applyTheme(theme);
   }, [theme, loaded]);
 
-  React.useEffect(() => {
-    if (!loaded) return;
-    writeLS(LS_DAILY_REMINDER, dailyReminder);
-  }, [dailyReminder, loaded]);
+  // Toggle handler: writes localStorage immediately + syncs to server when logged in
+  const handleDailyReminderChange = React.useCallback(
+    (next: boolean) => {
+      setDailyReminder(next);
+      writeLS(LS_DAILY_REMINDER, next);
+      if (user) {
+        fetch("/api/me/notifications", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ optIn: next }),
+        }).catch(() => {/* silent */});
+      }
+    },
+    [user],
+  );
+
+  const notificationDesc =
+    language === "th"
+      ? "รับไพ่รายวันทาง LINE ทุกเช้า"
+      : "Get your daily card via LINE every morning.";
 
   return (
     <div className="px-5 pb-8">
@@ -205,17 +237,16 @@ export function ProfileClient({ version }: { version?: string }) {
                   className="bg-[#06C755] text-white hover:bg-[#05b34c]"
                 >
                   {authLoading
-                    ? language === "th"
-                      ? "กำลังตรวจสอบ…"
-                      : "Checking…"
-                    : language === "th"
-                      ? "เข้าสู่ระบบด้วย LINE"
-                      : "Sign in with LINE"}
+                    ? language === "th" ? "กำลังตรวจสอบ…" : "Checking…"
+                    : language === "th" ? "เข้าสู่ระบบด้วย LINE" : "Sign in with LINE"}
                 </Button>
               </div>
             </>
           )}
         </Card>
+
+        {/* Add-friend prompt — only when opted-in to push but not yet a LINE friend */}
+        {user && dailyReminder && <AddFriendPrompt />}
 
         {/* Settings */}
         <Card className="p-5">
@@ -228,20 +259,8 @@ export function ProfileClient({ version }: { version?: string }) {
               desc={language === "th" ? "แค่หน้าตา UI (ยังไม่ใช่ i18n เต็ม)" : "UI-only (no full i18n)."}
               right={
                 <div className="flex items-center gap-2" aria-label="Language">
-                  <Chip
-                    selected={language === "th"}
-                    aria-pressed={language === "th"}
-                    onClick={() => setLanguage("th")}
-                  >
-                    ไทย
-                  </Chip>
-                  <Chip
-                    selected={language === "en"}
-                    aria-pressed={language === "en"}
-                    onClick={() => setLanguage("en")}
-                  >
-                    English
-                  </Chip>
+                  <Chip selected={language === "th"} aria-pressed={language === "th"} onClick={() => setLanguage("th")}>ไทย</Chip>
+                  <Chip selected={language === "en"} aria-pressed={language === "en"} onClick={() => setLanguage("en")}>English</Chip>
                 </div>
               }
             />
@@ -252,27 +271,9 @@ export function ProfileClient({ version }: { version?: string }) {
               desc={language === "th" ? "ระบบ / สว่าง / มืด" : "System / Light / Dark."}
               right={
                 <div className="flex items-center gap-2" aria-label="Theme">
-                  <Chip
-                    selected={theme === "system"}
-                    aria-pressed={theme === "system"}
-                    onClick={() => setTheme("system")}
-                  >
-                    {language === "th" ? "ระบบ" : "System"}
-                  </Chip>
-                  <Chip
-                    selected={theme === "light"}
-                    aria-pressed={theme === "light"}
-                    onClick={() => setTheme("light")}
-                  >
-                    {language === "th" ? "สว่าง" : "Light"}
-                  </Chip>
-                  <Chip
-                    selected={theme === "dark"}
-                    aria-pressed={theme === "dark"}
-                    onClick={() => setTheme("dark")}
-                  >
-                    {language === "th" ? "มืด" : "Dark"}
-                  </Chip>
+                  <Chip selected={theme === "system"} aria-pressed={theme === "system"} onClick={() => setTheme("system")}>{language === "th" ? "ระบบ" : "System"}</Chip>
+                  <Chip selected={theme === "light"} aria-pressed={theme === "light"} onClick={() => setTheme("light")}>{language === "th" ? "สว่าง" : "Light"}</Chip>
+                  <Chip selected={theme === "dark"} aria-pressed={theme === "dark"} onClick={() => setTheme("dark")}>{language === "th" ? "มืด" : "Dark"}</Chip>
                 </div>
               }
             />
@@ -280,16 +281,12 @@ export function ProfileClient({ version }: { version?: string }) {
             <Row
               id="setting-daily"
               title={language === "th" ? "การแจ้งเตือน" : "Notifications"}
-              desc={
-                language === "th"
-                  ? "เตือนรายวัน (UI อย่างเดียว)"
-                  : "Daily reminder (UI only)."
-              }
+              desc={notificationDesc}
               right={
                 <Switch
                   labelId="setting-daily"
                   checked={dailyReminder}
-                  onCheckedChange={setDailyReminder}
+                  onCheckedChange={handleDailyReminderChange}
                 />
               }
             />
@@ -309,14 +306,10 @@ export function ProfileClient({ version }: { version?: string }) {
 
           <div className="mt-4 grid grid-cols-2 gap-3">
             <Link href="/privacy" className="block">
-              <Button variant="ghost" className="w-full">
-                {language === "th" ? "ความเป็นส่วนตัว" : "Privacy"}
-              </Button>
+              <Button variant="ghost" className="w-full">{language === "th" ? "ความเป็นส่วนตัว" : "Privacy"}</Button>
             </Link>
             <Link href="/terms" className="block">
-              <Button variant="ghost" className="w-full">
-                {language === "th" ? "ข้อกำหนด" : "Terms"}
-              </Button>
+              <Button variant="ghost" className="w-full">{language === "th" ? "ข้อกำหนด" : "Terms"}</Button>
             </Link>
           </div>
         </Card>

@@ -11,6 +11,10 @@ export interface UserRow {
   membership_tier: string;
   created_at: string;
   last_login_at: string | null;
+  // Added by 0002_notification_prefs.sql
+  daily_push_opt_in: boolean;
+  daily_push_hour: number;             // 0–23, Asia/Bangkok
+  daily_push_last_sent_on: string | null; // YYYY-MM-DD (Bangkok date)
 }
 
 export interface ReadingHistoryRow {
