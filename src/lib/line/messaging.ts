@@ -1,15 +1,18 @@
 import { getServiceClient } from "@/lib/supabase/server";
 
 /**
- * LINE Messaging API push. Env-guarded: if the channel access token is missing
- * we log a `notifications` row and return gracefully instead of throwing
- * (mirrors the `missing_gemini_api_key` graceful contract).
+ * LINE Messaging API push + reply. Env-guarded: if the channel access token is
+ * missing we log a `notifications` row and return gracefully instead of
+ * throwing (mirrors the `missing_gemini_api_key` graceful contract).
  *
- * NOTE: push targets the LINE userId (`sub`). For this to work the Login channel
- * and the Messaging channel must live under the SAME LINE provider (shared
- * userId namespace) and the user must have added the bot as a friend.
+ * NOTE: push targets the LINE userId (`sub`). For this to work the Login
+ * channel and the Messaging channel must live under the SAME LINE provider
+ * (shared userId namespace) and the user must have added the bot as a friend.
  */
 
+// Single source of truth for every message shape used across share / push / reply.
+// `contents` is intentionally `unknown` because readings push carousels
+// (`buildReadingFlexMessage`), not just single bubbles.
 export type LineMessage =
   | { type: "text"; text: string }
   | { type: "flex"; altText: string; contents: unknown };
@@ -86,24 +89,50 @@ export async function sendLinePush(
 }
 
 /**
- * Reply to an inbound webhook event using its one-time replyToken. Unlike push,
- * reply does not require the same-provider userId — it always works for events
- * the bot receives. Env-guarded like `sendLinePush`.
+ * LINE reply API. Must be called within the webhook response window (~30s).
+ * Fire the 200 response first, then call this (fire-and-forget pattern) to
+ * avoid LINE's retry logic triggering duplicate replies.
  */
-export async function replyLineMessage(
+export async function sendLineReply(
   replyToken: string,
   messages: LineMessage[],
+  meta?: { messageType?: string; userId?: string | null },
 ): Promise<PushResult> {
   const token = process.env.LINE_MESSAGING_CHANNEL_ACCESS_TOKEN;
-  if (!token) return { ok: false, reason: "missing_line_messaging_token" };
+  const messageType = meta?.messageType ?? "reply";
+  const userId = meta?.userId ?? null;
+
+  if (!token) {
+    await logNotification({ userId, messageType, payload: { messages }, status: "failed", error: "missing_line_messaging_token" });
+    return { ok: false, reason: "missing_line_messaging_token" };
+  }
+
   try {
     const resp = await fetch("https://api.line.me/v2/bot/message/reply", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ replyToken, messages }),
     });
-    return resp.ok ? { ok: true } : { ok: false, reason: "line_reply_failed" };
-  } catch {
+
+    if (!resp.ok) {
+      const detail = await resp.text();
+      await logNotification({ userId, messageType, payload: { messages }, status: "failed", error: detail });
+      return { ok: false, reason: "line_reply_failed" };
+    }
+
+    await logNotification({ userId, messageType, payload: { messages }, status: "sent" });
+    return { ok: true };
+  } catch (err) {
+    await logNotification({
+      userId,
+      messageType,
+      payload: { messages },
+      status: "failed",
+      error: err instanceof Error ? err.message : String(err),
+    });
     return { ok: false, reason: "line_reply_error" };
   }
 }

@@ -4,6 +4,8 @@
  * module top-level (that would break SSR and the Workers build).
  */
 
+import type { LineMessage } from "@/lib/line/messaging";
+
 let liffReady: Promise<boolean> | null = null;
 
 /** Initialize LIFF once. Returns false when no LIFF ID is configured. */
@@ -83,6 +85,58 @@ export async function sendLiffMessages(messages: LiffMessage[]): Promise<boolean
 }
 
 /**
+ * Returns true when `shareTargetPicker` is available in the current LIFF context.
+ * Must be enabled in the LINE Developers console under the LIFF app settings.
+ */
+export async function canShareTargetPicker(): Promise<boolean> {
+  const ok = await ensureLiff();
+  if (!ok) return false;
+  const liff = (await import("@line/liff")).default;
+  try {
+    return liff.isApiAvailable("shareTargetPicker");
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Open the LINE share target picker and send `messages`.
+ * Returns false if the API is unavailable or the user cancels.
+ *
+ * The `as never` casts at the SDK boundary isolate type mismatches between our
+ * `LineMessage` union and the SDK's own message types — keeping strict mode
+ * intact everywhere else.
+ */
+export async function shareViaTargetPicker(messages: LineMessage[]): Promise<boolean> {
+  if (!(await canShareTargetPicker())) return false;
+  const liff = (await import("@line/liff")).default;
+  try {
+    const result = await liff.shareTargetPicker(messages as never);
+    // result is undefined when user cancels (LINE SDK behaviour)
+    return result?.status === "success";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Send messages directly into the chat window (only works when the LIFF app
+ * is opened from a chat context, e.g. a rich menu inside a 1:1 or group chat).
+ * Returns false on error or wrong context.
+ */
+export async function sendMessagesToChat(messages: LineMessage[]): Promise<boolean> {
+  const ok = await ensureLiff();
+  if (!ok) return false;
+  const liff = (await import("@line/liff")).default;
+  try {
+    await liff.sendMessages(messages as never);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Open the share-target picker so the user can forward the reading to friends.
  * Returns false when the API is unavailable (e.g. outside the LINE client).
  */
@@ -96,5 +150,22 @@ export async function shareReadingToFriends(messages: LiffMessage[]): Promise<bo
     return Boolean(res);
   } catch {
     return false;
+  }
+}
+
+/**
+ * Returns the current user's friendship status with the LINE OA.
+ * Requires `friendship_status` scope and the OA to be linked to the same
+ * LINE Login channel provider. Returns null when unavailable (graceful).
+ */
+export async function getFriendshipStatus(): Promise<boolean | null> {
+  const ok = await ensureLiff();
+  if (!ok) return null;
+  const liff = (await import("@line/liff")).default;
+  try {
+    const data = await liff.getFriendship();
+    return data.friendFlag;
+  } catch {
+    return null;
   }
 }

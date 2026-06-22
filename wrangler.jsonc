@@ -7,5 +7,17 @@
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
+  },
+  "vars": {
+    // Public env vars — safe to commit (no secrets here)
+    "NEXT_PUBLIC_SITE_ORIGIN": "https://www.reffortune.com"
   }
+  // Secrets (set via `wrangler secret put <NAME>`):
+  //   SUPABASE_SERVICE_ROLE_KEY
+  //   LINE_LOGIN_CHANNEL_SECRET
+  //   LINE_MESSAGING_CHANNEL_ACCESS_TOKEN
+  //   LINE_MESSAGING_CHANNEL_SECRET   ← NEW (Phase 4 webhook signature)
+  //   SESSION_SECRET
+  //   CRON_SECRET                      ← NEW (Phase 2 daily-push cron auth)
+  //   ADMIN_LINE_USER_IDS
 }
