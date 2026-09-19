@@ -6,6 +6,7 @@ import { Download, Share2, Loader2, Hash, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import type { NumerologyShareData } from "../types";
+import { SITE_HOST } from "@/lib/site";
 
 interface NumerologyShareableCardProps {
   data: NumerologyShareData;
@@ -123,7 +124,7 @@ export function NumerologyShareableCard({ data, onShare, className }: Numerology
 
         {/* Footer */}
         <div className="mt-5 pt-4 border-t border-amber-200/50 text-center">
-          <p className="text-amber-500 text-xs font-medium">🔢 วิเคราะห์เลขศาสตร์ฟรีที่ reffortune.com</p>
+          <p className="text-amber-500 text-xs font-medium">🔢 วิเคราะห์เลขศาสตร์ฟรีที่ {SITE_HOST}</p>
         </div>
       </div>
 

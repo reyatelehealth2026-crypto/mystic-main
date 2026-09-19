@@ -6,6 +6,7 @@ import { Download, Share2, Loader2, Star, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import type { HoroscopeShareData } from "../types";
+import { SITE_HOST } from "@/lib/site";
 
 interface HoroscopeShareableCardProps {
   data: HoroscopeShareData;
@@ -133,7 +134,7 @@ export function HoroscopeShareableCard({ data, onShare, className }: HoroscopeSh
 
         {/* Footer */}
         <div className="mt-5 pt-4 border-t border-gray-200/50 text-center">
-          <p className="text-gray-400 text-xs font-medium">✨ ดูดวงกับเรฟ reffortune.com</p>
+          <p className="text-gray-400 text-xs font-medium">✨ ดูดวงกับเรฟ {SITE_HOST}</p>
         </div>
       </div>
 

@@ -6,6 +6,7 @@ import { Download, Share2, Loader2, Sparkles, Star } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import type { SpiritShareData } from "../types";
+import { SITE_HOST } from "@/lib/site";
 
 interface SpiritShareableCardProps {
   data: SpiritShareData;
@@ -129,7 +130,7 @@ export function SpiritShareableCard({ data, onShare, className }: SpiritShareabl
 
         {/* Footer */}
         <div className="mt-5 pt-4 border-t border-teal-200/50 text-center">
-          <p className="text-teal-500 text-xs font-medium">✨ ค้นหาไพ่จิตวิญญาณของคุณที่ reffortune.com</p>
+          <p className="text-teal-500 text-xs font-medium">✨ ค้นหาไพ่จิตวิญญาณของคุณที่ {SITE_HOST}</p>
         </div>
       </div>
 

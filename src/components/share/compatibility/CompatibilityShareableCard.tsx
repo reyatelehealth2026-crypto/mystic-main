@@ -6,6 +6,7 @@ import { Download, Share2, Loader2, Heart, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import type { CompatibilityShareData } from "../types";
+import { SITE_HOST } from "@/lib/site";
 
 interface CompatibilityShareableCardProps {
   data: CompatibilityShareData;
@@ -150,7 +151,7 @@ export function CompatibilityShareableCard({ data, onShare, className }: Compati
 
         {/* Footer */}
         <div className="mt-5 pt-4 border-t border-pink-200/50 text-center">
-          <p className="text-pink-400 text-xs font-medium">💕 ดูความเข้ากันฟรีที่ reffortune.com</p>
+          <p className="text-pink-400 text-xs font-medium">💕 ดูความเข้ากันฟรีที่ {SITE_HOST}</p>
         </div>
       </div>
 

@@ -5,6 +5,7 @@ import { toPng } from "html-to-image";
 import { Download, Share2, Loader2 } from "lucide-react";
 import { Button } from "./Button";
 import { cn } from "@/lib/cn";
+import { SITE_HOST } from "@/lib/site";
 
 interface ShareableCardData {
   cardName: string;
@@ -154,7 +155,7 @@ export function ShareableCard({ data, onShare, className }: ShareableCardProps) 
 
         {/* Footer */}
         <div className="mt-4 border-t border-line-faint pt-4 text-center">
-          <p className="text-xs text-fg-subtle">ดูดวงกับเรฟ · reffortune.com</p>
+          <p className="text-xs text-fg-subtle">ดูดวงกับเรฟ · {SITE_HOST}</p>
         </div>
       </div>
 

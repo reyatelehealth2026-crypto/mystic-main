@@ -6,6 +6,7 @@ import { Download, Share2, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import type { ChineseZodiacShareData } from "../types";
+import { SITE_HOST } from "@/lib/site";
 
 interface ChineseZodiacShareableCardProps {
   data: ChineseZodiacShareData;
@@ -133,7 +134,7 @@ export function ChineseZodiacShareableCard({ data, onShare, className }: Chinese
 
         {/* Footer */}
         <div className="mt-5 pt-4 border-t border-red-200/50 text-center">
-          <p className="text-red-400 text-xs font-medium">🧧 ดูดวงปีจีนฟรีที่ reffortune.com</p>
+          <p className="text-red-400 text-xs font-medium">🧧 ดูดวงปีจีนฟรีที่ {SITE_HOST}</p>
         </div>
       </div>
 
